@@ -1,0 +1,25 @@
+project:
+  company_name: Northstar Energy
+  currency_label: synthetic currency units
+  random_seed: 20260815
+  start_month: "2023-01-01"
+  months: 36
+
+opportunity_weights:
+  market_size: 0.20
+  market_growth: 0.20
+  share_gap: 0.20
+  momentum: 0.15
+  margin: 0.15
+  competition: 0.10
+
+opportunity_labels:
+  high: 70
+  monitor: 45
+
+hhi_thresholds:
+  fragmented_upper: 0.15
+  moderate_upper: 0.25
+
+validation:
+  financial_tolerance: 0.02

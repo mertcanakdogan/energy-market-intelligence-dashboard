@@ -1,0 +1,8 @@
+company_name,current_share,prior_share,share_change_pp,momentum_rank,momentum_signal
+Atlas Energy,0.173713,0.168674,0.503871,1,Gaining
+Northstar Energy,0.180263,0.177708,0.255478,2,Gaining
+Vertex Energy,0.123196,0.122395,0.080067,3,Stable
+Aurora Energy,0.091033,0.091024,0.000822,4,Stable
+Horizon Utilities,0.145832,0.147929,-0.209659,5,Stable
+Summit Power,0.094911,0.097289,-0.237720,6,Stable
+Meridian Power,0.191052,0.194981,-0.392859,7,Losing

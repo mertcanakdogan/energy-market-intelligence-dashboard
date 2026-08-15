@@ -1,0 +1,27 @@
+{
+  "average_hhi": 0.154468,
+  "companies": 7,
+  "dataset_fingerprint": "1998da387df4452d3374210c578f37d7b038c345c04149cd86c1e0f11caf7cee",
+  "fact_row_count": 18144,
+  "final_period_northstar_share": 0.180263,
+  "generated_at_utc": "2026-08-15T16:49:19+00:00",
+  "gross_margin_change_pp": 1.342038,
+  "gross_margin_pct": 0.23057,
+  "highest_opportunity_region": "Sunrise Coast",
+  "market_yoy_growth": 0.0784,
+  "months": 36,
+  "northstar_yoy_growth": 0.093903,
+  "products": 4,
+  "regions": 18,
+  "seed": 20260815,
+  "sql_scripts": [
+    "01_schema.sql",
+    "02_market_metrics.sql",
+    "03_growth_analysis.sql",
+    "04_competitor_intelligence.sql",
+    "05_profitability.sql",
+    "06_regional_opportunity.sql",
+    "07_executive_kpis.sql"
+  ],
+  "synthetic_data_only": true
+}

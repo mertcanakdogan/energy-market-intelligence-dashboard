@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+
+# Generated analytical data and local databases
+data/generated/
+data/*.duckdb
+data/*.duckdb.wal
+*.duckdb
+*.duckdb.wal
+
+# Streamlit and local tooling
+.streamlit/secrets.toml
+.env
+.env.*
+.vscode/
+.idea/
+.agent/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Keep compact portfolio outputs
+!outputs/examples/
+!outputs/examples/*.csv
+!outputs/examples/*.png
+!outputs/examples/run_metadata.json
