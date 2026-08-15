@@ -106,6 +106,8 @@ Each region is min-max transformed to a 0–100 scale on six components. Constan
 | Gross-margin attractiveness | Higher is more attractive | 15% |
 | Competitive intensity | Lower HHI is more attractive | 10% |
 
+Northstar share gap is defined as `1 − Northstar regional market share`; after min-max scaling, lower-share regions receive a higher gap score.
+
 > **Opportunity Score:** This is a transparent analytical prioritisation heuristic for demonstration purposes, not a causal model or automated decision rule.
 
 The page exposes every component, so an analyst can see why a region ranks where it does. The weights and thresholds are newly chosen for this public demo and are not presented as optimal.
