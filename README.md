@@ -1,3 +1,5 @@
+[![Tests](https://github.com/mertcanakdogan/energy-market-intelligence-dashboard/actions/workflows/tests.yml/badge.svg)](https://github.com/mertcanakdogan/energy-market-intelligence-dashboard/actions/workflows/tests.yml)
+
 # Energy Market Intelligence Dashboard
 
 > A production-style portfolio project that turns raw commercial records into SQL-led market, profitability, competitive, and regional decision support.
@@ -186,7 +188,9 @@ All source code, SQL, scoring logic, data schemas, assumptions, tests, documenta
 
 ## Author
 
-Portfolio Author — independent commercial analytics project.
+**Mert Can Akdoğan**
+
+Commercial analytics and business intelligence portfolio project.
 
 ## License
 
