@@ -1,4 +1,4 @@
-"""Synthetic Northstar pricing ledger with a known price waterfall and demand ground truth.
+"""Synthetic focus-company pricing ledger with a known waterfall and demand ground truth.
 
 Grain of ``fact_pricing``: month x region x product x customer segment.
 
@@ -11,7 +11,7 @@ Data-generating process (all parameters come from ``config/default.yaml``):
 * Demand: constant-elasticity log-log model in *pocket* price with competitor price, seasonality,
   trend, promotion uplift and noise. The true elasticities are the config values.
 
-The pricing ledger is a separate Northstar sub-ledger: its volume scale is calibrated to the
+The pricing ledger is a separate sub-ledger: its volume scale is calibrated to the
 market fact, but its rows are not a reconciled split of ``fact_sales``.
 """
 
@@ -23,7 +23,7 @@ import pandas as pd
 from energy_market_intelligence.pricing_config import PricingConfig
 from energy_market_intelligence.synthetic_data import GeneratorConfig, generate_synthetic_data
 
-NORTHSTAR_COMPANY_ID = 1
+FOCUS_COMPANY_ID = 1
 PRICING_KEYS = ["month_id", "region_id", "product_id", "customer_segment_id"]
 
 
@@ -34,6 +34,7 @@ def _segment_dimensions(config: PricingConfig) -> tuple[pd.DataFrame, pd.DataFra
         {
             "customer_segment_id": ids,
             "customer_segment_name": names,
+            "customer_segment_en": [segment.name_en for segment in config.segments],
             "payment_terms_days": [segment.payment_terms_days for segment in config.segments],
         }
     )
@@ -51,7 +52,7 @@ def _competitor_prices(market: dict[str, pd.DataFrame]) -> pd.DataFrame:
     """Volume-weighted competitor price by month x region x product from the market fact."""
 
     fact = market["fact_sales"]
-    rivals = fact[fact["company_id"] != NORTHSTAR_COMPANY_ID].copy()
+    rivals = fact[fact["company_id"] != FOCUS_COMPANY_ID].copy()
     rivals["price_volume"] = rivals["average_price"] * rivals["volume_mwh"]
     grouped = rivals.groupby(["month_id", "region_id", "product_id"], as_index=False)[
         ["price_volume", "volume_mwh"]
@@ -60,9 +61,9 @@ def _competitor_prices(market: dict[str, pd.DataFrame]) -> pd.DataFrame:
     return grouped[["month_id", "region_id", "product_id", "competitor_price"]]
 
 
-def _northstar_base_volume(market: dict[str, pd.DataFrame]) -> pd.DataFrame:
+def _focus_base_volume(market: dict[str, pd.DataFrame]) -> pd.DataFrame:
     fact = market["fact_sales"]
-    own = fact[fact["company_id"] == NORTHSTAR_COMPANY_ID]
+    own = fact[fact["company_id"] == FOCUS_COMPANY_ID]
     base = own.groupby(["region_id", "product_id"], as_index=False)["volume_mwh"].mean()
     return base.rename(columns={"volume_mwh": "base_volume"})
 
@@ -189,7 +190,7 @@ def generate_pricing_data(
         _competitor_prices(market), on=["month_id", "region_id", "product_id"], how="left"
     )["competitor_price"].to_numpy()
     base_volume = grid.merge(
-        _northstar_base_volume(market), on=["region_id", "product_id"], how="left"
+        _focus_base_volume(market), on=["region_id", "product_id"], how="left"
     )["base_volume"].to_numpy()
     reference_pocket = reference_price * config.list_price_premium * (
         1 - seg_value("base_discount_pct")
@@ -242,7 +243,7 @@ def generate_pricing_data(
 def generate_full_bundle(
     generator_config: GeneratorConfig, pricing_config: PricingConfig
 ) -> dict[str, pd.DataFrame]:
-    """Market star schema plus the Northstar pricing tables, ready for validation and DuckDB."""
+    """Market star schema plus the focus-company pricing tables, ready for validation and DuckDB."""
 
     market = generate_synthetic_data(generator_config)
     pricing = generate_pricing_data(market, pricing_config, generator_config.seed)

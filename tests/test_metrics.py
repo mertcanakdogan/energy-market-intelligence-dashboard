@@ -57,7 +57,7 @@ def test_management_observations_are_metric_derived() -> None:
         {
             "region_name": ["R1"],
             "market_growth": [0.08],
-            "northstar_share": [0.12],
+            "focus_share": [0.12],
             "opportunity_score": [80],
         }
     )

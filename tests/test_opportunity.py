@@ -25,7 +25,7 @@ def opportunity_input() -> pd.DataFrame:
             "region_name": ["Strong", "Weak"],
             "market_volume": [1000.0, 100.0],
             "market_growth": [0.1, -0.1],
-            "northstar_share": [0.1, 0.5],
+            "focus_share": [0.1, 0.5],
             "share_momentum": [0.02, -0.02],
             "gross_margin_pct": [0.3, 0.1],
             "hhi": [0.1, 0.4],

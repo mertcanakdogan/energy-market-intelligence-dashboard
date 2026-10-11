@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW vw_northstar_profitability_monthly AS
+CREATE OR REPLACE VIEW vw_focus_profitability_monthly AS
 SELECT
     d.date,
     r.region_name,
@@ -14,7 +14,7 @@ JOIN dim_date AS d USING (month_id)
 JOIN dim_region AS r USING (region_id)
 JOIN dim_company AS c USING (company_id)
 JOIN dim_product AS p USING (product_id)
-WHERE c.company_name = 'Northstar Energy'
+WHERE c.company_type = 'Focus company'
 GROUP BY ALL;
 
 CREATE OR REPLACE VIEW vw_profitability_summary AS
@@ -30,7 +30,7 @@ SELECT
     SUM(gross_profit) AS gross_profit,
     SUM(gross_profit) / NULLIF(SUM(revenue), 0) AS gross_margin_pct,
     SUM(gross_profit) / NULLIF(SUM(volume_mwh), 0) AS profit_per_mwh
-FROM vw_northstar_profitability_monthly
+FROM vw_focus_profitability_monthly
 CROSS JOIN boundaries
 WHERE date > max_date - INTERVAL 12 MONTH
 GROUP BY region_name, product_segment;
@@ -54,7 +54,7 @@ periods AS (
     JOIN dim_company AS c USING (company_id)
     JOIN dim_product AS p USING (product_id)
     CROSS JOIN boundaries AS b
-    WHERE c.company_name = 'Northstar Energy'
+    WHERE c.company_type = 'Focus company'
       AND d.date IN (b.current_date, b.prior_date)
     GROUP BY ALL
 ),

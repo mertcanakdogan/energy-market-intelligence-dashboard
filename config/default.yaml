@@ -1,6 +1,6 @@
 project:
-  company_name: Northstar Energy
-  currency_label: synthetic currency units
+  company_name: Tavra Enerji            # fictional focus company
+  currency_label: TL (constant 2025 prices)
   random_seed: 20260815
   start_month: "2023-01-01"
   months: 36
@@ -31,46 +31,51 @@ validation:
 # checked against a known answer.
 # ---------------------------------------------------------------------------
 pricing:
-  # Reference list prices and unit variable costs per product (synthetic currency / MWh).
+  # All money amounts are in Turkish lira at constant (real) 2025 prices, so the series contain
+  # no inflation or currency effects. Prices and costs are TL per MWh.
+  # Reference list prices and unit variable costs per product.
   products:
-    Fixed Supply:    {reference_price: 76.0, unit_cost: 58.0}
-    Flexible Supply: {reference_price: 72.0, unit_cost: 56.0}
-    Renewable Blend: {reference_price: 82.0, unit_cost: 63.0}
-    Business Select: {reference_price: 78.0, unit_cost: 59.0}
+    "Sabit Fiyatlı":           {reference_price: 3040.0, unit_cost: 2320.0}
+    "Değişken Fiyatlı (PTF+)": {reference_price: 2880.0, unit_cost: 2240.0}
+    "Yeşil Enerji (YEK-G)":    {reference_price: 3280.0, unit_cost: 2520.0}
+    "Kurumsal Paket":          {reference_price: 3120.0, unit_cost: 2360.0}
   list_price_premium: 1.15        # list price = reference price x premium (before increases)
-  cost_inflation_per_month: 0.003 # unit variable cost drifts upward every month
+  cost_inflation_per_month: 0.003 # real unit variable cost drift per month (constant 2025 TL)
   cost_of_capital_annual: 0.09    # prices payment-term cost: invoice x rate x days / 365
-  seasonality: [1.12, 1.08, 1.02, 0.96, 0.91, 0.88, 0.90, 0.94, 0.99, 1.04, 1.09, 1.15]
+  seasonality: [1.08, 1.04, 0.97, 0.93, 0.92, 0.99, 1.10, 1.12, 1.02, 0.94, 1.00, 1.09]  # Jan..Dec
 
   # Customer segments. true_elasticity is the own-price elasticity of volume with respect
   # to POCKET price. policy_max_discount_pct is the on-invoice discount depth that the
   # commercial policy allows for the segment.
   segments:
-    - name: Residential
+    - name: Mesken
+      name_en: Residential
       true_elasticity: -1.6          # elastic
       base_discount_pct: 0.045
       policy_max_discount_pct: 0.065
       rebate_pct: 0.005
       payment_terms_days: 14
-      freight_service_per_mwh: 3.2
+      freight_service_per_mwh: 128.0
       unit_cost_factor: 1.00
       volume_share: 0.38
-    - name: SME
+    - name: Ticarethane / KOBİ
+      name_en: SME
       true_elasticity: -1.1          # roughly unit-elastic
       base_discount_pct: 0.085
       policy_max_discount_pct: 0.105
       rebate_pct: 0.020
       payment_terms_days: 30
-      freight_service_per_mwh: 2.1
+      freight_service_per_mwh: 84.0
       unit_cost_factor: 0.99
       volume_share: 0.34
-    - name: Industrial
+    - name: Sanayi
+      name_en: Industrial
       true_elasticity: -0.6          # inelastic
       base_discount_pct: 0.145
       policy_max_discount_pct: 0.175
       rebate_pct: 0.045
       payment_terms_days: 60
-      freight_service_per_mwh: 1.1
+      freight_service_per_mwh: 44.0
       unit_cost_factor: 0.97
       volume_share: 0.28
 
@@ -84,32 +89,33 @@ pricing:
 
   # Regions whose average on-invoice discount sits above policy (extra discount, fraction of list).
   leakage_regions:
-    Western Reach: 0.045
-    Highland Zone: 0.040
-    Blue Mesa: 0.050
-    Central Basin: 0.035
+    Ege Kuzey: 0.045
+    Batı Akdeniz: 0.035
+    Doğu Akdeniz: 0.040
+    Doğu Anadolu Kuzey: 0.050
 
-  # Staggered list-price increases (exogenous price variation used for identification).
-  # month_id 1 = first month of the series.
+  # Staggered real list-price increases (exogenous price variation used for identification).
+  # month_id 1 = January 2023, 13 = January 2024, 25 = January 2025.
   list_price_increases:
-    - month_id: 7
+    - month_id: 7        # July 2023
       pct: 0.05
-      regions: [North Coast, Pine Valley, Western Reach, Central Basin, Eastern Ridge, Cedar Fields]
-    - month_id: 14
+      regions: [İstanbul Avrupa, Trakya, Ege Kuzey, Batı Akdeniz, İç Anadolu Batı, İç Anadolu Doğu]
+    - month_id: 14       # February 2024
       pct: 0.06
-      regions: [Silver Plains, Lake District, Harbor Belt, Granite Valley, Riverland, Evergreen Basin]
-    - month_id: 21
+      regions: [İstanbul Anadolu, Marmara Güney, Ankara, Batı Karadeniz, Doğu Karadeniz, Güneydoğu Batı]
+    - month_id: 21       # September 2024
       pct: 0.05
-      regions: [Redwood Corridor, Highland Zone, Sunrise Coast, Blue Mesa]
-    - month_id: 28
+      regions: [Ege Güney, Doğu Akdeniz, Orta Karadeniz, Doğu Anadolu Kuzey]
+    - month_id: 28       # April 2025
       pct: 0.04
-      regions: [North Coast, Silver Plains, Maple Frontier]
-    # Southern Cross never changes its list price in the sample.
+      regions: [İstanbul Avrupa, İstanbul Anadolu, Doğu Anadolu Güney]
+    # Güneydoğu Doğu never changes its list price in the sample.
 
-  # Discount campaign: treated regions get an extra on-invoice discount during the window and a
-  # non-price campaign effect on volume (true_volume_uplift). All other regions are controls.
+  # Discount campaign (January to April 2025): treated regions get an extra on-invoice discount
+  # during the window and a non-price campaign effect on volume (true_volume_uplift). All other
+  # regions are controls.
   promotion:
-    treated_regions: [Harbor Belt, Sunrise Coast, Riverland, Eastern Ridge, Blue Mesa]
+    treated_regions: [İç Anadolu Batı, Ankara, Orta Karadeniz, Doğu Karadeniz, Doğu Anadolu Kuzey]
     start_month_id: 25
     end_month_id: 28
     promo_discount_pct: 0.03

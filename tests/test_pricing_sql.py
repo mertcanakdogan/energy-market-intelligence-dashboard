@@ -166,7 +166,7 @@ def test_pvm_reconciles_when_a_cell_is_missing_in_the_prior_period(
     assert len(bridge) == 12
     assert bridge["reconciliation_gap"].abs().max() < 1e-6
     assert bridge["gp_reconciliation_gap"].abs().max() < 1e-6
-    created = bridge[(bridge["product_name"] == "Fixed Supply")]
-    created = created[created["customer_segment_name"] == "Industrial"].iloc[0]
+    created = bridge[(bridge["product_name"] == "Sabit Fiyatlı")]
+    created = created[created["customer_segment_name"] == "Sanayi"].iloc[0]
     assert created["prior_volume"] == 0
     assert created["price_effect"] == pytest.approx(0)

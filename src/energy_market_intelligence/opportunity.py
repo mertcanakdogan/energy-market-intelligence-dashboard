@@ -41,7 +41,7 @@ def calculate_opportunity_scores(frame: pd.DataFrame, weights: Mapping[str, floa
         "region_name",
         "market_volume",
         "market_growth",
-        "northstar_share",
+        "focus_share",
         "share_momentum",
         "gross_margin_pct",
         "hhi",
@@ -52,7 +52,7 @@ def calculate_opportunity_scores(frame: pd.DataFrame, weights: Mapping[str, floa
     result = frame.copy()
     result["market_size_score"] = minmax_score(result["market_volume"])
     result["market_growth_score"] = minmax_score(result["market_growth"])
-    result["share_gap_score"] = minmax_score(1 - result["northstar_share"])
+    result["share_gap_score"] = minmax_score(1 - result["focus_share"])
     result["momentum_score"] = minmax_score(result["share_momentum"])
     result["margin_score"] = minmax_score(result["gross_margin_pct"])
     result["competition_score"] = minmax_score(result["hhi"], higher_is_better=False)

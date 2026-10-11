@@ -6,22 +6,30 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+from energy_market_intelligence.localization import (
+    VALUE_LABELS,
+    format_number,
+    format_pct,
+    order_segments,
+)
+from energy_market_intelligence.synthetic_data import FOCUS_COMPANY
 from energy_market_intelligence.visualization import (
     ACCENT_TEAL,
+    BRAND_BLUE,
     NEGATIVE_RED,
-    NORTHSTAR_BLUE,
+    TL_AXIS,
     apply_business_theme,
 )
 
 AMBER = "#C98A1B"
 WATERFALL_STEPS = (
-    ("List price", "list_price", "absolute"),
-    ("On-invoice discount", "on_invoice_discount", "relative"),
-    ("Invoice price", "invoice_price", "total"),
-    ("Off-invoice rebate", "off_invoice_rebate", "relative"),
-    ("Payment terms", "payment_term_cost", "relative"),
-    ("Freight & service", "freight_service_cost", "relative"),
-    ("Pocket price", "pocket_price", "total"),
+    ("Liste fiyat", "list_price", "absolute"),
+    ("Fatura üstü indirim", "on_invoice_discount", "relative"),
+    ("Fatura fiyatı", "invoice_price", "total"),
+    ("Fatura dışı iskonto", "off_invoice_rebate", "relative"),
+    ("Vade maliyeti", "payment_term_cost", "relative"),
+    ("Servis ve lojistik", "freight_service_cost", "relative"),
+    ("Cebe kalan fiyat", "pocket_price", "total"),
 )
 AMOUNT_COLUMNS = {
     "list_price": "list_revenue",
@@ -42,7 +50,8 @@ def segment_waterfall_table(waterfall: pd.DataFrame) -> pd.DataFrame:
     ].sum()
     for unit_column, amount_column in AMOUNT_COLUMNS.items():
         totals[unit_column] = totals[amount_column] / totals["volume_mwh"]
-    return totals[["customer_segment_name", "volume_mwh", *AMOUNT_COLUMNS]]
+    ordered = order_segments(totals).reset_index(drop=True)
+    return ordered[["customer_segment_name", "volume_mwh", *AMOUNT_COLUMNS]]
 
 
 def price_waterfall_figure(waterfall: pd.DataFrame) -> go.Figure:
@@ -69,11 +78,11 @@ def price_waterfall_figure(waterfall: pd.DataFrame) -> go.Figure:
                 x=[label for label, _field, _measure in WATERFALL_STEPS],
                 y=values,
                 measure=[measure for _label, _field, measure in WATERFALL_STEPS],
-                text=[f"{level:.1f}" for level in levels],
+                text=[format_number(level, 0) for level in levels],
                 textposition="outside",
                 increasing={"marker": {"color": ACCENT_TEAL}},
                 decreasing={"marker": {"color": NEGATIVE_RED}},
-                totals={"marker": {"color": NORTHSTAR_BLUE}},
+                totals={"marker": {"color": BRAND_BLUE}},
                 connector={"line": {"color": "#9CA3AF"}},
                 hoverinfo="x+text",
                 showlegend=False,
@@ -81,15 +90,13 @@ def price_waterfall_figure(waterfall: pd.DataFrame) -> go.Figure:
             row=1,
             col=column,
         )
-    figure.update_layout(
-        title="Northstar price waterfall by customer segment (per MWh, latest 12 months)"
-    )
+    figure.update_layout(title="Liste fiyattan cebe kalan fiyata (TL/MWh, 2025)")
     apply_business_theme(figure)
     figure.update_xaxes(tickangle=-40, tickfont={"size": 10})
     figure.update_yaxes(
         range=[float(table["pocket_price"].min()) * 0.9, float(table["list_price"].max()) * 1.04]
     )
-    figure.update_yaxes(title="Synthetic currency units per MWh (axis truncated)", col=1)
+    figure.update_yaxes(title="TL/MWh (sabit 2025 fiyatları, eksen kesik)", col=1)
     return figure
 
 
@@ -99,49 +106,51 @@ def pvm_bridge_figure(summary: pd.DataFrame) -> go.Figure:
     row = summary.iloc[0]
     panels = (
         (
-            "Net revenue change",
+            "Net ciro değişimi (cebe kalan fiyatla)",
             [
-                ("Volume", row["volume_effect"]),
-                ("Mix", row["mix_effect"]),
-                ("Price", row["price_effect"]),
+                ("Hacim", row["volume_effect"]),
+                ("Karışım", row["mix_effect"]),
+                ("Fiyat", row["price_effect"]),
             ],
-            ("Revenue change", row["total_revenue_change"]),
+            ("Ciro değişimi", row["total_revenue_change"]),
         ),
         (
-            "Gross profit change",
+            "Brüt kâr değişimi",
             [
-                ("Volume", row["gp_volume_effect"]),
-                ("Mix", row["gp_mix_effect"]),
-                ("Price", row["gp_price_effect"]),
-                ("Unit cost", row["gp_cost_effect"]),
+                ("Hacim", row["gp_volume_effect"]),
+                ("Karışım", row["gp_mix_effect"]),
+                ("Fiyat", row["gp_price_effect"]),
+                ("Birim maliyet", row["gp_cost_effect"]),
             ],
-            ("Gross profit change", row["total_gp_change"]),
+            ("Brüt kâr değişimi", row["total_gp_change"]),
         ),
     )
     figure = make_subplots(
         rows=1, cols=2, subplot_titles=[panel[0] for panel in panels], horizontal_spacing=0.1
     )
     for column, (_title, effects, (total_label, total)) in enumerate(panels, start=1):
-        values = [value for _, value in effects] + [total]
+        values = [value / 1e6 for _, value in effects] + [total / 1e6]
         figure.add_trace(
             go.Waterfall(
                 x=[label for label, _ in effects] + [total_label],
                 y=values,
                 measure=["relative"] * len(effects) + ["total"],
-                text=[f"{value:+,.0f}" for value in values],
+                text=[format_number(value, 1, signed=True) for value in values],
                 textposition="outside",
                 increasing={"marker": {"color": ACCENT_TEAL}},
                 decreasing={"marker": {"color": NEGATIVE_RED}},
-                totals={"marker": {"color": NORTHSTAR_BLUE}},
+                totals={"marker": {"color": BRAND_BLUE}},
                 connector={"line": {"color": "#9CA3AF"}},
-                hovertemplate="%{x}: %{y:,.0f}<extra></extra>",
+                hovertemplate="%{x}: %{y:,.1f} mn TL<extra></extra>",
                 showlegend=False,
             ),
             row=1,
             col=column,
         )
-    figure.update_layout(title="Northstar price-volume-mix bridge: latest 12 months vs prior 12")
-    return apply_business_theme(figure, y_title="Synthetic currency units")
+    figure.update_layout(
+        title=f"{FOCUS_COMPANY}: fiyat-hacim-karışım köprüsü (2025, 2024 ile kıyas)"
+    )
+    return apply_business_theme(figure, y_title=TL_AXIS)
 
 
 def _interval_trace(
@@ -152,13 +161,13 @@ def _interval_trace(
         y=y,
         mode="markers",
         name=name,
-        marker={"color": NORTHSTAR_BLUE, "size": 11},
+        marker={"color": BRAND_BLUE, "size": 11},
         error_x={
             "type": "data",
             "symmetric": False,
             "array": high - x,
             "arrayminus": x - low,
-            "color": NORTHSTAR_BLUE,
+            "color": BRAND_BLUE,
             "thickness": 2.5,
         },
     )
@@ -167,6 +176,7 @@ def _interval_trace(
 def elasticity_recovery_figure(table: pd.DataFrame) -> go.Figure:
     """Estimated elasticity with 95% CI next to the known true value, per segment."""
 
+    table = order_segments(table).iloc[::-1]  # first segment at the top of the chart
     figure = go.Figure()
     figure.add_trace(
         _interval_trace(
@@ -174,7 +184,7 @@ def elasticity_recovery_figure(table: pd.DataFrame) -> go.Figure:
             table["customer_segment_name"],
             table["ci_low"],
             table["ci_high"],
-            "Estimate (95% CI)",
+            "Tahmin (%95 güven aralığı)",
         )
     )
     figure.add_trace(
@@ -182,14 +192,19 @@ def elasticity_recovery_figure(table: pd.DataFrame) -> go.Figure:
             x=table["true_elasticity"],
             y=table["customer_segment_name"],
             mode="markers",
-            name="True value (generator)",
+            name="Gerçek değer (veri üreticisi)",
             marker={"color": AMBER, "size": 13, "symbol": "diamond"},
         )
     )
-    figure.add_vline(x=-1, line_dash="dot", line_color="#9CA3AF", annotation_text="unit elastic")
-    figure.update_layout(title="Elasticity recovery: estimate vs known truth")
+    figure.add_vline(
+        x=-1, line_dash="dot", line_color="#9CA3AF", annotation_text="birim esneklik (-1)"
+    )
+    figure.update_layout(title="Fiyat esnekliği: tahmin ve bilinen gerçek değer")
     apply_business_theme(figure)
-    figure.update_xaxes(title="Own-price elasticity of volume (pocket price)", showgrid=True)
+    figure.update_xaxes(
+        title="Fiyat esnekliği: fiyat %1 artınca hacim yüzde kaç değişir? (cebe kalan fiyat)",
+        showgrid=True,
+    )
     return figure
 
 
@@ -202,16 +217,22 @@ def promo_did_figure(
         rows=1,
         cols=2,
         column_widths=[0.55, 0.45],
-        subplot_titles=("Volume index (pre-campaign = 100)", "Estimated uplift vs truth"),
+        subplot_titles=(
+            "Hacim endeksi (kampanya öncesi = 100)",
+            "Tahmini kampanya etkisi ve gerçek değer",
+        ),
         horizontal_spacing=0.1,
     )
-    for name, color in (("control", ACCENT_TEAL), ("treated", NORTHSTAR_BLUE)):
+    for name, label, color in (
+        ("control", "Kontrol bölgeleri", ACCENT_TEAL),
+        ("treated", "Kampanya bölgeleri", BRAND_BLUE),
+    ):
         figure.add_trace(
             go.Scatter(
                 x=trend["month_id"],
                 y=trend[name],
                 mode="lines+markers",
-                name=f"{name.capitalize()} regions",
+                name=label,
                 line={"color": color, "width": 2.5},
                 marker={"size": 4},
             ),
@@ -227,14 +248,16 @@ def promo_did_figure(
         row=1,
         col=1,
     )
-    labels = estimates["method"].map({"naive": "Naive DiD", "price_adjusted": "Price-adjusted DiD"})
+    labels = estimates["method"].map(
+        {"naive": VALUE_LABELS["naive"], "price_adjusted": VALUE_LABELS["price_adjusted"]}
+    )
     figure.add_trace(
         _interval_trace(
             estimates["uplift"] * 100,
             labels,
             estimates["ci_low"] * 100,
             estimates["ci_high"] * 100,
-            "Estimate (95% CI)",
+            "Tahmin (%95 güven aralığı)",
         ),
         row=1,
         col=2,
@@ -244,15 +267,18 @@ def promo_did_figure(
         x=truth,
         line_dash="dash",
         line_color=AMBER,
-        annotation_text=f"true {truth:.0f}%",
+        annotation_text=f"gerçek {format_pct(truth / 100, 0)}",
         row=1,
         col=2,
     )
-    figure.update_layout(title="Promotion impact: difference-in-differences")
+    figure.update_layout(title="Kampanya etkisi: farkların farkı (DiD) yöntemi")
     apply_business_theme(figure)
-    figure.update_layout(legend={"orientation": "h", "yanchor": "bottom", "y": 1.1, "x": 0})
-    figure.update_xaxes(title="Month", row=1, col=1)
-    figure.update_xaxes(title="Volume uplift (%)", row=1, col=2, showgrid=True)
+    figure.update_layout(
+        legend={"orientation": "h", "yanchor": "top", "y": -0.2, "x": 0},
+        margin={"l": 65, "r": 30, "t": 80, "b": 120},
+    )
+    figure.update_xaxes(title="Ay (1 = Ocak 2023, 36 = Aralık 2025)", row=1, col=1)
+    figure.update_xaxes(title="Ek hacim etkisi (%)", row=1, col=2, showgrid=True)
     return figure
 
 
@@ -261,36 +287,37 @@ def price_recommendation_figure(table: pd.DataFrame) -> go.Figure:
 
     ordered = table.sort_values("expected_gross_profit_change")
     labels = [
-        f"{row.customer_segment_name}<br>{row.price_change_pct:+.1%} price, "
-        f"{row.expected_volume_change_pct:+.1%} volume"
+        f"{row.customer_segment_name}<br>"
+        f"fiyat {format_pct(row.price_change_pct, 1, signed=True)}, "
+        f"hacim {format_pct(row.expected_volume_change_pct, 1, signed=True)}"
         for row in ordered.itertuples(index=False)
     ]
-    expected = ordered["expected_gross_profit_change"]
+    expected = ordered["expected_gross_profit_change"] / 1e6
     figure = go.Figure(
         go.Bar(
             x=expected,
             y=labels,
             orientation="h",
             marker_color=ACCENT_TEAL,
-            text=[f"{value / 1e6:+.2f}M" for value in expected],
+            text=[f"{format_number(value, 1, signed=True)} mn TL" for value in expected],
             textposition="inside",
             insidetextanchor="middle",
             textfont={"color": "white", "size": 15},
             error_x={
                 "type": "data",
                 "symmetric": False,
-                "array": ordered["gross_profit_change_high"] - expected,
-                "arrayminus": expected - ordered["gross_profit_change_low"],
+                "array": ordered["gross_profit_change_high"] / 1e6 - expected,
+                "arrayminus": expected - ordered["gross_profit_change_low"] / 1e6,
                 "color": "#4B5563",
                 "thickness": 2,
             },
-            hovertemplate="%{y}: %{x:,.0f}<extra></extra>",
+            hovertemplate="%{y}: %{x:,.1f} mn TL<extra></extra>",
         )
     )
-    figure.update_layout(title="Recommended price step: expected 12-month gross-profit change")
+    figure.update_layout(title="Önerilen fiyat adımı: beklenen 12 aylık brüt kâr değişimi")
     apply_business_theme(figure)
     figure.update_layout(margin={"l": 210, "r": 30, "t": 70, "b": 60})
     figure.update_xaxes(
-        title="Synthetic currency units (bar = point estimate, whisker = elasticity CI)"
+        title="mn TL, sabit 2025 fiyatları (çubuk = tahmin, çizgi = esneklik güven aralığı)"
     )
     return figure

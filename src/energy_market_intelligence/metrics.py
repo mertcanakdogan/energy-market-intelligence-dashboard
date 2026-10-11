@@ -7,6 +7,8 @@ from collections.abc import Sequence
 import numpy as np
 import pandas as pd
 
+from energy_market_intelligence.localization import format_number
+
 
 def safe_divide(numerator: pd.Series, denominator: pd.Series) -> pd.Series:
     """Divide aligned series and return NaN where the denominator is zero."""
@@ -75,30 +77,58 @@ def add_rolling_metrics(
 
 
 def generate_management_observations(
-    kpis: dict[str, float], regional_opportunity: pd.DataFrame
+    kpis: dict[str, float], regional_opportunity: pd.DataFrame, language: str = "en"
 ) -> list[str]:
-    """Create concise, rule-based observations using only calculated metrics."""
+    """Create concise, rule-based observations using only calculated metrics.
 
+    ``language`` is ``"en"`` or ``"tr"`` (the Streamlit app uses Turkish).
+    """
+
+    if language not in {"en", "tr"}:
+        raise ValueError("language must be 'en' or 'tr'")
+    turkish = language == "tr"
     share_change = kpis.get("share_change_pp", np.nan)
     market_growth = kpis.get("market_yoy_growth_pct", np.nan)
     margin_change = kpis.get("gross_margin_change_pp", np.nan)
-    observations = [
-        (
-            f"Northstar share {'increased' if share_change >= 0 else 'decreased'} by "
-            f"{abs(share_change):.1f} pp year over year while market volume "
-            f"{'grew' if market_growth >= 0 else 'contracted'} {abs(market_growth):.1f}%."
-        )
-    ]
+    if turkish:
+        observations = [
+            f"Şirketin pazar payı bir önceki yıla göre {format_number(abs(share_change), 1)} "
+            f"puan {'arttı' if share_change >= 0 else 'azaldı'}; aynı sürede pazar hacmi "
+            f"%{format_number(abs(market_growth), 1)} "
+            f"{'büyüdü' if market_growth >= 0 else 'küçüldü'}."
+        ]
+    else:
+        observations = [
+            (
+                f"Focus company share {'increased' if share_change >= 0 else 'decreased'} by "
+                f"{abs(share_change):.1f} pp year over year while market volume "
+                f"{'grew' if market_growth >= 0 else 'contracted'} {abs(market_growth):.1f}%."
+            )
+        ]
     if np.isfinite(margin_change):
-        observations.append(
-            f"Gross margin {'improved' if margin_change >= 0 else 'declined'} by "
-            f"{abs(margin_change):.1f} pp versus the prior year."
-        )
+        if turkish:
+            observations.append(
+                f"Brüt marj bir önceki yıla göre {format_number(abs(margin_change), 1)} puan "
+                f"{'iyileşti' if margin_change >= 0 else 'geriledi'}."
+            )
+        else:
+            observations.append(
+                f"Gross margin {'improved' if margin_change >= 0 else 'declined'} by "
+                f"{abs(margin_change):.1f} pp versus the prior year."
+            )
     if not regional_opportunity.empty:
         top = regional_opportunity.sort_values("opportunity_score", ascending=False).iloc[0]
-        observations.append(
-            f"{top['region_name']} is the highest analytical priority at "
-            f"{top['opportunity_score']:.1f}/100, combining growth, share gap, "
-            "margin, and competition signals."
-        )
+        if turkish:
+            observations.append(
+                f"{top['region_name']} bölgesi {format_number(top['opportunity_score'], 1)}/100 "
+                "skorla en yüksek "
+                "analitik önceliğe sahip: büyüme, pay boşluğu, marj ve rekabet birlikte "
+                "değerlendirildi."
+            )
+        else:
+            observations.append(
+                f"{top['region_name']} is the highest analytical priority at "
+                f"{top['opportunity_score']:.1f}/100, combining growth, share gap, "
+                "margin, and competition signals."
+            )
     return observations

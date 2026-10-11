@@ -5,6 +5,7 @@ WITH company_totals AS (
         d.date,
         r.region_name,
         c.company_name,
+        c.company_type,
         SUM(f.volume_mwh) AS company_volume_mwh,
         SUM(f.revenue) AS revenue,
         SUM(f.gross_profit) AS gross_profit
@@ -29,18 +30,18 @@ WITH monthly AS (
         date,
         region_name,
         SUM(company_volume_mwh) AS market_volume_mwh,
-        SUM(company_volume_mwh) FILTER (WHERE company_name = 'Northstar Energy')
-            AS northstar_volume_mwh
+        SUM(company_volume_mwh) FILTER (WHERE company_type = 'Focus company')
+            AS focus_volume_mwh
     FROM vw_company_monthly
     GROUP BY ALL
 ),
 lagged AS (
     SELECT
         *,
-        northstar_volume_mwh / NULLIF(market_volume_mwh, 0) AS northstar_market_share,
+        focus_volume_mwh / NULLIF(market_volume_mwh, 0) AS focus_market_share,
         LAG(market_volume_mwh, 1) OVER regional_window AS prior_month_market_volume,
         LAG(market_volume_mwh, 12) OVER regional_window AS prior_year_market_volume,
-        LAG(northstar_volume_mwh, 12) OVER regional_window AS prior_year_northstar_volume,
+        LAG(focus_volume_mwh, 12) OVER regional_window AS prior_year_focus_volume,
         AVG(market_volume_mwh) OVER (
             PARTITION BY region_name ORDER BY date ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
         ) AS market_volume_rolling_3m,
@@ -52,11 +53,11 @@ lagged AS (
 )
 SELECT
     *,
-    1 - northstar_market_share AS competitor_market_share,
+    1 - focus_market_share AS competitor_market_share,
     (market_volume_mwh - prior_month_market_volume) / NULLIF(prior_month_market_volume, 0)
         AS market_mom_growth,
     (market_volume_mwh - prior_year_market_volume) / NULLIF(prior_year_market_volume, 0)
         AS market_yoy_growth,
-    (northstar_volume_mwh - prior_year_northstar_volume)
-        / NULLIF(prior_year_northstar_volume, 0) AS northstar_yoy_growth
+    (focus_volume_mwh - prior_year_focus_volume)
+        / NULLIF(prior_year_focus_volume, 0) AS focus_yoy_growth
 FROM lagged;

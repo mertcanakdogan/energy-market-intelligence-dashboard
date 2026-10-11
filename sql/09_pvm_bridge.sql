@@ -1,4 +1,4 @@
--- Northstar price–volume–mix bridge: latest 12 months versus the prior 12 months at
+-- Focus-company price–volume–mix bridge: latest 12 months versus the prior 12 months at
 -- product × customer-segment level, on pocket (net) revenue and on gross profit.
 --
 -- For cell i with volumes V0/V1 and unit net price P0/P1 (shares s = V / total volume):

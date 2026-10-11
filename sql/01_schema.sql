@@ -1,5 +1,5 @@
 -- Star schema. The market fact represents month × region × company × product.
--- The Northstar pricing fact represents month × region × product × customer segment.
+-- The focus-company pricing fact represents month × region × product × customer segment.
 CREATE OR REPLACE TABLE dim_date AS SELECT * FROM source_dim_date;
 CREATE OR REPLACE TABLE dim_region AS SELECT * FROM source_dim_region;
 CREATE OR REPLACE TABLE dim_company AS SELECT * FROM source_dim_company;

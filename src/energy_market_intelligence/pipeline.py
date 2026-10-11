@@ -142,7 +142,7 @@ def _query_outputs(database_path: Path, weights: dict[str, float]) -> dict[str, 
         ),
         "profit_bridge": query_dataframe(database_path, "SELECT * FROM vw_revenue_bridge"),
         "profitability_monthly": query_dataframe(
-            database_path, "SELECT * FROM vw_northstar_profitability_monthly ORDER BY date"
+            database_path, "SELECT * FROM vw_focus_profitability_monthly ORDER BY date"
         ),
     }
     opportunity_inputs = query_dataframe(
@@ -340,9 +340,9 @@ def run_pipeline(
         "dataset_fingerprint": _fingerprint(bundle["fact_sales"]),
         "pricing_dataset_fingerprint": _fingerprint(bundle["fact_pricing"]),
         "sql_scripts": dataset.executed_scripts,
-        "final_period_northstar_share": round(float(kpis["northstar_market_share"]), 6),
+        "final_period_focus_share": round(float(kpis["focus_market_share"]), 6),
         "market_yoy_growth": round(float(kpis["market_yoy_growth"]), 6),
-        "northstar_yoy_growth": round(float(kpis["northstar_yoy_growth"]), 6),
+        "focus_yoy_growth": round(float(kpis["focus_yoy_growth"]), 6),
         "gross_margin_pct": round(float(kpis["gross_margin_pct"]), 6),
         "gross_margin_change_pp": round(float(kpis["gross_margin_change_pp"]), 6),
         "highest_opportunity_region": str(kpis["highest_opportunity_region"]),
@@ -350,7 +350,7 @@ def run_pipeline(
         "pricing": _pricing_headlines(outputs),
     }
     (paths.output_dir / "run_metadata.json").write_text(
-        json.dumps(metadata, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        json.dumps(metadata, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8"
     )
     LOGGER.info("Pipeline complete: %s fact rows", metadata["fact_row_count"])
     return metadata

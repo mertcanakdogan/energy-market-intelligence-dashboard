@@ -7,43 +7,57 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
+# All names are fictional. Company names follow the pattern "<invented word> Enerji" and are not
+# real companies; they were checked against web search (see README, "Fictional setting").
 COMPANY_NAMES = (
-    "Northstar Energy",
-    "Meridian Power",
-    "Atlas Energy",
-    "Horizon Utilities",
-    "Vertex Energy",
-    "Summit Power",
-    "Aurora Energy",
+    "Tavra Enerji",
+    "Veyra Enerji",
+    "Ormena Enerji",
+    "Kuvara Enerji",
+    "Yelkara Enerji",
+    "Ozvela Enerji",
+    "Alvora Enerji",
 )
+FOCUS_COMPANY = COMPANY_NAMES[0]
 
-REGION_NAMES = (
-    "North Coast",
-    "Silver Plains",
-    "Pine Valley",
-    "Lake District",
-    "Western Reach",
-    "Redwood Corridor",
-    "Central Basin",
-    "Highland Zone",
-    "Eastern Ridge",
-    "Harbor Belt",
-    "Cedar Fields",
-    "Granite Valley",
-    "Sunrise Coast",
-    "Riverland",
-    "Blue Mesa",
-    "Maple Frontier",
-    "Evergreen Basin",
-    "Southern Cross",
+# Sales regions: (name, size factor, economic index, monthly volume growth). They follow the
+# geography of Turkey but are deliberately not tied to single provinces or utilities.
+REGIONS = (
+    ("İstanbul Avrupa", 1.55, 1.25, 0.0040),
+    ("İstanbul Anadolu", 1.35, 1.22, 0.0045),
+    ("Trakya", 0.85, 1.08, 0.0020),
+    ("Marmara Güney", 1.20, 1.12, 0.0030),
+    ("Ege Kuzey", 1.10, 1.10, 0.0050),
+    ("Ege Güney", 0.95, 1.02, 0.0034),
+    ("Batı Akdeniz", 0.98, 1.00, 0.0042),
+    ("Doğu Akdeniz", 1.05, 0.95, 0.0010),
+    ("İç Anadolu Batı", 0.80, 0.94, 0.0012),
+    ("Ankara", 1.30, 1.18, 0.0052),
+    ("İç Anadolu Doğu", 0.82, 0.90, -0.0008),
+    ("Batı Karadeniz", 0.82, 0.93, -0.0012),
+    ("Orta Karadeniz", 0.78, 0.89, 0.0006),
+    ("Doğu Karadeniz", 0.76, 0.90, 0.0016),
+    ("Doğu Anadolu Kuzey", 0.70, 0.84, -0.0018),
+    ("Doğu Anadolu Güney", 0.74, 0.82, 0.0022),
+    ("Güneydoğu Batı", 0.90, 0.88, 0.0038),
+    ("Güneydoğu Doğu", 0.72, 0.85, -0.0020),
 )
+REGION_NAMES = tuple(name for name, *_ in REGIONS)
 
+# (product_id, product name, short product family). Prices and costs are constant 2025 TL.
 PRODUCTS = (
-    (1, "Fixed Supply", "Fixed"),
-    (2, "Flexible Supply", "Flexible"),
-    (3, "Renewable Blend", "Renewable"),
-    (4, "Business Select", "Business"),
+    (1, "Sabit Fiyatlı", "Sabit"),
+    (2, "Değişken Fiyatlı (PTF+)", "Değişken"),
+    (3, "Yeşil Enerji (YEK-G)", "Yeşil"),
+    (4, "Kurumsal Paket", "Kurumsal"),
 )
+# Reference list price and unit variable cost per product, TL per MWh (constant 2025 TL).
+PRODUCT_REFERENCE_PRICE_TL = (3040.0, 2880.0, 3280.0, 3120.0)
+PRODUCT_UNIT_COST_TL = (2320.0, 2240.0, 2520.0, 2360.0)
+# Calendar seasonality: winter heating and summer cooling peaks, spring and autumn troughs.
+SEASONALITY = (1.08, 1.04, 0.97, 0.93, 0.92, 0.99, 1.10, 1.12, 1.02, 0.94, 1.00, 1.09)
+# Average monthly volume of one region with size and economic factors of 1 (MWh).
+MARKET_BASE_MWH = 31_000
 
 
 @dataclass(frozen=True)
@@ -71,41 +85,20 @@ def _date_dimension(config: GeneratorConfig) -> pd.DataFrame:
 
 
 def _region_dimension(config: GeneratorConfig) -> pd.DataFrame:
-    if not 1 <= config.regions <= len(REGION_NAMES):
-        raise ValueError(f"regions must be between 1 and {len(REGION_NAMES)}")
-    sizes = np.linspace(0.78, 1.35, config.regions)
-    economic = np.array(
-        [
-            0.92,
-            1.08,
-            0.98,
-            1.15,
-            0.88,
-            1.12,
-            1.03,
-            0.95,
-            1.18,
-            1.10,
-            0.91,
-            1.00,
-            1.22,
-            1.06,
-            0.86,
-            0.97,
-            1.16,
-            0.90,
-        ]
-    )[: config.regions]
+    if not 1 <= config.regions <= len(REGIONS):
+        raise ValueError(f"regions must be between 1 and {len(REGIONS)}")
+    selected = REGIONS[: config.regions]
+    sizes = np.array([size for _name, size, _economic, _growth in selected])
     return pd.DataFrame(
         {
             "region_id": np.arange(1, config.regions + 1, dtype=int),
-            "region_name": REGION_NAMES[: config.regions],
+            "region_name": [name for name, *_ in selected],
             "market_size_band": pd.cut(
-                sizes, bins=[0, 0.95, 1.15, np.inf], labels=["Small", "Medium", "Large"]
+                sizes, bins=[0, 0.95, 1.15, np.inf], labels=["Küçük", "Orta", "Büyük"]
             ).astype(str),
-            "economic_index": economic,
+            "economic_index": [economic for _name, _size, economic, _growth in selected],
             "strategic_segment": [
-                ("Develop" if index % 5 == 0 else "Defend" if index % 4 == 0 else "Core")
+                ("Geliştir" if index % 5 == 0 else "Savun" if index % 4 == 0 else "Çekirdek")
                 for index in range(config.regions)
             ],
             "size_factor": sizes,
@@ -134,36 +127,15 @@ def _commercial_fact(
     products: pd.DataFrame,
     rng: np.random.Generator,
 ) -> pd.DataFrame:
-    seasonality = np.array([1.12, 1.08, 1.02, 0.96, 0.91, 0.88, 0.90, 0.94, 0.99, 1.04, 1.09, 1.15])
-    regional_monthly_growth = np.array(
-        [
-            0.0045,
-            0.0030,
-            0.0010,
-            0.0052,
-            -0.0010,
-            0.0040,
-            0.0022,
-            -0.0018,
-            0.0058,
-            0.0038,
-            -0.0008,
-            0.0016,
-            0.0062,
-            0.0034,
-            -0.0022,
-            0.0012,
-            0.0050,
-            -0.0014,
-        ]
-    )[: len(regions)]
+    seasonality = np.array(SEASONALITY)
+    regional_monthly_growth = np.array([growth for *_rest, growth in REGIONS])[: len(regions)]
     product_mix = np.array([0.34, 0.27, 0.17, 0.22])
     product_growth = np.array([-0.0005, 0.0010, 0.0045, 0.0020])
     base_company_weight = np.array([0.18, 0.20, 0.16, 0.15, 0.12, 0.10, 0.09])
     company_monthly_momentum = np.array([0.0018, -0.0012, 0.0030, -0.0006, 0.0010, -0.0014, 0.0004])
     company_price_position = np.array([1.02, 0.98, 1.04, 0.97, 1.01, 0.96, 1.03])
-    product_price = np.array([76.0, 72.0, 82.0, 78.0])
-    product_cost = np.array([58.0, 56.0, 63.0, 59.0])
+    product_price = np.array(PRODUCT_REFERENCE_PRICE_TL)
+    product_cost = np.array(PRODUCT_UNIT_COST_TL)
     rows: list[dict[str, float | int]] = []
 
     for date_row in dates.itertuples(index=False):
@@ -173,7 +145,7 @@ def _commercial_fact(
         compression = 1.035 if 18 <= month_index <= 25 else 1.0
         for region in regions.itertuples(index=False):
             region_index = int(region.region_id) - 1
-            market_base = 28_000 * float(region.size_factor) * float(region.economic_index)
+            market_base = MARKET_BASE_MWH * float(region.size_factor) * float(region.economic_index)
             region_trend = (1 + regional_monthly_growth[region_index]) ** month_index
             region_noise = rng.normal(1.0, 0.018)
             for product in products.itertuples(index=False):

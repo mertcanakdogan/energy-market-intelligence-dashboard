@@ -6,6 +6,7 @@ period_company AS (
     SELECT
         r.region_name,
         c.company_name,
+        c.company_type,
         CASE
             WHEN d.date > b.max_date - INTERVAL 12 MONTH THEN 'current'
             WHEN d.date > b.max_date - INTERVAL 24 MONTH
@@ -35,15 +36,15 @@ regional AS (
         SUM(volume_mwh) FILTER (WHERE period = 'current') AS market_volume,
         SUM(volume_mwh) FILTER (WHERE period = 'prior') AS prior_market_volume,
         MAX(market_share) FILTER (
-            WHERE period = 'current' AND company_name = 'Northstar Energy'
-        ) AS northstar_share,
+            WHERE period = 'current' AND company_type = 'Focus company'
+        ) AS focus_share,
         MAX(market_share) FILTER (
-            WHERE period = 'prior' AND company_name = 'Northstar Energy'
-        ) AS prior_northstar_share,
+            WHERE period = 'prior' AND company_type = 'Focus company'
+        ) AS prior_focus_share,
         SUM(gross_profit) FILTER (
-            WHERE period = 'current' AND company_name = 'Northstar Energy'
+            WHERE period = 'current' AND company_type = 'Focus company'
         ) / NULLIF(SUM(revenue) FILTER (
-            WHERE period = 'current' AND company_name = 'Northstar Energy'
+            WHERE period = 'current' AND company_type = 'Focus company'
         ), 0) AS gross_margin_pct,
         SUM(POWER(market_share, 2)) FILTER (WHERE period = 'current') AS hhi
     FROM shares
@@ -53,8 +54,8 @@ SELECT
     region_name,
     market_volume,
     (market_volume - prior_market_volume) / NULLIF(prior_market_volume, 0) AS market_growth,
-    northstar_share,
-    northstar_share - prior_northstar_share AS share_momentum,
+    focus_share,
+    focus_share - prior_focus_share AS share_momentum,
     gross_margin_pct,
     hhi
 FROM regional;
