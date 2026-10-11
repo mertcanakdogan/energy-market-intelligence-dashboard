@@ -4,6 +4,13 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- Design: the "fiyat kaçağı" concept with one signature element, the fatura dökümü (bill-style price itemisation) on the landing page. The home page now leads with a computed thesis sentence, the bill next to a matching waterfall, three question cards and a model-trust strip instead of the metric-card row. See `docs/DESIGN.md`.
+- Page titles are questions; sidebar sections are "Fiyatlama" and "Pazar" with short noun labels; page URLs changed accordingly. Waterfall items are named like bill lines (Fatura içi iskonto, Fatura dışı prim, Hizmet ve nakliye).
+- One Plotly template (`tavra`) for all charts and PNG exports; colours have fixed meanings (red only for leakage and breaches, green only for gains). Theme and fonts (Source Sans 3, Barlow Semi Condensed, IBM Plex Mono) are set in `.streamlit/config.toml`; Streamlit 1.65 or newer is required.
+- Public URL is `https://tavra-enerji-fiyatlama.streamlit.app`.
+
 ## [2.1.0] - 2026-10-11
 
 Turkish setting, TL currency and a clearer app and README. The ground truth is unchanged: all elasticity and promotion estimates are identical to 2.0.0 to three decimals.

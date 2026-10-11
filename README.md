@@ -4,7 +4,7 @@
 
 A case study for a **fictional Turkish electricity retailer**. It answers one business question: *where should the company change its prices, and what is that worth?* The data are synthetic, so every result can be checked against the true answer.
 
-**[Open the live app](https://northstar-pricing.streamlit.app)** (the app text is in Turkish; this README is in English).
+**[Open the live app](https://tavra-enerji-fiyatlama.streamlit.app)** (the app text is in Turkish; this README is in English).
 
 All money is in Turkish lira (TL) at **constant 2025 prices**, so the numbers contain no inflation. The data cover January 2023 to December 2025; "the latest 12 months" means calendar year 2025.
 
@@ -96,7 +96,14 @@ Display convention: entity names (companies, regions, products, segments) are Tu
 
 ## The app
 
-The Streamlit app is fully in Turkish and has two sidebar sections: **Fiyatlama / Pricing** (price waterfall, revenue bridge, elasticity, promotion impact, price recommendation, scenario analysis) and **Pazar / Market** (executive summary, market performance, competition, profitability, regional opportunity). Every page opens with "Bu sayfa ne gösteriyor?" (what this shows) and a data-driven "Ne anlama geliyor?" (what it means) box, and the home page has a glossary.
+The Streamlit app is fully in Turkish. The idea is *fiyat kaçağı* (price leakage): the home page leads with one computed sentence ("Liste fiyatının %14,8'i müşteriye ulaşmadan kayboluyor", the list price that never reaches the customer), shows the price waterfall as an itemised bill (*fatura dökümü*) next to the matching chart, answers three questions with one data-driven line each, and shows how well the elasticity model recovers the known true values.
+
+The sidebar has two sections, and every page title is the question the page answers:
+
+- **Fiyatlama** (pricing): *Fiyat nerede kaçıyor?* (price waterfall and policy breaches), *Ciro neden değişti?* (price-volume-mix bridge), *Müşteri fiyata ne kadar duyarlı?* (elasticity), *Kampanya gerçekten işe yaradı mı?* (promotion DiD), *Hangi fiyat adımı değer?* (price recommendation) and *Fiyatı değiştirirsem ne olur?* (scenario).
+- **Pazar** (market): executive summary, market performance, competition, profitability and regional opportunity.
+
+Every page opens with "Bu sayfa ne gösteriyor?" (what this shows) and a data-driven "Ne anlama geliyor?" (what it means) box, and the home page has a glossary. Colours, fonts and the design rules are described in [docs/DESIGN.md](docs/DESIGN.md).
 
 ## Business questions answered
 
@@ -221,6 +228,7 @@ src/energy_market_intelligence/
     powerbi_export.py            Star-schema CSV export
     pipeline.py                  End-to-end build and example outputs
 app.py, views/, dashboard_support.py   Streamlit app: navigation, pages and shared helpers
+dashboard_style.py, .streamlit/       App stylesheet, bill block and theme (see docs/DESIGN.md)
 powerbi/measures.md              Power BI model and DAX
 tests/                           Unit, SQL, pipeline, page-smoke and repository-hygiene tests
 outputs/examples/                Compact CSV and PNG results plus run_metadata.json

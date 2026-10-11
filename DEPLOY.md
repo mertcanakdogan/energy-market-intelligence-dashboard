@@ -3,7 +3,7 @@
 The Streamlit app can run locally or on Streamlit Community Cloud. No API keys, secrets, external
 databases or paid services are needed: all data are synthetic and generated deterministically.
 
-**Live demo:** <https://northstar-pricing.streamlit.app> (deploys from branch `main`, main file `app.py`). The app text is in Turkish.
+**Live demo:** <https://tavra-enerji-fiyatlama.streamlit.app> (deploys from branch `main`, main file `app.py`). The app text is in Turkish. The subdomain `tavra-enerji-fiyatlama` is not part of the code: it is set in the app's settings on Streamlit Community Cloud (**Settings** > **General** > **App URL**), so change it there if the link above ever differs.
 
 ## How the app finds its data
 
@@ -41,6 +41,13 @@ streamlit run app.py
    tools are not installed, because PNG export is only used by the pipeline.
 7. The first page load builds the synthetic database, so allow up to a minute. Later visits reuse
    it until the app container is recycled.
+
+## Design notes
+
+The look of the app (colour tokens, fonts, the bill block) is documented in [docs/DESIGN.md](docs/DESIGN.md). Two deployment-relevant points:
+
+- Fonts load from Google Fonts in the visitor's browser through the native `font`, `headingFont` and `codeFont` options in `.streamlit/config.toml` (Streamlit 1.65 or newer, see `requirements.txt`). Nothing is bundled and no secrets are involved. If the fonts cannot load, the browser falls back to system sans-serif and monospace fonts and the layout still works.
+- The theme is light only; there is no dark-mode variant.
 
 ## Troubleshooting
 
