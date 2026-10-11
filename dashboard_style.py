@@ -15,6 +15,7 @@ import pandas as pd
 import streamlit as st
 
 from energy_market_intelligence.localization import (
+    SEGMENT_ORDER,
     format_number,
     format_pct,
     order_segments,
@@ -23,6 +24,7 @@ from energy_market_intelligence.pricing_visualization import (
     DEDUCTION_LABELS,
     NET_LABEL,
     Bill,
+    portfolio_bill,
 )
 
 GITHUB_URL = "https://github.com/mertcanakdogan/energy-market-intelligence-dashboard"
@@ -51,6 +53,7 @@ GLOBAL_CSS = """
 h1, h2, h3, h4 {color: var(--tv-navy);}
 h1 {letter-spacing: -0.01em; line-height: 1.12;}
 h2, h3 {letter-spacing: 0;}
+[data-testid="stHeading"] {margin-top: 1.2rem;}
 [data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p {color: var(--tv-slate); opacity: 1;}
 [data-testid="stMetric"] {border-top: 1px solid var(--tv-rule); padding-top: 0.65rem;}
 [data-testid="stMetricLabel"] p {color: var(--tv-slate); font-size: 0.92rem;}
@@ -77,7 +80,7 @@ h2, h3 {letter-spacing: 0;}
   display: block; font-family: var(--tv-head); font-weight: 700; font-size: 1.05rem;
   color: var(--tv-navy); margin-bottom: 0.1rem;
 }
-.tv-callout .tv-line {display: block; margin-top: 0.25rem;}
+.tv-callout .tv-line {display: grid; grid-template-columns: 4.4rem 1fr; gap: 0 0.4rem; margin-top: 0.3rem;}
 .tv-callout .tv-line b {color: var(--tv-navy);}
 .tv-callout--note {border-top-color: var(--tv-slate);}
 .tv-callout--note .tv-label {color: var(--tv-slate);}
@@ -137,13 +140,42 @@ h2, h3 {letter-spacing: 0;}
   .fl-amt {min-width: 5.2rem;}
 }
 
+/* Leakage by customer segment, next to the bill. */
+.tv-seg {
+  border: 1px solid var(--tv-rule); border-top: 3px solid var(--tv-navy);
+  padding: 0.9rem 1.1rem 0.4rem; color: var(--tv-ink);
+}
+.tv-seg-title {
+  font-family: var(--tv-head); font-weight: 700; font-size: 1.3rem; line-height: 1.2;
+  color: var(--tv-navy);
+}
+.tv-seg-sub {margin: 0.3rem 0 0.4rem; font-size: 0.875rem; line-height: 1.45; color: var(--tv-slate);}
+.tv-seg-row {padding: 0.65rem 0 0.7rem; border-top: 1px solid var(--tv-rule);}
+.tv-seg-line {display: flex; justify-content: space-between; align-items: baseline; gap: 0.8rem;}
+.tv-seg-name {font-family: var(--tv-head); font-weight: 600; font-size: 1.1rem; color: var(--tv-navy);}
+.tv-seg-rate {
+  font-family: var(--tv-mono); font-variant-numeric: tabular-nums; font-weight: 500;
+  font-size: 1.05rem; color: var(--tv-leak);
+}
+.tv-seg-bar {display: flex; gap: 2px; height: 0.5rem; margin: 0.4rem 0 0.35rem;}
+.tv-seg-kept {background: var(--tv-navy);}
+.tv-seg-leak {background: var(--tv-leak);}
+.tv-seg-net {font-size: 0.875rem; color: var(--tv-slate);}
+.tv-seg-net b {
+  font-family: var(--tv-mono); font-variant-numeric: tabular-nums; font-weight: 500;
+  color: var(--tv-ink);
+}
+
 /* Link cards on the landing page: the question is the link. */
 [class*="st-key-card-"] {
   border: 1px solid var(--tv-rule); border-top: 3px solid var(--tv-navy); border-radius: 0;
-  padding: 0.9rem 1.1rem 1rem; height: 100%; box-sizing: border-box;
+  padding: 0.9rem 1.1rem 1rem; flex: 1 1 auto; box-sizing: border-box;
 }
+.st-key-card-action {background: var(--tv-panel); border-top-width: 4px;}
+/* Equal-height cards: stretch every level from the column down to the card. */
+[data-testid="stColumn"]:has([class*="st-key-card-"]) {display: flex; flex-direction: column;}
 [data-testid="stColumn"]:has([class*="st-key-card-"]) > [data-testid="stVerticalBlock"],
-[data-testid="stColumn"]:has([class*="st-key-card-"]) [data-testid="stLayoutWrapper"] {height: 100%;}
+[data-testid="stColumn"]:has([class*="st-key-card-"]) [data-testid="stLayoutWrapper"] {flex: 1 1 auto;}
 [data-testid="stPageLink"] a {padding-left: 0; text-decoration: none;}
 [data-testid="stPageLink"] a:hover p {text-decoration: underline;}
 [data-testid="stPageLink"] p {font-weight: 600; color: var(--tv-navy);}
@@ -153,15 +185,26 @@ h2, h3 {letter-spacing: 0;}
 }
 [class*="st-key-card-"] [data-testid="stPageLink"] a,
 [class*="st-key-card-"] [data-testid="stPageLink"] a > div {max-width: 100%; overflow: visible;}
+[class*="st-key-card-"] [data-testid="stPageLink"] a {justify-content: space-between; align-items: flex-start;}
+[class*="st-key-card-"] [data-testid="stPageLink"] a > div {flex: 1 1 auto;}
+@media (min-width: 901px) {[class*="st-key-card-"] [data-testid="stPageLink"] a {min-height: 3.2rem;}}
+/* Three cards side by side need room; below that they stack. */
+@media (max-width: 900px) {
+  [data-testid="stHorizontalBlock"]:has([class*="st-key-card-"]) {flex-wrap: wrap;}
+  [data-testid="stHorizontalBlock"]:has([class*="st-key-card-"]) > [data-testid="stColumn"] {
+    flex: 1 1 100%; min-width: 100%;
+  }
+}
 [data-testid="stPageLink"] a::after {content: "\\2192"; margin-left: 0.4rem; color: var(--tv-navy);}
 .tv-chart-title {
   font-family: var(--tv-head); font-weight: 700; font-size: 1.3rem; line-height: 1.2;
   color: var(--tv-navy); margin: 0.9rem 0 0.2rem;
 }
-.tv-answer {margin: 0.35rem 0 0; color: var(--tv-ink); line-height: 1.45;}
+/* Streamlit pulls the last block of a markdown container up by 1rem; give that back. */
+.tv-answer {margin: 0.35rem 0 0; padding-bottom: 1rem; color: var(--tv-ink); line-height: 1.45;}
 
 /* Bill terms (under the bill) and the closing line of the overview. */
-.tv-terms {margin: 0.7rem 0 0; max-width: 36rem; font-size: 0.875rem; line-height: 1.5; color: var(--tv-slate);}
+.tv-terms {margin: 0.9rem 0 0; max-width: 36rem; font-size: 0.875rem; line-height: 1.5; color: var(--tv-slate);}
 .tv-terms b {font-weight: 600; color: var(--tv-ink);}
 .tv-closing {
   margin: 2.2rem 0 0.4rem; padding-top: 0.9rem; border-top: 1px solid var(--tv-rule);
@@ -303,6 +346,39 @@ def bill_html(bill: Bill) -> str:
         + "".join(rows)
         + f'<div class="bill-foot">Leakage rate: <b>{format_pct(bill.leakage_rate, 1)}</b></div>'
         "</section>"
+    )
+
+
+def segment_leakage_html(waterfall: pd.DataFrame) -> str:
+    """Leakage rate and net price of each customer segment: where leakage differs.
+
+    One row per segment: its name and leakage rate, a bar of the list price split into the part
+    kept (navy) and the part that leaks (red), and the net price per MWh.
+    """
+
+    rows = []
+    for name in SEGMENT_ORDER:
+        if name not in set(waterfall["customer_segment_name"]):
+            continue
+        bill = portfolio_bill(waterfall, name)
+        net = bill.lines[-1]
+        leak = bill.leakage_rate
+        rows.append(
+            '<div class="tv-seg-row">'
+            f'<div class="tv-seg-line"><span class="tv-seg-name">{_html(name)}</span>'
+            f'<span class="tv-seg-rate">{format_pct(leak, 1)}</span></div>'
+            '<div class="tv-seg-bar" aria-hidden="true">'
+            f'<span class="tv-seg-kept" style="width:{100 * (1 - leak):.1f}%"></span>'
+            f'<span class="tv-seg-leak" style="width:{100 * leak:.1f}%"></span></div>'
+            '<div class="tv-seg-line tv-seg-net"><span>Net price</span>'
+            f"<b>{format_number(net.amount, 2)}</b></div>"
+            "</div>"
+        )
+    return (
+        '<section class="tv-seg" aria-label="Leakage by customer segment">'
+        '<div class="tv-seg-title">Where leakage differs</div>'
+        '<p class="tv-seg-sub">Leakage rate by customer segment, with the net price in TRY/MWh. '
+        "Bars show the list price: navy is kept, red leaks away.</p>" + "".join(rows) + "</section>"
     )
 
 

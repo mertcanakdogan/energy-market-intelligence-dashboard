@@ -6,9 +6,9 @@ import dashboard_style as style
 from dashboard_support import (
     load_elasticities,
     load_pricing_config,
+    load_promotion_results,
     load_view,
     page_spec,
-    show_chart,
     takeaway,
 )
 from energy_market_intelligence.insights import (
@@ -17,14 +17,11 @@ from energy_market_intelligence.insights import (
     leakage_answer,
     leakage_thesis,
     overview_takeaway,
+    promo_proof,
+    trust_note,
 )
-from energy_market_intelligence.localization import SEGMENT_ORDER
 from energy_market_intelligence.price_recommendation import recommend_prices
-from energy_market_intelligence.pricing_visualization import (
-    PORTFOLIO,
-    bill_waterfall_figure,
-    portfolio_bill,
-)
+from energy_market_intelligence.pricing_visualization import portfolio_bill
 from energy_market_intelligence.synthetic_data import FOCUS_COMPANY
 
 waterfall = load_view("vw_price_waterfall")
@@ -40,6 +37,7 @@ recommendation = recommend_prices(
     max_volume_loss=guard.max_volume_loss_pct,
 )
 portfolio = portfolio_bill(waterfall)
+promotion_estimates, _trend = load_promotion_results()
 
 # 1. The thesis, computed from the data.
 with st.container(key="hero"):
@@ -51,39 +49,32 @@ with st.container(key="hero"):
 
 takeaway(overview_takeaway(portfolio, waterfall, recommendation))
 
-# 2. The price breakdown next to the waterfall it summarises.
-segments = [name for name in SEGMENT_ORDER if name in set(waterfall["customer_segment_name"])]
-scope = st.segmented_control(
-    "Scope of the price breakdown", [PORTFOLIO, *segments], default=PORTFOLIO, key="home_scope"
-)
-bill = portfolio_bill(waterfall, None if scope in (None, PORTFOLIO) else scope)
+# 2. The price breakdown, and where leakage differs between the customer segments.
 left, right = st.columns([6, 5], gap="large")
 with left:
-    st.markdown(style.bill_html(bill), unsafe_allow_html=True)
+    st.markdown(style.bill_html(portfolio), unsafe_allow_html=True)
     st.markdown(style.bill_terms_html(), unsafe_allow_html=True)
 with right:
-    st.markdown("**From list price to net price** (TRY/MWh)")
-    show_chart(
-        bill_waterfall_figure(bill),
-        alt=f"Items from list price to net price, TRY/MWh ({bill.scope})",
-    )
-    st.caption("The axis does not start at zero, so the gaps between the items stay readable.")
+    st.markdown(style.segment_leakage_html(waterfall), unsafe_allow_html=True)
 
-# 3. Three questions, each with its one-line answer.
+# 3. Three questions, each with its one-line answer; the recommendation comes first.
 st.subheader("Three questions, answered with data")
 cards = (
-    ("views/price_waterfall.py", None, leakage_answer(portfolio, flags)),
-    ("views/pvm_bridge.py", None, bridge_answer(pvm_summary)),
-    ("views/price_recommendation.py", "What should the company do?", action_answer(recommendation)),
+    (
+        "action",
+        "views/price_recommendation.py",
+        "What should the company do?",
+        action_answer(recommendation),
+    ),
+    ("leakage", "views/price_waterfall.py", None, leakage_answer(portfolio, flags)),
+    ("bridge", "views/pvm_bridge.py", None, bridge_answer(pvm_summary)),
 )
-for index, (column, (path, label, answer)) in enumerate(
-    zip(st.columns(3, gap="medium"), cards, strict=True)
-):
-    with column, st.container(key=f"card-{index}"):
+for column, (key, path, label, answer) in zip(st.columns(3, gap="medium"), cards, strict=True):
+    with column, st.container(key=f"card-{key}"):
         st.page_link(path, label=label or page_spec(path).question)
         style.answer(answer)
 
-# 4. Why the model can be trusted: true versus estimated elasticity.
+# 4. Why the model can be trusted: estimates next to the known truth.
 st.subheader("Why can you trust the model?")
 recovered = int(elasticities["truth_in_ci"].sum())
 st.write(
@@ -92,7 +83,13 @@ st.write(
     "inside the 95% confidence interval of the estimate."
 )
 st.markdown(style.trust_strip_html(elasticities), unsafe_allow_html=True)
-st.page_link("views/elasticity.py", label=page_spec("views/elasticity.py").question)
+st.caption(trust_note(elasticities))
+st.write(promo_proof(promotion_estimates))
+proof_left, proof_right = st.columns(2, gap="medium")
+proof_left.page_link("views/elasticity.py", label=page_spec("views/elasticity.py").question)
+proof_right.page_link(
+    "views/promotion_impact.py", label=page_spec("views/promotion_impact.py").question
+)
 
 with st.expander("Glossary (terms used in this app)"):
     st.markdown(

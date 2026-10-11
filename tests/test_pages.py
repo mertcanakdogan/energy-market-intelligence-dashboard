@@ -55,12 +55,24 @@ def test_landing_page_leads_with_the_thesis_and_the_bill(project_root: Path) -> 
     assert not app.metric
 
 
-def test_landing_page_bill_follows_the_segment_selector(project_root: Path) -> None:
+def test_landing_page_compares_segments_instead_of_offering_a_scope_control(
+    project_root: Path,
+) -> None:
     app = AppTest.from_file(str(project_root / "app.py"), default_timeout=TIMEOUT).run()
-    app.get("button_group")[0].set_value("Industrial").run()
     assert not app.exception, [item.value for item in app.exception]
+    assert not app.get("button_group"), "the scope control lives on the price leakage page only"
     text = " ".join(item.value for item in app.markdown)
-    assert "Industrial · TRY/MWh" in text
+    assert "Whole portfolio · TRY/MWh" in text
+    assert "Where leakage differs" in text
+    for segment in ("Residential", "Commercial (SME)", "Industrial"):
+        assert segment in text
+    assert "What it means" in text and "Finding" in text and "Action" in text
+    assert "The same test works for the promotion" in text
+    assert "Built by" in text and "Synthetic data and a fictional company" in " ".join(
+        item.value for item in app.caption
+    )
+    assert "redesigned" not in text
+    assert [link.label for link in app.get("page_link")][:1] == ["What should the company do?"]
 
 
 def test_navigation_is_one_flat_list_of_six_pricing_pages(project_root: Path) -> None:

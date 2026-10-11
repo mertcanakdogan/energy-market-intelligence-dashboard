@@ -315,3 +315,20 @@ def test_intro_label_ends_with_a_colon(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(style.st, "markdown", lambda body, **_: captured.append(body))
     style.intro("What this page shows", "text")
     assert "<strong>What this page shows:</strong> text" in captured[0]
+
+
+def test_segment_leakage_lists_each_segment_with_rate_and_net_price(
+    waterfall_frame: pd.DataFrame,
+) -> None:
+    html = style.segment_leakage_html(waterfall_frame)
+    assert [html.index(segment) for segment in SEGMENT_ORDER] == sorted(
+        html.index(segment) for segment in SEGMENT_ORDER
+    )
+    for segment in SEGMENT_ORDER:
+        bill = portfolio_bill(waterfall_frame, segment)
+        assert f"{bill.leakage_rate * 100:.1f}%" in html
+        assert f"{bill.lines[-1].amount:,.2f}" in html
+        assert f"width:{100 * (1 - bill.leakage_rate):.1f}%" in html
+    assert html.count("tv-seg-row") == len(SEGMENT_ORDER)
+    assert chr(10) not in html
+    assert ".tv-seg-rate" in style.GLOBAL_CSS and "var(--tv-leak)" in style.GLOBAL_CSS
