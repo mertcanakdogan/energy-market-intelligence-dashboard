@@ -1,8 +1,8 @@
 company_name,current_share,prior_share,share_change_pp,momentum_rank,momentum_signal
-Ormena Enerji,0.171936,0.167144,0.479202,1,Gaining
-Tavra Enerji,0.189355,0.186195,0.315926,2,Gaining
-Yelkara Enerji,0.120914,0.120279,0.063489,3,Stable
-Alvora Enerji,0.088523,0.088756,-0.023322,4,Stable
-Kuvara Enerji,0.144358,0.146430,-0.207149,5,Stable
-Ozvela Enerji,0.093345,0.095711,-0.236550,6,Stable
-Veyra Enerji,0.191569,0.195485,-0.391596,7,Losing
+Ormena Energy,0.171936,0.167144,0.479202,1,Gaining
+Tavra Energy,0.189355,0.186195,0.315926,2,Gaining
+Yelkara Energy,0.120914,0.120279,0.063489,3,Stable
+Alvora Energy,0.088523,0.088756,-0.023322,4,Stable
+Kuvara Energy,0.144358,0.146430,-0.207149,5,Stable
+Ozvela Energy,0.093345,0.095711,-0.236550,6,Stable
+Veyra Energy,0.191569,0.195485,-0.391596,7,Losing

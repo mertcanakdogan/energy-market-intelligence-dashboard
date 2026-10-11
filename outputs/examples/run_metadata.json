@@ -6,39 +6,39 @@
   "fact_row_count": 18144,
   "final_period_focus_share": 0.189355,
   "focus_yoy_growth": 0.099759,
-  "generated_at_utc": "2026-10-11T17:11:55+00:00",
+  "generated_at_utc": "2026-10-11T18:22:58+00:00",
   "gross_margin_change_pp": 1.402049,
   "gross_margin_pct": 0.231235,
-  "highest_opportunity_region": "İstanbul Avrupa",
+  "highest_opportunity_region": "Istanbul",
   "market_yoy_growth": 0.08141,
   "months": 36,
   "pricing": {
     "breaching_regions": [
-      "Batı Akdeniz",
-      "Doğu Akdeniz",
-      "Doğu Anadolu Kuzey",
-      "Ege Kuzey"
+      "Adana",
+      "Antalya",
+      "Erzurum",
+      "Izmir"
     ],
     "elasticity": {
-      "Mesken": {
-        "ci_high": -1.4393,
-        "ci_low": -1.7576,
-        "estimate": -1.5984,
-        "true": -1.6,
+      "Commercial (SME)": {
+        "ci_high": -0.9772,
+        "ci_low": -1.228,
+        "estimate": -1.1026,
+        "true": -1.1,
         "truth_in_ci": true
       },
-      "Sanayi": {
+      "Industrial": {
         "ci_high": -0.5305,
         "ci_low": -0.6798,
         "estimate": -0.6051,
         "true": -0.6,
         "truth_in_ci": true
       },
-      "Ticarethane / KOBİ": {
-        "ci_high": -0.9772,
-        "ci_low": -1.228,
-        "estimate": -1.1026,
-        "true": -1.1,
+      "Residential": {
+        "ci_high": -1.4393,
+        "ci_low": -1.7576,
+        "estimate": -1.5984,
+        "true": -1.6,
         "truth_in_ci": true
       }
     },
@@ -64,7 +64,7 @@
     },
     "pvm_gp_change": -36340165.38,
     "pvm_gp_cost_effect": -122382076.77,
-    "pvm_max_abs_reconciliation_gap": 5.21540641784668e-08,
+    "pvm_max_abs_reconciliation_gap": 5.774199962615967e-08,
     "pvm_mix_effect": -1361518.61,
     "pvm_price_effect": 57863248.98,
     "pvm_total_revenue_change": 186888008.07,
