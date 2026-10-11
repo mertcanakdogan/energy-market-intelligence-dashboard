@@ -50,6 +50,7 @@ The look of the app (colour tokens, fonts, the bill block) is documented in [DES
 
 - Fonts load from Google Fonts in the visitor's browser through the native `font`, `headingFont` and `codeFont` options in `.streamlit/config.toml` (Streamlit 1.65 or newer, see `requirements.txt`). Nothing is bundled and no secrets are involved. If the fonts cannot load, the browser falls back to system sans-serif and monospace fonts and the layout still works.
 - The theme is light only; there is no dark-mode variant.
+- The PNG charts in `outputs/examples/` are rendered by Kaleido, which only sees fonts installed on the machine. Before regenerating them, install Barlow Semi Condensed (Regular, SemiBold, Bold), Source Sans 3 and IBM Plex Mono (Regular, Medium, SemiBold) from Google Fonts (SIL Open Font License). Without them the charts fall back to Arial Narrow, Segoe UI and Consolas and no longer match the app.
 
 ## Troubleshooting
 
@@ -59,5 +60,6 @@ The look of the app (colour tokens, fonts, the bill block) is documented in [DES
 | `Could not create the analytical database` | Neither the repository nor the temp directory is writable. Set `EMID_DATABASE_PATH` to a writable path. |
 | Old page names (`app`, `price waterfall`) in the sidebar | Browser cache of an older deployment; reload the page. Version 2.1.0 replaced the `pages/` directory with `st.navigation`. |
 | Turkish names or more than six pages after updating to 2.3.0 | The app still serves an older build. The database rebuilds itself when `DATASET_VERSION` changes; if the old pages remain, reboot the app from **Manage app**. |
+| `KeyError: 'energy_market_intelligence...'` in the logs, or new pages with old wording after a push | Streamlit reloaded the pages but kept the package modules it had already imported. Reboot the app from **Manage app**. |
 | Stale numbers after changing `config/default.yaml` | Delete `data/energy_market.duckdb` (and the temp copy) and clear the Streamlit cache. |
 | `ModuleNotFoundError: energy_market_intelligence` (or one of its modules) | `requirements.txt` was not picked up, or the package was installed non-editable before a module was added; confirm it contains `-e .`, then reboot the app from **Manage app**. |

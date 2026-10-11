@@ -25,8 +25,8 @@ GRID = "#E3E7EA"  # gridlines and hairlines
 NAVY_SOFT = "#8197B4"  # lighter navy for second series and neutral increases
 SLATE_SOFT = "#B5BDC6"  # lighter slate for third series
 
-# Font stacks. The web fonts come from Google Fonts in the app; the fallbacks keep PNG exports
-# (rendered offline by Kaleido) and slow connections readable.
+# Font stacks. The web fonts come from Google Fonts in the app; PNG exports (rendered by Kaleido)
+# use them when they are installed on the machine (see DEPLOY.md), else the fallbacks.
 FONT_BODY = "'Source Sans 3', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
 FONT_HEADING = "'Barlow Semi Condensed', 'Arial Narrow', Arial, sans-serif"
 FONT_MONO = "'IBM Plex Mono', Consolas, Menlo, monospace"
@@ -55,7 +55,7 @@ def _build_template() -> go.layout.Template:
             "y": 1,
             "yanchor": "top",
             "pad": {"t": 22},
-            "font": {"family": FONT_HEADING, "size": 21, "color": NAVY},
+            "font": {"family": FONT_HEADING, "size": 22, "weight": 700, "color": NAVY},
         },
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",

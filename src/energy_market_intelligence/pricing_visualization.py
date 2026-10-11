@@ -232,7 +232,9 @@ def price_waterfall_figure(waterfall: pd.DataFrame) -> go.Figure:
         )
     figure.update_layout(title="From list price to pocket price (TRY/MWh, 2025)")
     apply_business_theme(figure)
-    figure.update_annotations(font={"family": FONT_HEADING, "size": 17, "color": NAVY})
+    figure.update_annotations(
+        font={"family": FONT_HEADING, "size": 18, "weight": 600, "color": NAVY}
+    )
     figure.update_xaxes(tickangle=-40, tickfont={"family": FONT_BODY, "size": 13, "color": INK})
     figure.update_yaxes(
         range=[float(table["pocket_price"].min()) * 0.9, float(table["list_price"].max()) * 1.05],
@@ -358,7 +360,9 @@ def pvm_bridge_figure(summary: pd.DataFrame) -> go.Figure:
         figure.add_trace(_bridge_trace(effects, total), row=1, col=column)
     figure.update_layout(title=f"{FOCUS_COMPANY}: price-volume-mix bridge (2025 vs 2024)")
     apply_business_theme(figure)
-    figure.update_annotations(font={"family": FONT_HEADING, "size": 17, "color": NAVY})
+    figure.update_annotations(
+        font={"family": FONT_HEADING, "size": 18, "weight": 600, "color": NAVY}
+    )
     figure.update_xaxes(tickfont={"family": FONT_BODY, "size": 13, "color": INK})
     figure.update_yaxes(range=y_range)
     figure.update_yaxes(title=TRY_AXIS, col=1)
@@ -626,7 +630,8 @@ def promo_did_figure(
     apply_business_theme(figure)
     for title in titles:
         figure.update_annotations(
-            font={"family": FONT_HEADING, "size": 17, "color": NAVY}, selector={"text": title}
+            font={"family": FONT_HEADING, "size": 18, "weight": 600, "color": NAVY},
+            selector={"text": title},
         )
     # The subplot titles sit where the legend would go, so the legend moves under the plots.
     figure.update_layout(

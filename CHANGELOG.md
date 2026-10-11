@@ -22,6 +22,7 @@ A design audit of all six pages, at laptop and phone width, and of every exporte
 - Tables show the columns that answer the page's question; standard errors, volumes and prices behind the effects are one click away.
 - The province filter is a single choice (all provinces or one) instead of 18 removable chips.
 - README: the elasticity and promotion charts are shown full width instead of side by side.
+- Exported charts use the brand fonts (Barlow Semi Condensed titles in bold, Source Sans 3, IBM Plex Mono for numbers) instead of system fallbacks; DEPLOY.md lists the fonts to install before regenerating them.
 
 ## [2.3.0] - 2026-10-11
 
