@@ -1,6 +1,6 @@
 project:
-  company_name: Tavra Enerji            # fictional focus company
-  currency_label: TL (constant 2025 prices)
+  company_name: Tavra Energy            # fictional focus company
+  currency_label: TRY (constant 2025 prices)
   random_seed: 20260815
   start_month: "2023-01-01"
   months: 36
@@ -31,16 +31,18 @@ validation:
 # checked against a known answer.
 # ---------------------------------------------------------------------------
 pricing:
-  # All money amounts are in Turkish lira at constant (real) 2025 prices, so the series contain
-  # no inflation or currency effects. Prices and costs are TL per MWh.
+  # Sales areas are Turkish provinces. The keys keep the older internal word "region"
+  # (leakage_regions, treated_regions, regions) and hold province names.
+  # All money amounts are in Turkish lira (TRY) at constant (real) 2025 prices, so the series
+  # contain no inflation or currency effects. Prices and costs are TRY per MWh.
   # Reference list prices and unit variable costs per product.
   products:
-    "Sabit Fiyatlı":           {reference_price: 3040.0, unit_cost: 2320.0}
-    "Değişken Fiyatlı (PTF+)": {reference_price: 2880.0, unit_cost: 2240.0}
-    "Yeşil Enerji (YEK-G)":    {reference_price: 3280.0, unit_cost: 2520.0}
-    "Kurumsal Paket":          {reference_price: 3120.0, unit_cost: 2360.0}
+    "Fixed price":          {reference_price: 3040.0, unit_cost: 2320.0}
+    "Index-linked (PTF+)":  {reference_price: 2880.0, unit_cost: 2240.0}  # PTF: day-ahead market price
+    "Green energy (YEK-G)": {reference_price: 3280.0, unit_cost: 2520.0}  # YEK-G: renewable certificate
+    "Corporate bundle":     {reference_price: 3120.0, unit_cost: 2360.0}
   list_price_premium: 1.15        # list price = reference price x premium (before increases)
-  cost_inflation_per_month: 0.003 # real unit variable cost drift per month (constant 2025 TL)
+  cost_inflation_per_month: 0.003 # real unit variable cost drift per month (constant 2025 prices)
   cost_of_capital_annual: 0.09    # prices payment-term cost: invoice x rate x days / 365
   seasonality: [1.08, 1.04, 0.97, 0.93, 0.92, 0.99, 1.10, 1.12, 1.02, 0.94, 1.00, 1.09]  # Jan..Dec
 
@@ -48,8 +50,7 @@ pricing:
   # to POCKET price. policy_max_discount_pct is the on-invoice discount depth that the
   # commercial policy allows for the segment.
   segments:
-    - name: Mesken
-      name_en: Residential
+    - name: Residential
       true_elasticity: -1.6          # elastic
       base_discount_pct: 0.045
       policy_max_discount_pct: 0.065
@@ -58,8 +59,7 @@ pricing:
       freight_service_per_mwh: 128.0
       unit_cost_factor: 1.00
       volume_share: 0.38
-    - name: Ticarethane / KOBİ
-      name_en: SME
+    - name: Commercial (SME)
       true_elasticity: -1.1          # roughly unit-elastic
       base_discount_pct: 0.085
       policy_max_discount_pct: 0.105
@@ -68,8 +68,7 @@ pricing:
       freight_service_per_mwh: 84.0
       unit_cost_factor: 0.99
       volume_share: 0.34
-    - name: Sanayi
-      name_en: Industrial
+    - name: Industrial
       true_elasticity: -0.6          # inelastic
       base_discount_pct: 0.145
       policy_max_discount_pct: 0.175
@@ -79,7 +78,7 @@ pricing:
       unit_cost_factor: 0.97
       volume_share: 0.28
 
-  # Demand: log(volume) = region-product-segment intercept + log seasonality + trend
+  # Demand: log(volume) = province-product-segment intercept + log seasonality + trend
   #   + true_elasticity * log(pocket / reference) + cross_elasticity * log(competitor / reference)
   #   + log(1 + true_volume_uplift) * promo + noise
   cross_elasticity: 0.35             # competitor price up 1% -> focus-company volume up 0.35%
@@ -87,35 +86,35 @@ pricing:
   demand_noise_sd: 0.05
   discount_noise_sd: 0.008           # month-level random discount noise (exogenous variation)
 
-  # Regions whose average on-invoice discount sits above policy (extra discount, fraction of list).
+  # Provinces whose average on-invoice discount sits above policy (extra discount, fraction of list).
   leakage_regions:
-    Ege Kuzey: 0.045
-    Batı Akdeniz: 0.035
-    Doğu Akdeniz: 0.040
-    Doğu Anadolu Kuzey: 0.050
+    Izmir: 0.045
+    Antalya: 0.035
+    Adana: 0.040
+    Erzurum: 0.050
 
-  # Staggered real list-price increases (exogenous price variation used for identification).
+  # Staggered real list-price increases by province (exogenous price variation used for identification).
   # month_id 1 = January 2023, 13 = January 2024, 25 = January 2025.
   list_price_increases:
     - month_id: 7        # July 2023
       pct: 0.05
-      regions: [İstanbul Avrupa, Trakya, Ege Kuzey, Batı Akdeniz, İç Anadolu Batı, İç Anadolu Doğu]
+      regions: [Istanbul, Tekirdağ, Izmir, Antalya, Konya, Kayseri]
     - month_id: 14       # February 2024
       pct: 0.06
-      regions: [İstanbul Anadolu, Marmara Güney, Ankara, Batı Karadeniz, Doğu Karadeniz, Güneydoğu Batı]
+      regions: [Kocaeli, Bursa, Ankara, Zonguldak, Trabzon, Gaziantep]
     - month_id: 21       # September 2024
       pct: 0.05
-      regions: [Ege Güney, Doğu Akdeniz, Orta Karadeniz, Doğu Anadolu Kuzey]
+      regions: [Muğla, Adana, Samsun, Erzurum]
     - month_id: 28       # April 2025
       pct: 0.04
-      regions: [İstanbul Avrupa, İstanbul Anadolu, Doğu Anadolu Güney]
-    # Güneydoğu Doğu never changes its list price in the sample.
+      regions: [Istanbul, Kocaeli, Van]
+    # Diyarbakır never changes its list price in the sample.
 
-  # Discount campaign (January to April 2025): treated regions get an extra on-invoice discount
+  # Discount campaign (January to April 2025): treated provinces get an extra on-invoice discount
   # during the window and a non-price campaign effect on volume (true_volume_uplift). All other
-  # regions are controls.
+  # provinces are controls.
   promotion:
-    treated_regions: [İç Anadolu Batı, Ankara, Orta Karadeniz, Doğu Karadeniz, Doğu Anadolu Kuzey]
+    treated_regions: [Konya, Ankara, Samsun, Trabzon, Erzurum]
     start_month_id: 25
     end_month_id: 28
     promo_discount_pct: 0.03

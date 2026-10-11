@@ -17,13 +17,14 @@ def raw_section(project_root: Path) -> dict:
 
 def test_ground_truth_is_documented_in_config(pricing_config: PricingConfig) -> None:
     truth = pricing_config.true_elasticities
-    assert set(truth) == {"Mesken", "Ticarethane / KOBİ", "Sanayi"}
+    assert set(truth) == {"Residential", "Commercial (SME)", "Industrial"}
     assert any(value < -1 for value in truth.values())
     assert any(value > -1 for value in truth.values())
     assert pricing_config.cross_elasticity > 0
     assert pricing_config.promotion.true_volume_uplift == pytest.approx(0.08)
     assert (
-        pricing_config.policy_max_discount["Sanayi"] > pricing_config.policy_max_discount["Mesken"]
+        pricing_config.policy_max_discount["Industrial"]
+        > pricing_config.policy_max_discount["Residential"]
     )
 
 

@@ -1,13 +1,14 @@
 """Synthetic focus-company pricing ledger with a known waterfall and demand ground truth.
 
-Grain of ``fact_pricing``: month x region x product x customer segment.
+Grain of ``fact_pricing``: month x province x product x customer segment. The province is
+still stored under its older internal name, ``region_id`` / ``region_name``.
 
 Data-generating process (all parameters come from ``config/default.yaml``):
 
-* ``list_price``: product reference price x premium, raised by staggered regional increases.
+* ``list_price``: product reference price x premium, raised by staggered increases by province.
 * Waterfall: list -> on-invoice discount -> invoice -> off-invoice rebate -> payment-term cost
-  -> freight/service cost -> pocket price. Discount depth varies by segment and region, with a
-  few "leakage" regions above policy.
+  -> freight/service cost -> pocket price. Discount depth varies by segment and province, with a
+  few "leakage" provinces above policy.
 * Demand: constant-elasticity log-log model in *pocket* price with competitor price, seasonality,
   trend, promotion uplift and noise. The true elasticities are the config values.
 
@@ -34,7 +35,6 @@ def _segment_dimensions(config: PricingConfig) -> tuple[pd.DataFrame, pd.DataFra
         {
             "customer_segment_id": ids,
             "customer_segment_name": names,
-            "customer_segment_en": [segment.name_en for segment in config.segments],
             "payment_terms_days": [segment.payment_terms_days for segment in config.segments],
         }
     )
@@ -49,7 +49,7 @@ def _segment_dimensions(config: PricingConfig) -> tuple[pd.DataFrame, pd.DataFra
 
 
 def _competitor_prices(market: dict[str, pd.DataFrame]) -> pd.DataFrame:
-    """Volume-weighted competitor price by month x region x product from the market fact."""
+    """Volume-weighted competitor price by month x province x product from the market fact."""
 
     fact = market["fact_sales"]
     rivals = fact[fact["company_id"] != FOCUS_COMPANY_ID].copy()
@@ -88,7 +88,7 @@ def _validate_config_against_market(market: dict[str, pd.DataFrame], config: Pri
     )
     unknown = referenced.difference(market["dim_region"]["region_name"])
     if unknown:
-        raise ValueError(f"pricing config references unknown regions: {sorted(unknown)}")
+        raise ValueError(f"pricing config references unknown provinces: {sorted(unknown)}")
 
 
 def generate_pricing_data(

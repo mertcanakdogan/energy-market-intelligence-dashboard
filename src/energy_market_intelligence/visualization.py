@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import datetime
-import math
 from pathlib import Path
 
 import pandas as pd
@@ -11,16 +10,16 @@ import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
 
-from energy_market_intelligence.localization import format_number, format_pct
+from energy_market_intelligence.localization import format_number
 from energy_market_intelligence.synthetic_data import FOCUS_COMPANY
 
-TL_AXIS = "mn TL (sabit 2025 fiyatlarıyla)"
+TRY_AXIS = "TRY m (constant 2025 prices)"
 
 # Design tokens. Every colour carries exactly one meaning (see docs/DESIGN.md).
-NAVY = "#1F3A5F"  # Şebeke laciverti: prices, headings, primary series
-LEAK_RED = "#C8462B"  # Kaçak kırmızısı: deductions, leakage and policy breaches only
-GAIN_GREEN = "#2E7D5B"  # Sertifika yeşili: gains from the recommendation, positive outcomes only
-SLATE = "#6B7480"  # Trafo grisi: secondary text and neutral series
+NAVY = "#1F3A5F"  # Grid navy: prices, headings, primary series
+LEAK_RED = "#C8462B"  # Leak red: deductions, leakage and policy breaches only
+GAIN_GREEN = "#2E7D5B"  # Certificate green: gains from the recommendation, positive outcomes only
+SLATE = "#6B7480"  # Transformer grey: secondary text and neutral series
 INK = "#1B2430"  # body text
 GRID = "#E3E7EA"  # gridlines and hairlines
 NAVY_SOFT = "#8197B4"  # lighter navy for second series and neutral increases
@@ -68,7 +67,7 @@ def _build_template() -> go.layout.Template:
             "bordercolor": GRID,
             "font": {"family": FONT_MONO, "size": 13, "color": INK},
         },
-        separators=",.",  # Turkish: comma for decimals, dot for thousands
+        separators=".,",  # English: dot for decimals, comma for thousands
         xaxis={**axis, "showgrid": False, "zeroline": False},
         yaxis={
             **axis,
@@ -92,49 +91,6 @@ pio.templates[TEMPLATE_NAME] = _build_template()
 pio.templates.default = TEMPLATE_NAME
 
 
-def _nice_step(span: float, target_ticks: int = 5) -> float:
-    raw = span / max(target_ticks, 1)
-    magnitude = 10 ** math.floor(math.log10(raw))
-    for multiple in (1, 2, 5, 10):
-        if raw <= multiple * magnitude:
-            return multiple * magnitude
-    return 10 * magnitude
-
-
-def percent_axis(figure: go.Figure, axis: str = "y") -> go.Figure:
-    """Label a share axis the Turkish way (``%10``, ``%12,5``) instead of d3's ``10%``.
-
-    Plotly's d3 formats always put the percent sign after the number, so the ticks are set
-    explicitly from the plotted data. Call it after the traces are final.
-    """
-
-    values: list[float] = []
-    for trace in figure.data:
-        data = getattr(trace, axis, None)
-        if data is None:
-            continue
-        values.extend(float(v) for v in data if v is not None and math.isfinite(float(v)))
-    if not values:
-        return figure
-    low, high = min(values), max(values)
-    if any(trace.type == "bar" for trace in figure.data):
-        low, high = min(low, 0.0), max(high, 0.0)  # bars start at zero; lines keep their range
-    if high == low:
-        high = low + 0.01
-    step = _nice_step(high - low)
-    first = math.floor(low / step + 1e-9)
-    last = math.ceil(high / step - 1e-9)
-    ticks = [round(index * step, 10) for index in range(first, last + 1)]
-    shown = 0 if round(step * 100, 6).is_integer() else 1
-    labels = [format_pct(value, shown) for value in ticks]
-    update = {"tickmode": "array", "tickvals": ticks, "ticktext": labels}
-    if axis == "y":
-        figure.update_yaxes(**update)
-    else:
-        figure.update_xaxes(**update)
-    return figure
-
-
 def _axis_kind(figure: go.Figure, axis: str) -> str | None:
     """``"date"``, ``"number"`` or ``None`` (categories or mixed) for the plotted data."""
 
@@ -155,13 +111,13 @@ def _axis_kind(figure: go.Figure, axis: str) -> str | None:
     return kinds.pop() if len(kinds) == 1 else None
 
 
-def turkish_axes(figure: go.Figure) -> go.Figure:
-    """Give unformatted axes Turkish ticks: months as ``01/2025``, thousands as ``4.000``.
+def format_axes(figure: go.Figure) -> go.Figure:
+    """Give unformatted axes readable ticks: months as ``Jan 2025``, thousands as ``4,000``.
 
     Axes that already carry a ``tickformat`` or explicit tick labels are left as they are.
     """
 
-    formats = {"date": "%m/%Y", "number": ",~f"}
+    formats = {"date": "%b %Y", "number": ",~f"}
     for axis, each in (("x", figure.for_each_xaxis), ("y", figure.for_each_yaxis)):
         kind = _axis_kind(figure, axis)
         if kind is None:
@@ -200,17 +156,17 @@ def market_share_trend_figure(frame: pd.DataFrame) -> go.Figure:
         frame,
         x="date",
         y="focus_market_share",
-        title=f"{FOCUS_COMPANY}: aylık pazar payı",
+        title=f"{FOCUS_COMPANY}: monthly market share",
         markers=True,
     )
     figure.update_traces(line={"color": NAVY, "width": 3}, marker={"size": 5})
-    percent_axis(figure, "y")
-    figure.update_traces(hovertemplate="%{x|%m/%Y}: %{y:.1%}<extra></extra>")
-    return apply_business_theme(figure, y_title="Pazar payı")
+    figure.update_yaxes(tickformat=".1%")
+    figure.update_traces(hovertemplate="%{x|%b %Y}: %{y:.1%}<extra></extra>")
+    return apply_business_theme(figure, y_title="Market share")
 
 
 def opportunity_matrix_figure(frame: pd.DataFrame) -> go.Figure:
-    """Compare regional growth, focus-company share, scale, and opportunity score."""
+    """Compare provincial growth, focus-company share, scale, and opportunity score."""
 
     chart_data = frame.copy()
     if "opportunity_rank" in chart_data:
@@ -228,20 +184,20 @@ def opportunity_matrix_figure(frame: pd.DataFrame) -> go.Figure:
         hover_name="region_name",
         text="display_label",
         size_max=42,
-        title="Bölgesel fırsat matrisi (balon büyüklüğü = pazar hacmi)",
+        title="Province opportunity matrix (bubble size = market volume)",
         labels={
-            "opportunity_score": "Fırsat skoru",
-            "focus_share": "Şirketin pazar payı",
-            "market_growth": "Pazar büyümesi (yıllık)",
-            "market_volume": "Pazar hacmi (MWh)",
-            "region_name": "Bölge",
+            "opportunity_score": "Opportunity score",
+            "focus_share": "Company market share",
+            "market_growth": "Market growth (yearly)",
+            "market_volume": "Market volume (MWh)",
+            "region_name": "Province",
         },
     )
     figure.update_traces(textposition="top center", textfont={"size": 11})
-    percent_axis(figure, "x")
-    percent_axis(figure, "y")
-    apply_business_theme(figure, y_title="Pazar büyümesi (son 12 ay / önceki 12 ay)")
-    figure.update_xaxes(title="Şirketin pazar payı (son 12 ay)")
+    figure.update_xaxes(tickformat=".0%")
+    figure.update_yaxes(tickformat=".0%")
+    apply_business_theme(figure, y_title="Market growth (last 12 months vs the 12 before)")
+    figure.update_xaxes(title="Company market share (last 12 months)")
     return figure
 
 
@@ -258,15 +214,15 @@ def competitor_change_figure(frame: pd.DataFrame) -> go.Figure:
             marker_color=colors,
             textfont={"family": FONT_MONO, "size": 13},
             text=ordered["share_change_pp"].map(
-                lambda value: f"{format_number(value, 2, signed=True)} puan"
+                lambda value: f"{format_number(value, 2, signed=True)} pp"
             ),
             textposition="outside",
-            hovertemplate="%{y}<br>Pay değişimi: %{x:+.2f} puan<extra></extra>",
+            hovertemplate="%{y}<br>Share change: %{x:+.2f} pp<extra></extra>",
         )
     )
-    figure.update_layout(title="Şirketlerin pazar payı değişimi: son 12 ay / önceki 12 ay")
+    figure.update_layout(title="Change in market share by company: last 12 months vs the 12 before")
     apply_business_theme(figure, y_title=None, mono_axis="x")
-    figure.update_xaxes(title="Pazar payı değişimi (yüzde puan)")
+    figure.update_xaxes(title="Change in market share (percentage points)")
     return figure
 
 
@@ -281,13 +237,13 @@ def gross_margin_trend_figure(frame: pd.DataFrame) -> go.Figure:
         monthly,
         x="date",
         y="gross_margin_pct",
-        title=f"{FOCUS_COMPANY}: aylık brüt marj",
+        title=f"{FOCUS_COMPANY}: monthly gross margin",
         markers=True,
     )
     figure.update_traces(line={"color": NAVY, "width": 3}, marker={"size": 5})
-    percent_axis(figure, "y")
-    figure.update_traces(hovertemplate="%{x|%m/%Y}: %{y:.1%}<extra></extra>")
-    return apply_business_theme(figure, y_title="Brüt marj")
+    figure.update_yaxes(tickformat=".1%")
+    figure.update_traces(hovertemplate="%{x|%b %Y}: %{y:.1%}<extra></extra>")
+    return apply_business_theme(figure, y_title="Gross margin")
 
 
 def profit_bridge_figure(bridge: pd.DataFrame) -> go.Figure:
@@ -301,7 +257,7 @@ def profit_bridge_figure(bridge: pd.DataFrame) -> go.Figure:
     ]
     figure = go.Figure(
         go.Waterfall(
-            x=["Hacim etkisi", "Fiyat etkisi", "Etkileşim", "Ciro değişimi"],
+            x=["Volume effect", "Price effect", "Interaction", "Revenue change"],
             y=values,
             measure=["relative", "relative", "relative", "total"],
             text=[format_number(value, 1, signed=True) for value in values],
@@ -311,13 +267,13 @@ def profit_bridge_figure(bridge: pd.DataFrame) -> go.Figure:
             totals={"marker": {"color": NAVY}},
             textfont={"family": FONT_MONO, "size": 13},
             connector={"line": {"color": SLATE_SOFT}},
-            hovertemplate="%{x}: %{y:,.1f} mn TL<extra></extra>",
+            hovertemplate="%{x}: TRY %{y:,.1f}m<extra></extra>",
         )
     )
     figure.update_layout(
-        title=f"{FOCUS_COMPANY}: ciro değişim köprüsü (son ay / önceki yılın aynı ayı)"
+        title=f"{FOCUS_COMPANY}: revenue bridge (latest month vs the same month a year earlier)"
     )
-    return apply_business_theme(figure, y_title=TL_AXIS)
+    return apply_business_theme(figure, y_title=TRY_AXIS)
 
 
 def write_png(figure: go.Figure, path: Path) -> None:
@@ -325,7 +281,7 @@ def write_png(figure: go.Figure, path: Path) -> None:
 
     path.parent.mkdir(parents=True, exist_ok=True)
     try:
-        export = turkish_axes(go.Figure(figure))
+        export = format_axes(go.Figure(figure))
         export.update_layout(paper_bgcolor="#FFFFFF", plot_bgcolor="#FFFFFF")
         export.write_image(path, width=1200, height=680, scale=1.5)
     except Exception as exc:  # pragma: no cover - exercised only when renderer is unavailable

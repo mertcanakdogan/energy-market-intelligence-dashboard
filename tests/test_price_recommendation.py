@@ -101,7 +101,7 @@ def test_segment_table_respects_cap_and_floor(
         spec.margin_floor_pct,
         max_volume_loss=spec.max_volume_loss_pct,
     )
-    assert set(table["customer_segment_name"]) == {"Mesken", "Ticarethane / KOBİ", "Sanayi"}
+    assert set(table["customer_segment_name"]) == {"Residential", "Commercial (SME)", "Industrial"}
     assert (table["price_change_pct"].abs() <= spec.max_price_step_pct + 1e-12).all()
     reached = table["new_margin_pct"] >= spec.margin_floor_pct - 1e-9
     assert (reached | table["binding_constraint"].str.contains("not reachable")).all()
@@ -122,8 +122,12 @@ def test_volume_guard_differentiates_the_elastic_segment(
         spec.margin_floor_pct,
         max_volume_loss=spec.max_volume_loss_pct,
     ).set_index("customer_segment_name")
-    assert table.loc["Mesken", "price_change_pct"] < table.loc["Sanayi", "price_change_pct"]
-    assert table.loc["Mesken", "expected_volume_change_pct"] >= -spec.max_volume_loss_pct - 1e-9
+    assert (
+        table.loc["Residential", "price_change_pct"] < table.loc["Industrial", "price_change_pct"]
+    )
+    assert (
+        table.loc["Residential", "expected_volume_change_pct"] >= -spec.max_volume_loss_pct - 1e-9
+    )
 
 
 def test_region_table_has_one_row_per_region_and_segment(
@@ -141,7 +145,7 @@ def test_region_table_has_one_row_per_region_and_segment(
     assert (table["price_change_pct"].abs() <= spec.max_price_step_pct + 1e-12).all()
     # Industrial discount-leakage regions cannot reach the floor in a single step.
     unreachable = table[table["binding_constraint"].str.contains("not reachable")]
-    assert set(unreachable["customer_segment_name"]) <= {"Sanayi", "Ticarethane / KOBİ"}
+    assert set(unreachable["customer_segment_name"]) <= {"Industrial", "Commercial (SME)"}
     assert not unreachable.empty
 
 

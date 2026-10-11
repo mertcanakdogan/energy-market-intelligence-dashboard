@@ -68,7 +68,7 @@ def test_discount_depth_orders_by_segment(synthetic_bundle: dict[str, pd.DataFra
         .groupby(fact["customer_segment_name"])
         .mean()
     )
-    assert depth["Sanayi"] > depth["Ticarethane / KOBİ"] > depth["Mesken"]
+    assert depth["Industrial"] > depth["Commercial (SME)"] > depth["Residential"]
 
 
 def test_leakage_regions_discount_above_others(
@@ -87,8 +87,8 @@ def test_list_price_increases_are_staggered_by_region(
 ) -> None:
     frame = regression_frame(synthetic_bundle)
     cell = frame[
-        (frame["product_name"] == "Sabit Fiyatlı")
-        & (frame["customer_segment_name"] == "Ticarethane / KOBİ")
+        (frame["product_name"] == "Fixed price")
+        & (frame["customer_segment_name"] == "Commercial (SME)")
     ]
     steps = (
         cell.sort_values("month_id")
@@ -99,9 +99,9 @@ def test_list_price_increases_are_staggered_by_region(
             )
         )
     )
-    assert steps["Güneydoğu Doğu"] == ()
-    assert steps["Trakya"] == (7,)
-    assert steps["Marmara Güney"] == (14,)
+    assert steps["Diyarbakır"] == ()
+    assert steps["Tekirdağ"] == (7,)
+    assert steps["Bursa"] == (14,)
     assert len({steps[name] for name in steps.index}) >= 4
 
 
@@ -129,7 +129,7 @@ def test_volume_falls_with_pocket_price_within_a_cell(
     synthetic_bundle: dict[str, pd.DataFrame],
 ) -> None:
     frame = regression_frame(synthetic_bundle)
-    frame = frame[frame["customer_segment_name"] == "Mesken"]
+    frame = frame[frame["customer_segment_name"] == "Residential"]
     demeaned = frame.assign(
         log_volume=np.log(frame["volume_mwh"]), log_price=np.log(frame["pocket_price"])
     )
@@ -139,11 +139,11 @@ def test_volume_falls_with_pocket_price_within_a_cell(
     assert demeaned["log_volume"].corr(demeaned["log_price"]) < -0.2
 
 
-def test_unknown_region_in_config_is_rejected(
+def test_unknown_province_in_config_is_rejected(
     small_market: dict[str, pd.DataFrame], pricing_config: PricingConfig
 ) -> None:
     broken = dataclasses.replace(pricing_config, leakage_regions={"Atlantis": 0.05})
-    with pytest.raises(ValueError, match="unknown regions"):
+    with pytest.raises(ValueError, match="unknown provinces"):
         generate_pricing_data(small_market, broken, seed=1)
 
 
@@ -151,7 +151,7 @@ def test_missing_product_in_config_is_rejected(
     small_market: dict[str, pd.DataFrame], pricing_config: PricingConfig
 ) -> None:
     prices = dict(pricing_config.product_reference_price)
-    prices.pop("Sabit Fiyatlı")
+    prices.pop("Fixed price")
     broken = dataclasses.replace(pricing_config, product_reference_price=prices)
     with pytest.raises(ValueError, match="missing entries"):
         generate_pricing_data(small_market, broken, seed=1)

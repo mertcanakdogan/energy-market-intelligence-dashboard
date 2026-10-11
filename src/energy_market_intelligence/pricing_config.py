@@ -20,7 +20,6 @@ class SegmentSpec:
     """Commercial and demand parameters of one customer segment."""
 
     name: str
-    name_en: str
     true_elasticity: float
     base_discount_pct: float
     policy_max_discount_pct: float

@@ -44,7 +44,7 @@ LOGGER = logging.getLogger(__name__)
 
 # Bump when the generated data or the SQL models change. A deployed app keeps its database
 # between commits, and the stamp lets it notice a database left over from an earlier version.
-DATASET_VERSION = "2.1.0"
+DATASET_VERSION = "2.3.0"
 
 
 def dataset_stamp_path(database_path: Path) -> Path:

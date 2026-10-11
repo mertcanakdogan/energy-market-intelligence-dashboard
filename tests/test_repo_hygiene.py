@@ -64,8 +64,10 @@ FORBIDDEN_COMPANY_NAMES = [
     "Baymina",
     "Borusan",
     "Eksim",
-    # Turkish electricity distribution companies (the words Trakya and Akdeniz are also used in
-    # generic sales-region names such as "Batı Akdeniz", so only unambiguous names are listed)
+    # Turkish electricity distribution companies. Names of the provinces used as sales areas
+    # (Istanbul, Kocaeli, Tekirdağ, Bursa, Izmir, Muğla, Antalya, Adana, Konya, Kayseri, Ankara,
+    # Zonguldak, Samsun, Trabzon, Erzurum, Van, Gaziantep, Diyarbakır) are generic place names and
+    # are deliberately not listed.
     "Toroslar",
     "Başkent",
     "Boğaziçi",
@@ -82,7 +84,6 @@ FORBIDDEN_COMPANY_NAMES = [
     "Osmangazi",
     "Yeşilırmak",
     "Çamlıbel",
-    "Kayseri",
     # Fuel and LPG brands
     "İpragaz",
     "Aygaz",

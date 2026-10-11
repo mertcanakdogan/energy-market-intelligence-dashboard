@@ -10,12 +10,11 @@ from energy_market_intelligence.localization import (
     format_number,
     format_pct,
     format_pp,
-    format_tl,
-    format_tl_per_mwh,
+    format_try,
+    format_try_per_mwh,
     format_volume,
     localize_frame,
     order_segments,
-    segment_with_gloss,
     translate_value,
 )
 
@@ -23,65 +22,71 @@ from energy_market_intelligence.localization import (
 @pytest.mark.parametrize(
     ("value", "decimals", "expected"),
     [
-        (1234.5, 1, "1.234,5"),
-        (3100, 0, "3.100"),
-        (-0.04, 1, "0,0"),
-        (-1.6, 2, "-1,60"),
-        (1_234_567.891, 2, "1.234.567,89"),
+        (1234.5, 1, "1,234.5"),
+        (3100, 0, "3,100"),
+        (3732.61, 2, "3,732.61"),
+        (-0.04, 1, "0.0"),
+        (-1.6, 2, "-1.60"),
+        (1_234_567.891, 2, "1,234,567.89"),
         (0, 0, "0"),
     ],
 )
-def test_format_number_uses_turkish_separators(value: float, decimals: int, expected: str) -> None:
+def test_format_number_uses_english_separators(value: float, decimals: int, expected: str) -> None:
     assert format_number(value, decimals) == expected
 
 
 def test_signed_numbers_and_missing_values() -> None:
-    assert format_number(4.3, 1, signed=True) == "+4,3"
-    assert format_number(-4.2, 1, signed=True) == "-4,2"
-    assert format_number(0.0, 1, signed=True) == "0,0"
+    assert format_number(4.3, 1, signed=True) == "+4.3"
+    assert format_number(-4.2, 1, signed=True) == "-4.2"
+    assert format_number(0.0, 1, signed=True) == "0.0"
     assert format_number(math.nan) == "–"
     assert format_pct(math.nan) == "–"
-    assert format_tl(math.inf) == "–"
+    assert format_try(math.inf) == "–"
     assert format_volume(math.nan) == "–"
 
 
-def test_percent_has_the_turkish_prefix_form() -> None:
-    assert format_pct(0.852) == "%85,2"
-    assert format_pct(0.043, 1, signed=True) == "+%4,3"
-    assert format_pct(-0.044, 1) == "-%4,4"
-    assert format_pct(0.08, 0) == "%8"
-    assert format_pp(0.5) == "+0,50 puan"
+def test_percent_follows_the_number() -> None:
+    assert format_pct(0.852) == "85.2%"
+    assert format_pct(0.148) == "14.8%"
+    assert format_pct(0.043, 1, signed=True) == "+4.3%"
+    assert format_pct(-0.044, 1) == "-4.4%"
+    assert format_pct(0.08, 0) == "8%"
+    assert format_pp(0.5) == "+0.50 pp"
+    assert format_pp(-0.554) == "-0.55 pp"
 
 
 @pytest.mark.parametrize(
     ("value", "expected"),
     [
-        (4_540_000_000, "4,54 mlr TL"),
-        (23_435_358, "23,4 mn TL"),
-        (540_000, "540 bin TL"),
-        (5_400_000, "5,40 mn TL"),
-        (12_800, "12,8 bin TL"),
-        (950, "950 TL"),
-        (-36_340_165, "-36,3 mn TL"),
+        (4_540_000_000, "TRY 4.54bn"),
+        (4_690_000_000, "TRY 4.69bn"),
+        (23_435_358, "TRY 23.4m"),
+        (540_000, "TRY 540k"),
+        (5_400_000, "TRY 5.40m"),
+        (12_800, "TRY 12.8k"),
+        (950, "TRY 950"),
+        (-36_340_165, "-TRY 36.3m"),
     ],
 )
-def test_compact_tl(value: float, expected: str) -> None:
-    assert format_tl(value) == expected
+def test_compact_try(value: float, expected: str) -> None:
+    assert format_try(value) == expected
 
 
-def test_tl_signed_price_and_volume_units() -> None:
-    assert format_tl(57_863_249, signed=True) == "+57,9 mn TL"
-    assert format_tl_per_mwh(3099.6) == "3.100 TL/MWh"
-    assert format_volume(1_454_730) == "1,45 TWh"
+def test_try_signed_price_and_volume_units() -> None:
+    assert format_try(57_863_249, signed=True) == "+TRY 57.9m"
+    assert format_try(-1_300, signed=True) == "-TRY 1.3k"
+    assert format_try_per_mwh(3099.6) == "3,100 TRY/MWh"
+    assert format_try_per_mwh(3099.6, 1) == "3,099.6 TRY/MWh"
+    assert format_volume(1_454_730) == "1.45 TWh"
     assert format_volume(820_000) == "820 GWh"
-    assert format_volume(12_300) == "12,3 GWh"
+    assert format_volume(12_300) == "12.3 GWh"
     assert format_volume(950) == "950 MWh"
-    assert format_volume(-1_200_000, signed=True) == "-1,20 TWh"
+    assert format_volume(-1_200_000, signed=True) == "-1.20 TWh"
 
 
 def test_translate_and_localize_frame() -> None:
-    assert translate_value("Gaining") == "Pay kazanıyor"
-    assert translate_value(True) == "Evet"
+    assert translate_value("Gaining") == "Gaining share"
+    assert translate_value(True) == "Yes"
     assert translate_value("unknown code") == "unknown code"
     frame = pd.DataFrame(
         {
@@ -92,15 +97,15 @@ def test_translate_and_localize_frame() -> None:
         }
     )
     shown = localize_frame(frame)
-    assert list(shown.columns) == ["Bölge", "Eğilim", "Sınırı aşıyor mu?", "Esneklik"]
-    assert shown.iloc[0].tolist() == ["Ankara", "Pay kazanıyor", "Evet", -1.6]
+    assert list(shown.columns) == ["Province", "Trend", "Above the limit?", "Elasticity"]
+    assert shown.iloc[0].tolist() == ["Ankara", "Gaining share", "Yes", -1.6]
     raw = localize_frame(frame, translate_values=False)
-    assert raw.iloc[0]["Eğilim"] == "Gaining"
+    assert raw.iloc[0]["Trend"] == "Gaining"
 
 
-def test_segments_are_ordered_and_glossed() -> None:
-    frame = pd.DataFrame({"customer_segment_name": ["Sanayi", "Mesken", "Ticarethane / KOBİ", "x"]})
+def test_segments_are_ordered() -> None:
+    frame = pd.DataFrame(
+        {"customer_segment_name": ["Industrial", "Residential", "Commercial (SME)", "x"]}
+    )
     ordered = order_segments(frame)["customer_segment_name"].tolist()
     assert ordered == [*SEGMENT_ORDER, "x"]
-    assert segment_with_gloss("Mesken") == "Mesken (Residential)"
-    assert segment_with_gloss("Başka") == "Başka"

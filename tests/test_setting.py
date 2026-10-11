@@ -7,7 +7,7 @@ import re
 import pandas as pd
 import pytest
 
-from energy_market_intelligence.localization import SEGMENT_GLOSS, SEGMENT_ORDER
+from energy_market_intelligence.localization import SEGMENT_ORDER
 from energy_market_intelligence.pricing_config import PricingConfig
 from energy_market_intelligence.synthetic_data import (
     COMPANY_NAMES,
@@ -16,50 +16,50 @@ from energy_market_intelligence.synthetic_data import (
     REGION_NAMES,
 )
 
-EXPECTED_REGIONS = [
-    "İstanbul Avrupa",
-    "İstanbul Anadolu",
-    "Trakya",
-    "Marmara Güney",
-    "Ege Kuzey",
-    "Ege Güney",
-    "Batı Akdeniz",
-    "Doğu Akdeniz",
-    "İç Anadolu Batı",
+EXPECTED_PROVINCES = [
+    "Istanbul",
+    "Kocaeli",
+    "Tekirdağ",
+    "Bursa",
+    "Izmir",
+    "Muğla",
+    "Antalya",
+    "Adana",
+    "Konya",
     "Ankara",
-    "İç Anadolu Doğu",
-    "Batı Karadeniz",
-    "Orta Karadeniz",
-    "Doğu Karadeniz",
-    "Doğu Anadolu Kuzey",
-    "Doğu Anadolu Güney",
-    "Güneydoğu Batı",
-    "Güneydoğu Doğu",
+    "Kayseri",
+    "Zonguldak",
+    "Samsun",
+    "Trabzon",
+    "Erzurum",
+    "Van",
+    "Gaziantep",
+    "Diyarbakır",
 ]
 
 
-def test_companies_are_fictional_invented_names_with_the_enerji_suffix() -> None:
+def test_companies_are_fictional_invented_names_with_the_energy_suffix() -> None:
     assert len(COMPANY_NAMES) == 7
     assert len(set(COMPANY_NAMES)) == 7
-    assert COMPANY_NAMES[0] == FOCUS_COMPANY == "Tavra Enerji"
+    assert COMPANY_NAMES[0] == FOCUS_COMPANY == "Tavra Energy"
     for name in COMPANY_NAMES:
-        assert re.fullmatch(r"[A-ZÇĞİÖŞÜ][a-zçğıöşü]+ Enerji", name), name
-    cities = {"İstanbul", "Ankara", "İzmir", "Bursa", "Antalya", "Adana", "Konya", "Kocaeli"}
+        assert re.fullmatch(r"[A-Z][a-z]+ Energy", name), name
+    cities = {"Istanbul", "Ankara", "Izmir", "Bursa", "Antalya", "Adana", "Konya", "Kocaeli"}
     assert not any(city in name for name in COMPANY_NAMES for city in cities)
 
 
-def test_regions_follow_turkey_geography_without_single_provinces() -> None:
-    assert list(REGION_NAMES) == EXPECTED_REGIONS
+def test_sales_areas_are_eighteen_distinct_turkish_provinces() -> None:
+    assert list(REGION_NAMES) == EXPECTED_PROVINCES
     assert len(set(REGION_NAMES)) == 18
 
 
-def test_products_have_turkish_names_and_match_the_config(pricing_config: PricingConfig) -> None:
+def test_products_have_english_names_and_match_the_config(pricing_config: PricingConfig) -> None:
     names = [name for _id, name, _family in PRODUCTS]
     assert names == [
-        "Sabit Fiyatlı",
-        "Değişken Fiyatlı (PTF+)",
-        "Yeşil Enerji (YEK-G)",
-        "Kurumsal Paket",
+        "Fixed price",
+        "Index-linked (PTF+)",
+        "Green energy (YEK-G)",
+        "Corporate bundle",
     ]
     assert set(names) == set(pricing_config.product_reference_price)
 
@@ -71,8 +71,7 @@ def test_segments_use_one_naming_convention_everywhere(
     assert config_names == SEGMENT_ORDER
     dimension = synthetic_bundle["dim_customer_segment"]
     assert tuple(dimension["customer_segment_name"]) == SEGMENT_ORDER
-    glosses = dimension.set_index("customer_segment_name")["customer_segment_en"].to_dict()
-    assert glosses == SEGMENT_GLOSS
+    assert "customer_segment_en" not in dimension.columns
 
 
 def test_prices_are_realistic_turkish_lira_per_mwh(
@@ -123,9 +122,9 @@ def test_seasonality_peaks_in_summer_and_winter(pricing_config: PricingConfig) -
     assert factors[0] > factors[4] and factors[11] > factors[4]  # winter above May
 
 
-@pytest.mark.parametrize("region", EXPECTED_REGIONS)
-def test_every_region_exists_in_the_database(region: str, analytics_db) -> None:
+@pytest.mark.parametrize("province", EXPECTED_PROVINCES)
+def test_every_province_exists_in_the_database(province: str, analytics_db) -> None:
     from energy_market_intelligence.database import query_dataframe
 
     names = set(query_dataframe(analytics_db, "SELECT region_name FROM dim_region")["region_name"])
-    assert region in names
+    assert province in names

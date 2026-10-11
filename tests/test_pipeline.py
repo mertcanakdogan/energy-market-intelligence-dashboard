@@ -94,10 +94,10 @@ def test_pipeline_pricing_metadata_matches_ground_truth(tmp_path: Path, project_
     assert 0.7 < pricing["price_realization_pct"] < 1
     assert pricing["recommended_gross_profit_change"] > 0
     assert set(pricing["breaching_regions"]) == {
-        "Ege Kuzey",
-        "Batı Akdeniz",
-        "Doğu Akdeniz",
-        "Doğu Anadolu Kuzey",
+        "Izmir",
+        "Antalya",
+        "Adana",
+        "Erzurum",
     }
 
 

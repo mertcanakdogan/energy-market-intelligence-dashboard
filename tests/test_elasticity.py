@@ -21,7 +21,11 @@ def estimates(pricing_frame: pd.DataFrame, pricing_config: PricingConfig) -> pd.
 def test_truth_lies_inside_the_confidence_interval_for_every_segment(
     estimates: pd.DataFrame,
 ) -> None:
-    assert set(estimates["customer_segment_name"]) == {"Mesken", "Ticarethane / KOBİ", "Sanayi"}
+    assert set(estimates["customer_segment_name"]) == {
+        "Residential",
+        "Commercial (SME)",
+        "Industrial",
+    }
     assert estimates["truth_in_ci"].all()
 
 
@@ -34,8 +38,8 @@ def test_estimates_are_close_to_the_known_elasticities(estimates: pd.DataFrame) 
 
 def test_segments_are_classified_as_elastic_or_inelastic(estimates: pd.DataFrame) -> None:
     labels = estimates.set_index("customer_segment_name")["classification"]
-    assert labels["Mesken"] == "elastic"
-    assert labels["Sanayi"] == "inelastic"
+    assert labels["Residential"] == "elastic"
+    assert labels["Industrial"] == "inelastic"
 
 
 def test_cross_elasticity_is_positive_and_near_truth(

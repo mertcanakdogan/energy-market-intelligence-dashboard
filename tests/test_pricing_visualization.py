@@ -56,8 +56,8 @@ def test_elasticity_and_promo_figures_include_the_truth(
     elasticity, promo = estimates
     recovery = elasticity_recovery_figure(elasticity)
     assert [trace.name for trace in recovery.data] == [
-        "Tahmin (%95 güven aralığı)",
-        "Gerçek değer (veri üreticisi)",
+        "Estimate (95% confidence interval)",
+        "True value (data generator)",
     ]
     window = (pricing_config.promotion.start_month_id, pricing_config.promotion.end_month_id)
     did = promo_did_figure(promo, treated_control_trend(pricing_frame), window)
