@@ -21,6 +21,7 @@ dependencies = [
   "pandas>=2.2,<3",
   "plotly>=5.24,<7",
   "PyYAML>=6.0,<7",
+  "statsmodels>=0.14,<1",
   "streamlit>=1.40,<2",
 ]
 
@@ -46,6 +47,7 @@ where = ["src"]
 [tool.pytest.ini_options]
 addopts = "-ra --strict-markers"
 testpaths = ["tests"]
+pythonpath = ["."]
 
 [tool.coverage.run]
 branch = true

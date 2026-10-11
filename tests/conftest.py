@@ -5,12 +5,51 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from energy_market_intelligence.synthetic_data import GeneratorConfig, generate_synthetic_data
+from energy_market_intelligence.database import build_database, query_dataframe
+from energy_market_intelligence.pricing_config import PricingConfig, load_pricing_config
+from energy_market_intelligence.pricing_data import generate_full_bundle
+from energy_market_intelligence.synthetic_data import GeneratorConfig
+from helpers import regression_frame
 
 
 @pytest.fixture(scope="session")
-def synthetic_bundle() -> dict[str, pd.DataFrame]:
-    return generate_synthetic_data(GeneratorConfig(seed=20260815))
+def project_root() -> Path:
+    return Path(__file__).resolve().parents[1]
+
+
+@pytest.fixture(scope="session")
+def pricing_config(project_root: Path) -> PricingConfig:
+    return load_pricing_config(project_root / "config" / "default.yaml")
+
+
+@pytest.fixture(scope="session")
+def synthetic_bundle(pricing_config: PricingConfig) -> dict[str, pd.DataFrame]:
+    """Market star schema plus the pricing tables, generated once per test session."""
+
+    return generate_full_bundle(GeneratorConfig(seed=20260815), pricing_config)
+
+
+@pytest.fixture(scope="session")
+def pricing_frame(synthetic_bundle: dict[str, pd.DataFrame]) -> pd.DataFrame:
+    return regression_frame(synthetic_bundle)
+
+
+@pytest.fixture(scope="session")
+def analytics_db(
+    tmp_path_factory: pytest.TempPathFactory,
+    synthetic_bundle: dict[str, pd.DataFrame],
+    project_root: Path,
+) -> Path:
+    """DuckDB database with every SQL model built from the shared bundle."""
+
+    db_path = tmp_path_factory.mktemp("analytics") / "analytics.duckdb"
+    build_database(synthetic_bundle, db_path, project_root / "sql")
+    return db_path
+
+
+@pytest.fixture(scope="session")
+def waterfall_frame(analytics_db: Path) -> pd.DataFrame:
+    return query_dataframe(analytics_db, "SELECT * FROM vw_price_waterfall")
 
 
 @pytest.fixture()
@@ -29,8 +68,3 @@ def small_fact() -> pd.DataFrame:
             "gross_margin_pct": [0.3, 3000 / 13500, 2400 / 6600, 2800 / 12880],
         }
     )
-
-
-@pytest.fixture(scope="session")
-def project_root() -> Path:
-    return Path(__file__).resolve().parents[1]

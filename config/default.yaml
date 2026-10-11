@@ -23,3 +23,100 @@ hhi_thresholds:
 
 validation:
   financial_tolerance: 0.02
+
+# ---------------------------------------------------------------------------
+# Pricing case study: Northstar price waterfall, demand model and ground truth.
+# Everything below is a public-demo construct. The "true_*" values are the
+# parameters the synthetic generator uses, so the estimators in this repo can be
+# checked against a known answer.
+# ---------------------------------------------------------------------------
+pricing:
+  # Reference list prices and unit variable costs per product (synthetic currency / MWh).
+  products:
+    Fixed Supply:    {reference_price: 76.0, unit_cost: 58.0}
+    Flexible Supply: {reference_price: 72.0, unit_cost: 56.0}
+    Renewable Blend: {reference_price: 82.0, unit_cost: 63.0}
+    Business Select: {reference_price: 78.0, unit_cost: 59.0}
+  list_price_premium: 1.15        # list price = reference price x premium (before increases)
+  cost_inflation_per_month: 0.003 # unit variable cost drifts upward every month
+  cost_of_capital_annual: 0.09    # prices payment-term cost: invoice x rate x days / 365
+  seasonality: [1.12, 1.08, 1.02, 0.96, 0.91, 0.88, 0.90, 0.94, 0.99, 1.04, 1.09, 1.15]
+
+  # Customer segments. true_elasticity is the own-price elasticity of volume with respect
+  # to POCKET price. policy_max_discount_pct is the on-invoice discount depth that the
+  # commercial policy allows for the segment.
+  segments:
+    - name: Residential
+      true_elasticity: -1.6          # elastic
+      base_discount_pct: 0.045
+      policy_max_discount_pct: 0.065
+      rebate_pct: 0.005
+      payment_terms_days: 14
+      freight_service_per_mwh: 3.2
+      unit_cost_factor: 1.00
+      volume_share: 0.38
+    - name: SME
+      true_elasticity: -1.1          # roughly unit-elastic
+      base_discount_pct: 0.085
+      policy_max_discount_pct: 0.105
+      rebate_pct: 0.020
+      payment_terms_days: 30
+      freight_service_per_mwh: 2.1
+      unit_cost_factor: 0.99
+      volume_share: 0.34
+    - name: Industrial
+      true_elasticity: -0.6          # inelastic
+      base_discount_pct: 0.145
+      policy_max_discount_pct: 0.175
+      rebate_pct: 0.045
+      payment_terms_days: 60
+      freight_service_per_mwh: 1.1
+      unit_cost_factor: 0.97
+      volume_share: 0.28
+
+  # Demand: log(volume) = region-product-segment intercept + log seasonality + trend
+  #   + true_elasticity * log(pocket / reference) + cross_elasticity * log(competitor / reference)
+  #   + log(1 + true_volume_uplift) * promo + noise
+  cross_elasticity: 0.35             # competitor price up 1% -> Northstar volume up 0.35%
+  demand_trend_per_month: 0.002
+  demand_noise_sd: 0.05
+  discount_noise_sd: 0.008           # month-level random discount noise (exogenous variation)
+
+  # Regions whose average on-invoice discount sits above policy (extra discount, fraction of list).
+  leakage_regions:
+    Western Reach: 0.045
+    Highland Zone: 0.040
+    Blue Mesa: 0.050
+    Central Basin: 0.035
+
+  # Staggered list-price increases (exogenous price variation used for identification).
+  # month_id 1 = first month of the series.
+  list_price_increases:
+    - month_id: 7
+      pct: 0.05
+      regions: [North Coast, Pine Valley, Western Reach, Central Basin, Eastern Ridge, Cedar Fields]
+    - month_id: 14
+      pct: 0.06
+      regions: [Silver Plains, Lake District, Harbor Belt, Granite Valley, Riverland, Evergreen Basin]
+    - month_id: 21
+      pct: 0.05
+      regions: [Redwood Corridor, Highland Zone, Sunrise Coast, Blue Mesa]
+    - month_id: 28
+      pct: 0.04
+      regions: [North Coast, Silver Plains, Maple Frontier]
+    # Southern Cross never changes its list price in the sample.
+
+  # Discount campaign: treated regions get an extra on-invoice discount during the window and a
+  # non-price campaign effect on volume (true_volume_uplift). All other regions are controls.
+  promotion:
+    treated_regions: [Harbor Belt, Sunrise Coast, Riverland, Eastern Ridge, Blue Mesa]
+    start_month_id: 25
+    end_month_id: 28
+    promo_discount_pct: 0.03
+    true_volume_uplift: 0.08
+
+  # Price recommendation guard rails.
+  recommendation:
+    max_price_step_pct: 0.05         # largest pocket-price move recommended in one step
+    margin_floor_pct: 0.15           # recommended pocket margin must not fall below this
+    max_volume_loss_pct: 0.05        # an increase is limited to the price where expected volume loss hits this

@@ -111,3 +111,84 @@ def validate_market_shares(
     totals = frame.groupby(group_columns, dropna=False)[share_column].sum()
     if not np.allclose(totals, 1.0, atol=1e-6):
         raise DataValidationError("market shares do not sum to 1")
+
+
+PRICING_REQUIRED_COLUMNS = {
+    "dim_customer_segment": {"customer_segment_id", "customer_segment_name", "payment_terms_days"},
+    "dim_discount_policy": {"customer_segment_id", "customer_segment_name", "max_discount_pct"},
+    "fact_pricing": {
+        "month_id",
+        "region_id",
+        "product_id",
+        "customer_segment_id",
+        "volume_mwh",
+        "promo_flag",
+        "list_price",
+        "on_invoice_discount",
+        "invoice_price",
+        "off_invoice_rebate",
+        "payment_term_cost",
+        "freight_service_cost",
+        "pocket_price",
+        "unit_variable_cost",
+        "competitor_price",
+        "list_revenue",
+        "pocket_revenue",
+        "variable_cost",
+        "gross_profit",
+    },
+}
+
+PRICING_DIMENSION_KEYS = {
+    "month_id": "dim_date",
+    "region_id": "dim_region",
+    "product_id": "dim_product",
+    "customer_segment_id": "dim_customer_segment",
+}
+PRICING_KEYS = ["month_id", "region_id", "product_id", "customer_segment_id"]
+WATERFALL_TOLERANCE = 1e-4
+
+
+def validate_pricing_bundle(bundle: Mapping[str, pd.DataFrame]) -> None:
+    """Validate the pricing fact: grain, keys, positive prices and the waterfall identity."""
+
+    for table, columns in PRICING_REQUIRED_COLUMNS.items():
+        if table not in bundle:
+            raise DataValidationError(f"Missing required table: {table}")
+        missing = columns.difference(bundle[table].columns)
+        if missing:
+            raise DataValidationError(f"{table} missing columns: {sorted(missing)}")
+    fact = bundle["fact_pricing"]
+    if fact[PRICING_KEYS].isna().any().any():
+        raise DataValidationError("fact_pricing contains a null key")
+    if fact.duplicated(PRICING_KEYS).any():
+        raise DataValidationError("fact_pricing contains duplicate grain rows")
+    for key, table_name in PRICING_DIMENSION_KEYS.items():
+        unknown = set(fact[key]).difference(bundle[table_name][key])
+        if unknown:
+            raise DataValidationError(f"fact_pricing {key} has unknown values: {sorted(unknown)[:3]}")
+    price_columns = [
+        "list_price",
+        "invoice_price",
+        "pocket_price",
+        "unit_variable_cost",
+        "competitor_price",
+    ]
+    if not np.isfinite(fact[price_columns + ["volume_mwh"]]).all().all():
+        raise DataValidationError("fact_pricing contains non-finite values")
+    if (fact[price_columns] <= 0).any().any() or (fact["volume_mwh"] <= 0).any():
+        raise DataValidationError("fact_pricing requires positive prices and volumes")
+    deductions = fact[
+        ["on_invoice_discount", "off_invoice_rebate", "payment_term_cost", "freight_service_cost"]
+    ]
+    if (deductions < 0).any().any():
+        raise DataValidationError("fact_pricing contains a negative waterfall deduction")
+    gap = fact["list_price"] - deductions.sum(axis=1) - fact["pocket_price"]
+    if gap.abs().max() > WATERFALL_TOLERANCE:
+        raise DataValidationError("price waterfall does not reconcile list price to pocket price")
+    invoice_gap = fact["list_price"] - fact["on_invoice_discount"] - fact["invoice_price"]
+    if invoice_gap.abs().max() > WATERFALL_TOLERANCE:
+        raise DataValidationError("invoice price does not equal list price less discount")
+    revenue_gap = fact["pocket_revenue"] - fact["volume_mwh"] * fact["pocket_price"]
+    if revenue_gap.abs().max() > 0.01:
+        raise DataValidationError("pocket revenue is inconsistent with volume x pocket price")
