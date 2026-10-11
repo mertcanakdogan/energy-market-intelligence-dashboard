@@ -1,4 +1,4 @@
-"""Fiyat esnekliği: segment bazında tahmin ve bilinen gerçek değer."""
+"""Price elasticity: the estimate per segment and the known true value."""
 
 import streamlit as st
 
@@ -16,9 +16,9 @@ from energy_market_intelligence.pricing_visualization import elasticity_recovery
 
 page_intro(
     "views/elasticity.py",
-    "Cebe kalan fiyat %1 arttığında satış hacminin yüzde kaç değiştiğini, müşteri segmentine "
-    "göre gösterir. Veri sentetik olduğu için gerçek değerler bilinir ve tahminin ne kadar "
-    "doğru olduğu kontrol edilebilir.",
+    "By how many percent sales volume changes when the pocket price rises 1%, for each "
+    "customer segment. The data are synthetic, so the true values are known and the accuracy "
+    "of the estimate can be checked.",
 )
 table = order_segments(load_elasticities()).reset_index(drop=True)
 
@@ -27,20 +27,20 @@ for column, row in zip(cards, table.itertuples(index=False), strict=True):
     column.metric(
         row.customer_segment_name,
         format_number(row.elasticity, 2),
-        f"%95 GA: {format_number(row.ci_low, 2)} / {format_number(row.ci_high, 2)}",
+        f"95% CI: {format_number(row.ci_low, 2)} / {format_number(row.ci_high, 2)}",
         delta_color="off",
-        help="Fiyat esnekliği tahmini. -1'den küçükse talep esnek (fiyata duyarlı), "
-        "-1'den büyükse esnek değil.",
+        help="Estimated price elasticity. Below -1 demand is elastic (price-sensitive); "
+        "above -1 it is inelastic.",
     )
 takeaway(elasticity_insight(table))
 
 show_chart(elasticity_recovery_figure(table))
 recovered = int(table["truth_in_ci"].sum())
 positive(
-    f"Bilinen gerçek esneklik, {len(table)} segmentin {recovered} tanesinde tahminin %95 güven "
-    "aralığı içinde. Veri üreticisinin gerçek parametreleri bilindiği için tahmin yöntemi "
-    "doğrudan sınanabilir.",
-    label="Model sınandı",
+    f"The known true elasticity lies inside the 95% confidence interval of the estimate in "
+    f"{recovered} of {len(table)} segments. The true parameters of the data generator are "
+    "known, so the estimation method can be tested directly.",
+    label="Model checked",
 )
 show_table(
     table[
@@ -58,16 +58,17 @@ show_table(
         ]
     ]
 )
-with st.expander("Yöntem ve varsayımlar"):
+with st.expander("Method and assumptions"):
     st.markdown(
         """
-- Her müşteri segmenti için ayrı log-log regresyon (OLS):
-  `log(hacim) ~ log(cebe kalan fiyat) + log(rakip fiyatı) + trend + ay değişkenleri +
-  bölge x ürün sabit etkileri + kampanya`.
-- Standart hatalar bölge bazında kümelenmiştir. Tahmini mümkün kılan fiyat değişimi, bölgelere
-  kademeli uygulanan liste fiyat artışlarından ve aylık rastgele indirim oynamalarından gelir.
-- Esneklik tasarım gereği sabittir. Gerçekte talep büyük fiyat değişimlerinde sabit esneklikle
-  hareket etmez ve rakipler tepki verebilir; sonuçlar küçük fiyat adımları için yerel
-  tahminlerdir.
+- A separate log-log regression (OLS, ordinary least squares) for each customer segment:
+  `log(volume) ~ log(pocket price) + log(competitor price) + trend + month dummies +
+  province x product fixed effects + promotion`.
+- Standard errors are clustered by province. The price changes that make the estimate possible
+  come from list-price increases rolled out to the provinces at different times and from random
+  monthly changes in discounts.
+- The elasticity is constant by design. In reality demand does not keep a constant elasticity
+  for large price changes, and competitors may react; the results are local estimates for small
+  price steps.
         """
     )

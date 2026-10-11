@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pandas as pd
@@ -8,39 +9,21 @@ import pytest
 from energy_market_intelligence.database import query_dataframe
 from energy_market_intelligence.elasticity import estimate_segment_elasticities
 from energy_market_intelligence.insights import (
-    competition_insight,
     elasticity_insight,
     headline_findings,
-    market_insight,
-    opportunity_insight,
-    performance_insight,
     price_waterfall_insight,
-    profitability_insight,
     promo_insight,
     pvm_insight,
     recommendation_insight,
-    scenario_insight,
 )
-from energy_market_intelligence.metrics import generate_management_observations
-from energy_market_intelligence.opportunity import calculate_opportunity_scores
 from energy_market_intelligence.price_recommendation import recommend_prices
 from energy_market_intelligence.pricing_config import PricingConfig
 from energy_market_intelligence.promotion import estimate_promo_uplift
-from energy_market_intelligence.scenario import calculate_scenario
 
 
 @pytest.fixture(scope="module")
 def views(analytics_db: Path) -> dict[str, pd.DataFrame]:
-    names = [
-        "vw_discount_policy_flags",
-        "vw_pvm_bridge_summary",
-        "vw_executive_kpis",
-        "vw_competitor_momentum",
-        "vw_regional_concentration",
-        "vw_regional_opportunity_inputs",
-        "vw_profitability_summary",
-        "vw_market_metrics",
-    ]
+    names = ["vw_discount_policy_flags", "vw_pvm_bridge_summary"]
     return {name: query_dataframe(analytics_db, f"SELECT * FROM {name}") for name in names}
 
 
@@ -52,22 +35,25 @@ def estimates(pricing_frame: pd.DataFrame, pricing_config: PricingConfig):
     )
 
 
-def test_waterfall_insight_names_the_worst_segment_and_breaching_regions(
+def test_waterfall_insight_names_the_worst_segment_and_breaching_provinces(
     waterfall_frame: pd.DataFrame, views: dict[str, pd.DataFrame]
 ) -> None:
     text = price_waterfall_insight(waterfall_frame, views["vw_discount_policy_flags"])
     realization = waterfall_frame["pocket_revenue"].sum() / waterfall_frame["list_revenue"].sum()
-    assert f"{realization * 100:.1f}".replace(".", ",") in text
-    assert "Sanayi" in text  # the segment with the widest list-to-pocket gap
-    assert "mn TL" in text
-    assert any(region in text for region in ("Ege Kuzey", "Doğu Anadolu Kuzey"))
+    assert f"the company keeps TRY {realization * 100:.1f} on average" in text
+    assert "Industrial segment" in text  # the segment with the widest list-to-pocket gap
+    assert "TRY/MWh" in text and "provinces" in text
+    assert re.search(r"costs TRY \d+\.\dm a year", text)
+    assert any(province in text for province in ("Izmir", "Erzurum"))
 
 
 def test_waterfall_insight_without_policy_breaches(
     waterfall_frame: pd.DataFrame, views: dict[str, pd.DataFrame]
 ) -> None:
     flags = views["vw_discount_policy_flags"].assign(exceeds_policy=False)
-    assert "Hiçbir bölge" in price_waterfall_insight(waterfall_frame, flags)
+    assert "No province gives discounts above the policy limit." in price_waterfall_insight(
+        waterfall_frame, flags
+    )
 
 
 def test_pvm_insight_reports_price_recovering_part_of_the_cost_increase(
@@ -75,10 +61,10 @@ def test_pvm_insight_reports_price_recovering_part_of_the_cost_increase(
 ) -> None:
     summary = views["vw_pvm_bridge_summary"]
     text = pvm_insight(summary)
-    assert "Net ciro" in text and "Brüt kâr" in text and "telafi" in text
+    assert "Net revenue" in text and "Gross profit" in text and "made up for" in text
     flipped = summary.assign(gp_cost_effect=1.0, total_gp_change=1.0, total_revenue_change=-1.0)
-    assert "telafi" not in pvm_insight(flipped)
-    assert "azaldı" in pvm_insight(flipped)
+    assert "made up for" not in pvm_insight(flipped)
+    assert "Net revenue fell by" in pvm_insight(flipped)
 
 
 def test_elasticity_and_promo_insights_state_the_truth_check(
@@ -86,12 +72,13 @@ def test_elasticity_and_promo_insights_state_the_truth_check(
 ) -> None:
     elasticity, promo = estimates
     text = elasticity_insight(elasticity)
-    assert "Mesken -1,60" in text and "Sanayi -0,61" in text
-    assert "3/3" in text
-    assert "truth_in_ci" not in elasticity_insight(elasticity.drop(columns="truth_in_ci"))
+    assert "Residential -1.60" in text and "Industrial -0.61" in text
+    assert "If prices rise 5%, volume falls about" in text
+    assert "3 of 3 segments" in text
+    assert "true values are known" not in elasticity_insight(elasticity.drop(columns="truth_in_ci"))
     promo_text = promo_insight(promo)
-    assert "%8,7" in promo_text and "%12,0" in promo_text and "%8,0" in promo_text
-    assert "Gerçek" not in promo_insight(promo.drop(columns="true_uplift"))
+    assert "8.7%" in promo_text and "12.0%" in promo_text and "8.0%" in promo_text
+    assert "true value" not in promo_insight(promo.drop(columns="true_uplift"))
 
 
 def test_recommendation_insight_and_headline_findings(
@@ -110,7 +97,7 @@ def test_recommendation_insight_and_headline_findings(
         max_volume_loss=spec.max_volume_loss_pct,
     )
     text = recommendation_insight(table)
-    assert "artar" in text and "mn TL" in text and "karar destek" in text
+    assert "gross profit rises by TRY" in text and "decision-support" in text
     findings = headline_findings(
         waterfall_frame,
         views["vw_discount_policy_flags"],
@@ -124,60 +111,22 @@ def test_recommendation_insight_and_headline_findings(
     loss = table.assign(
         expected_gross_profit_change=-1.0, price_change_pct=-0.01, expected_volume_change_pct=-0.01
     )
-    assert "azalır" in recommendation_insight(loss)
+    assert "gross profit falls by" in recommendation_insight(loss)
 
 
-def test_market_page_insights_are_computed_from_the_views(
-    views: dict[str, pd.DataFrame], pricing_config: PricingConfig, project_root: Path
+def test_sentences_write_money_as_try(
+    waterfall_frame: pd.DataFrame,
+    views: dict[str, pd.DataFrame],
+    estimates: tuple[pd.DataFrame, pd.DataFrame],
 ) -> None:
-    kpis = views["vw_executive_kpis"].iloc[0]
-    assert "Pazar hacmi" in market_insight(kpis)
-    text = competition_insight(views["vw_competitor_momentum"], views["vw_regional_concentration"])
-    assert "Pazar lideri" in text and "Enerji" in text
-    regional = (
-        views["vw_market_metrics"]
-        .groupby("date", as_index=False)[["market_volume_mwh", "focus_volume_mwh"]]
-        .sum()
+    elasticity, promo = estimates
+    text = " ".join(
+        [
+            price_waterfall_insight(waterfall_frame, views["vw_discount_policy_flags"]),
+            pvm_insight(views["vw_pvm_bridge_summary"]),
+            elasticity_insight(elasticity),
+            promo_insight(promo),
+        ]
     )
-    regional["focus_share"] = regional["focus_volume_mwh"] / regional["market_volume_mwh"]
-    assert "mevsimsellik" in performance_insight(regional)
-    summary = (
-        views["vw_profitability_summary"]
-        .groupby("region_name", as_index=False)[["revenue", "gross_profit"]]
-        .sum()
-    )
-    summary["gross_margin_pct"] = summary["gross_profit"] / summary["revenue"]
-    assert "En yüksek brüt marj" in profitability_insight(summary)
-    weights = {
-        "market_size": 0.2,
-        "market_growth": 0.2,
-        "share_gap": 0.2,
-        "momentum": 0.15,
-        "margin": 0.15,
-        "competition": 0.1,
-    }
-    scores = calculate_opportunity_scores(views["vw_regional_opportunity_inputs"], weights)
-    assert "Öncelik sıralamasında ilk bölge" in opportunity_insight(scores)
-
-
-def test_scenario_insight_direction() -> None:
-    baseline = {
-        "volume_mwh": 1000.0,
-        "revenue": 3_000_000.0,
-        "variable_cost": 2_400_000.0,
-        "gross_profit": 600_000.0,
-    }
-    gain = calculate_scenario(baseline, 5.0, -2.0, 0.0)
-    loss = calculate_scenario(baseline, 0.0, -5.0, 0.0)
-    assert "artar" in scenario_insight(gain)
-    assert "azalır" in scenario_insight(loss)
-
-
-def test_turkish_management_observations() -> None:
-    kpis = {"share_change_pp": -1.2, "market_yoy_growth_pct": 4.5, "gross_margin_change_pp": 0.8}
-    regions = pd.DataFrame({"region_name": ["Ankara"], "opportunity_score": [81.5]})
-    text = " ".join(generate_management_observations(kpis, regions, language="tr"))
-    assert "azaldı" in text and "%4,5" in text and "iyileşti" in text and "Ankara" in text
-    assert "81,5/100" in text
-    with pytest.raises(ValueError, match="language"):
-        generate_management_observations(kpis, regions, language="de")
+    assert not re.search(r"\bTL\b", text)
+    assert "\u20ba" not in text  # the lira sign

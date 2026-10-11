@@ -39,39 +39,57 @@ def test_landing_page_leads_with_the_thesis_and_the_bill(project_root: Path) -> 
     app = AppTest.from_file(str(project_root / "app.py"), default_timeout=TIMEOUT).run()
     assert not app.exception, [item.value for item in app.exception]
     assert re.fullmatch(
-        r"Liste fiyatının :red\[%\d+,\d'\w+\] müşteriye ulaşmadan kayboluyor\.", app.title[0].value
+        r"Of every TRY 100 at list price, the company keeps TRY \d+\.\d and "
+        r":red\[TRY \d+\.\d\] leaks away\.",
+        app.title[0].value,
     )
     text = " ".join(item.value for item in app.markdown)
-    assert "FATURA DÖKÜMÜ" in text
-    assert "Kaçak oranı:" in text
-    assert "kurgusal" in text and "sentetik" in text and "sabit 2025 fiyatlarıyla" in text
-    assert "Net (cebe kalan) fiyat" in text
+    assert "PRICE BREAKDOWN" in text
+    assert "Leakage rate:" in text
+    assert "fictional" in text and "synthetic" in text and "constant 2025 prices" in text
+    assert "Net (pocket) price" in text
+    assert "day-ahead market price" in text
     subheaders = [item.value for item in app.subheader]
-    assert "Modele neden güvenebilirsiniz?" in subheaders
+    assert "Why can you trust the model?" in subheaders
     # The generic metric-card row is gone; every number on the page is part of the story.
     assert not app.metric
 
 
 def test_landing_page_bill_follows_the_segment_selector(project_root: Path) -> None:
     app = AppTest.from_file(str(project_root / "app.py"), default_timeout=TIMEOUT).run()
-    app.get("button_group")[0].set_value("Sanayi").run()
+    app.get("button_group")[0].set_value("Industrial").run()
     assert not app.exception, [item.value for item in app.exception]
     text = " ".join(item.value for item in app.markdown)
-    assert "Sanayi · TL/MWh" in text
+    assert "Industrial · TRY/MWh" in text
 
 
-def test_navigation_has_two_named_sections_in_order(project_root: Path) -> None:
+def test_navigation_is_one_flat_list_of_six_pricing_pages(project_root: Path) -> None:
     specs = dashboard_support.PAGE_SPECS
-    sections = list(dict.fromkeys(spec.section for spec in specs))
-    assert sections == ["", "Fiyatlama", "Pazar"]
-    assert specs[0].path == "views/home.py"
-    assert len({spec.title for spec in specs}) == len(specs)
-    assert len({spec.url_path for spec in specs}) == len(specs)
+    assert [spec.title for spec in specs] == [
+        "Overview",
+        "Price leakage",
+        "Revenue bridge",
+        "Price sensitivity",
+        "Promotion impact",
+        "Price recommendation",
+    ]
+    assert [spec.url_path for spec in specs] == [
+        "overview",
+        "price-leakage",
+        "revenue-bridge",
+        "price-sensitivity",
+        "promotion-impact",
+        "price-recommendation",
+    ]
+    assert specs[0].path == "views/home.py" and specs[0].question == ""
+    assert not hasattr(specs[0], "section")
     for spec in specs:
         assert (project_root / spec.path).is_file()
-        assert spec.title and "_" not in spec.title and not spec.title.endswith(".py")
-        if spec.section:
+        if spec.question:
             assert spec.question.endswith("?"), spec.question
+    assert sorted(path.name for path in (project_root / "views").glob("*.py")) == sorted(
+        Path(spec.path).name for spec in specs
+    ), "every view file is a page and every page has a view file"
     assert not (project_root / "pages").exists(), "legacy pages/ directory must not return"
 
 
@@ -83,34 +101,41 @@ def test_every_page_asks_a_question_explains_itself_and_gives_a_takeaway(
     assert not app.exception
     assert app.title[0].value == dashboard_support.page_spec(page).question
     text = " ".join(item.value for item in app.markdown)
-    assert "Bu sayfa ne gösteriyor?" in text
-    if not page.endswith("scenario_analysis.py"):
-        assert "Ne anlama geliyor?" in text
+    assert "What this page shows" in text
+    assert "What it means" in text
 
 
-def test_scenario_page_supports_manual_override(project_root: Path) -> None:
+def test_price_leakage_page_filters_by_province(project_root: Path) -> None:
     app = AppTest.from_file(
-        str(project_root / "views/scenario_analysis.py"), default_timeout=TIMEOUT
+        str(project_root / "views/price_waterfall.py"), default_timeout=TIMEOUT
     ).run()
+    provinces = app.sidebar.multiselect[0]
+    assert provinces.label == "Provinces"
+    assert "Istanbul" in provinces.options
+    provinces.set_value(["Istanbul", "Ankara"]).run()
+    assert not app.exception, [item.value for item in app.exception]
+    provinces.set_value([]).run()
     assert not app.exception
-    app.radio[0].set_value("Elle girilen").run()
-    assert not app.exception
-    assert any("elle girilen" in slider.label for slider in app.select_slider)
+    assert any("Select at least one province" in item.value for item in app.info)
 
 
-def test_scenario_page_uses_estimated_elasticity_by_default(project_root: Path) -> None:
+def test_price_recommendation_page_reacts_to_the_limits(project_root: Path) -> None:
     app = AppTest.from_file(
-        str(project_root / "views/scenario_analysis.py"), default_timeout=TIMEOUT
+        str(project_root / "views/price_recommendation.py"), default_timeout=TIMEOUT
     ).run()
-    price_slider = next(
-        slider for slider in app.select_slider if slider.label == "Fiyat değişimi (%)"
-    )
-    price_slider.set_value(5.0).run()
-    assert not app.exception
-    captions = " ".join(item.value for item in app.caption)
-    assert "hacim tepkisi -" in captions
+    step = next(slider for slider in app.select_slider if slider.label == "Largest price step (%)")
+    step.set_value(2.0).run()
+    assert not app.exception, [item.value for item in app.exception]
+    app.sidebar.radio[0].set_value("Segment x province").run()
+    assert not app.exception, [item.value for item in app.exception]
     text = " ".join(item.value for item in app.markdown)
-    assert "Ne anlama geliyor?" in text
+    assert "What it means" in text and "TRY" in text
+
+
+def test_tables_show_try_millions_and_gigawatt_hours() -> None:
+    assert dashboard_support._table_rule("gross_profit", set()) == (1e6, 2, False, "(TRY m)")
+    assert dashboard_support._table_rule("volume_mwh", set()) == (1e3, 1, False, "(GWh)")
+    assert dashboard_support._table_rule("list_price", set()) == (1.0, 0, False, None)
 
 
 def test_missing_database_is_built_on_first_start(

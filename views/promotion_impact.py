@@ -1,4 +1,4 @@
-"""Kampanya etkisi: farkların farkı yöntemi."""
+"""Promotion impact: the difference-in-differences method."""
 
 import streamlit as st
 
@@ -16,9 +16,9 @@ from energy_market_intelligence.pricing_visualization import promo_did_figure
 
 page_intro(
     "views/promotion_impact.py",
-    "İndirim kampanyasının gerçekte ne kadar ek hacim yarattığını, kampanya yapılan ve "
-    "yapılmayan bölgeleri karşılaştırarak (farkların farkı, DiD) ölçer. Kampanya: "
-    "Ocak-Nisan 2025.",
+    "How much extra volume the discount promotion really created, measured by comparing "
+    "provinces with and without the promotion (difference-in-differences, DiD). Promotion: "
+    "January to April 2025.",
 )
 estimates, trend = load_promotion_results()
 promo = load_pricing_config().promotion
@@ -28,31 +28,34 @@ naive = by_method.loc["naive"]
 
 cards = st.columns(3)
 cards[0].metric(
-    "Fiyat düzeltmeli etki",
+    "Price-adjusted effect",
     format_pct(adjusted["uplift"]),
-    f"%95 GA: {format_pct(adjusted['ci_low'])} / {format_pct(adjusted['ci_high'])}",
+    f"95% CI: {format_pct(adjusted['ci_low'])} / {format_pct(adjusted['ci_high'])}",
     delta_color="off",
-    help="Kampanya indiriminin ve liste fiyat farklarının etkisi çıkarıldıktan sonra kalan "
-    "ek hacim.",
+    help="Extra volume left once the effect of the promotion discount and of list-price "
+    "differences is taken out.",
 )
 cards[1].metric(
-    "Basit karşılaştırma",
+    "Simple comparison",
     format_pct(naive["uplift"]),
-    help="Önce/sonra ve kampanyalı/kampanyasız farkı; fiyat etkisini de içerdiği için şişkindir.",
+    help="Before/after and with/without-promotion difference; it is too high because it also "
+    "includes the effect of price.",
 )
 cards[2].metric(
-    "Gerçek etki (veri üreticisi)",
+    "True effect (data generator)",
     format_pct(adjusted["true_uplift"]),
-    help="Sentetik veride kullanılan gerçek ek hacim etkisi.",
+    help="The true extra-volume effect used to generate the synthetic data.",
 )
 takeaway(promo_insight(estimates))
 
 show_chart(promo_did_figure(estimates, trend, (promo.start_month_id, promo.end_month_id)))
 st.write(
-    f"Kampanya bölgesi: {adjusted['treated_regions']}; kontrol bölgesi: "
-    f"{adjusted['control_regions']}; kampanya ayları: {promo.start_month_id}-{promo.end_month_id} "
-    "(Ocak-Nisan 2025). Basit tahmin, kampanya indiriminin ve liste fiyat artışlarının hacme "
-    "yaptığı etkiyi de saydığı için kampanyanın ek etkisini olduğundan yüksek gösterir."
+    f"The promotion ran in {adjusted['treated_regions']} provinces; "
+    f"{adjusted['control_regions']} provinces without it are the control group. Promotion "
+    f"months: {promo.start_month_id} to {promo.end_month_id} on the month axis (January to "
+    "April 2025). The simple estimate "
+    "overstates the extra effect of the promotion, because it also counts the effect of the "
+    "promotion discount and the list-price increases on volume."
 )
 show_table(
     estimates[
@@ -70,14 +73,16 @@ show_table(
     ],
     fractions={"uplift", "ci_low", "ci_high", "true_uplift", "abs_error"},
 )
-with st.expander("Yöntem ve varsayımlar"):
+with st.expander("Method and assumptions"):
     st.markdown(
         """
-- Öncesi: kampanyadan önceki aylar. Sonrası: kampanya ayları. Sonraki aylar dışarıda bırakılır.
-- Fiyat düzeltmeli model: iki yönlü sabit etkiler (bölge x ürün x segment ve ay), segmente özel
-  cebe kalan fiyat eğimi ve rakip fiyatı; standart hatalar bölge bazında kümelenmiştir.
-- Temel varsayım: kampanya olmasaydı, fiyat hesaba katıldığında kampanya ve kontrol bölgeleri
-  paralel seyredecekti. Bölgeler rastgele değil veri üreticisi tarafından seçildiği için bu
-  varsayım gerçek veride mutlaka kontrol edilmelidir.
+- Before: the months before the promotion. After: the promotion months. Later months are left
+  out.
+- Price-adjusted model: two-way fixed effects (province x product x segment, and month), a
+  pocket-price slope for each segment and the competitor price; standard errors are clustered
+  by province.
+- Key assumption: without the promotion, and once price is taken into account, the promotion
+  and control provinces would have moved in parallel. The provinces were chosen by the data
+  generator, not at random, so this assumption must be checked on real data.
         """
     )

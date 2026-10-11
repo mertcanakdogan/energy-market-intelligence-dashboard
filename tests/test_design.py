@@ -1,7 +1,8 @@
-"""Design system: tokens, Plotly template, fatura dökümü and the landing-page answers."""
+"""Design system: tokens, Plotly template, price breakdown and the landing-page answers."""
 
 from __future__ import annotations
 
+import re
 import tomllib
 from pathlib import Path
 
@@ -17,11 +18,7 @@ from energy_market_intelligence.insights import (
     leakage_answer,
     leakage_thesis,
 )
-from energy_market_intelligence.localization import (
-    SEGMENT_ORDER,
-    accusative_suffix,
-    format_pct_accusative,
-)
+from energy_market_intelligence.localization import SEGMENT_ORDER
 from energy_market_intelligence.price_recommendation import recommend_prices
 from energy_market_intelligence.pricing_visualization import (
     DEDUCTION_LABELS,
@@ -60,7 +57,7 @@ def test_fonts_are_loaded_through_the_native_theme_options(theme: dict) -> None:
 def test_plotly_template_is_registered_once_and_is_the_default() -> None:
     assert pio.templates.default == visualization.TEMPLATE_NAME
     layout = pio.templates[visualization.TEMPLATE_NAME].layout
-    assert layout.separators == ",."
+    assert layout.separators == ".,"  # English: decimal point, comma thousands
     assert layout.paper_bgcolor == "rgba(0,0,0,0)"
     assert layout.colorway[0] == NAVY
     # Red and green are reserved for leakage and gains, so they never serve as series colours.
@@ -96,7 +93,7 @@ def test_segment_bill_differs_from_the_portfolio(
 
 def test_unknown_segment_is_rejected(waterfall_frame: pd.DataFrame) -> None:
     with pytest.raises(ValueError, match="No price waterfall rows"):
-        portfolio_bill(waterfall_frame, "Yok")
+        portfolio_bill(waterfall_frame, "Unknown")
 
 
 def test_bill_html_shows_displayed_amounts_that_add_up(waterfall_frame: pd.DataFrame) -> None:
@@ -108,7 +105,12 @@ def test_bill_html_shows_displayed_amounts_that_add_up(waterfall_frame: pd.DataF
             abs(shown - line.amount) < 0.02 for shown, line in zip(amounts, bill.lines, strict=True)
         )
     html = style.bill_html(portfolio_bill(waterfall_frame))
-    assert "FATURA DÖKÜMÜ" in html and "Kaçak oranı:" in html
+    assert "PRICE BREAKDOWN" in html and "Leakage rate:" in html
+    assert 'class="bill"' in html and "bill-head" in html and "bill-foot" in html
+    assert "TRY/MWh · 2025" in html
+    assert 'aria-label="Price breakdown, Whole portfolio"' in html
+    assert 'aria-label="percentage of list price"' in html
+    assert ".bill {" in style.GLOBAL_CSS and ".bill-title" in style.GLOBAL_CSS
     assert html.count("fl--deduction") == 4 and html.count("fl--net") == 1
     assert html.count("−") >= 8  # operator and sign of each deduction
     assert "\n" not in html, "blank lines or indentation would break the Markdown block"
@@ -135,7 +137,7 @@ def test_segment_waterfall_uses_bill_labels_and_semantic_colours(
 def test_trust_strip_lists_every_segment_with_the_true_value() -> None:
     table = pd.DataFrame(
         {
-            "customer_segment_name": ["Sanayi", "Mesken"],
+            "customer_segment_name": ["Industrial", "Residential"],
             "elasticity": [-0.61, -1.6],
             "ci_low": [-0.68, -1.76],
             "ci_high": [-0.53, -1.44],
@@ -144,43 +146,22 @@ def test_trust_strip_lists_every_segment_with_the_true_value() -> None:
         }
     )
     html = style.trust_strip_html(table)
-    assert html.index("Mesken") < html.index("Sanayi")
-    assert "-1,60" in html and "-0,61" in html
+    assert html.index("Residential") < html.index("Industrial")
+    assert "-1.60" in html and "-0.61" in html
     assert html.count("tv-trust-ok") == 1
-    assert "aralığın dışında" in html
+    assert "True value is outside the interval" in html
+    assert "True value is inside the interval" in html
+    assert "95% interval" in html and "Estimate" in html and "Open diamond: true value." in html
 
 
 def test_callouts_escape_html(monkeypatch: pytest.MonkeyPatch) -> None:
     captured: list[str] = []
     monkeypatch.setattr(style.st, "markdown", lambda body, **_: captured.append(body))
-    style.callout("breach", "Etiket", "<script>x</script>")
-    style.callout("takeaway", "Ne anlama geliyor?", "metin")
+    style.callout("breach", "Label", "<script>x</script>")
+    style.callout("takeaway", "What it means", "text")
     assert "<script>" not in captured[0] and "&lt;script&gt;" in captured[0]
     assert "tv-callout--breach" in captured[0]
     assert 'class="tv-callout"' in captured[1]
-
-
-@pytest.mark.parametrize(
-    ("fraction", "expected"),
-    [
-        (0.148, "%14,8'i"),
-        (0.142, "%14,2'yi"),
-        (0.143, "%14,3'ü"),
-        (0.146, "%14,6'yı"),
-        (0.149, "%14,9'u"),
-        (0.10, "%10,0'ı"),
-    ],
-)
-def test_percent_gets_the_right_turkish_suffix(fraction: float, expected: str) -> None:
-    assert format_pct_accusative(fraction) == expected
-
-
-@pytest.mark.parametrize(
-    ("number", "suffix"),
-    [("10", "u"), ("20", "i"), ("40", "ı"), ("100", "ü"), ("90", "ı"), ("7", "yi"), ("", "i")],
-)
-def test_round_numbers_use_the_tens_word(number: str, suffix: str) -> None:
-    assert accusative_suffix(number) == suffix
 
 
 def test_landing_answers_are_computed_from_the_data(
@@ -193,16 +174,21 @@ def test_landing_answers_are_computed_from_the_data(
 
     bill = portfolio_bill(waterfall_frame)
     thesis = leakage_thesis(bill.leakage_rate)
-    assert thesis.startswith("Liste fiyatının %") and thesis.endswith("kayboluyor.")
+    assert thesis.startswith("Of every TRY 100 at list price, the company keeps TRY ")
+    assert thesis.endswith("leaks away.")
+    assert ":red[" not in thesis
     assert leakage_thesis(bill.leakage_rate, highlight=True).count(":red[") == 1
+    assert leakage_thesis(0.148) == (
+        "Of every TRY 100 at list price, the company keeps TRY 85.2 and TRY 14.8 leaks away."
+    )
 
     flags = query_dataframe(analytics_db, "SELECT * FROM vw_discount_policy_flags")
     answer = leakage_answer(bill, flags)
-    assert f"{int(flags['exceeds_policy'].sum())} bölge-segment çifti" in answer
-    assert "fatura içi iskonto" in answer  # the largest deduction of the synthetic portfolio
+    assert f"{int(flags['exceeds_policy'].sum())} province-segment pairs" in answer
+    assert "on-invoice discount" in answer  # the largest deduction of the synthetic portfolio
 
     summary = query_dataframe(analytics_db, "SELECT * FROM vw_pvm_bridge_summary")
-    assert "Net ciro" in bridge_answer(summary) and "birim maliyet" in bridge_answer(summary)
+    assert "Net revenue" in bridge_answer(summary) and "unit-cost" in bridge_answer(summary)
 
     elasticities = estimate_segment_elasticities(
         regression_frame(synthetic_bundle), pricing_config.true_elasticities
@@ -215,43 +201,36 @@ def test_landing_answers_are_computed_from_the_data(
         guard.margin_floor_pct,
         max_volume_loss=guard.max_volume_loss_pct,
     )
-    assert "brüt kâr yılda" in action_answer(table)
+    assert "gross profit could rise by TRY" in action_answer(table)
+    assert re.search(r"a year \(\+\d+\.\d%\)\.$", action_answer(table))
 
 
-def test_table_cells_use_turkish_separators_whatever_the_browser_locale() -> None:
-    from dashboard_support import turkish_formatter
+def test_table_cells_use_english_separators_whatever_the_browser_locale() -> None:
+    from dashboard_support import cell_formatter
 
-    assert turkish_formatter(2)(2.784) == "2,78"
-    assert turkish_formatter(0)(3180.47) == "3.180"
-    assert turkish_formatter(2, percent=True)(0.0928) == "%9,28"
-    assert turkish_formatter(2, percent=True)(0.084) == "%8,40"
-    assert turkish_formatter(2)(float("nan")) == "–"
+    assert cell_formatter(2)(2.784) == "2.78"
+    assert cell_formatter(0)(3180.47) == "3,180"
+    assert cell_formatter(2)(-1234.5) == "-1,234.50"
+    assert cell_formatter(2, percent=True)(0.0928) == "9.28%"
+    assert cell_formatter(2, percent=True)(0.084) == "8.40%"
+    assert cell_formatter(2)(float("nan")) == "–"
+    assert cell_formatter(2)(None) == "–"
 
 
 def test_callouts_use_a_top_rule_not_a_side_stripe() -> None:
     assert "border-left" not in style.GLOBAL_CSS
 
 
-def test_percent_axes_put_the_sign_first() -> None:
-    import plotly.graph_objects as go
-
-    figure = go.Figure(go.Bar(x=["a", "b"], y=[0.031, 0.104]))
-    visualization.percent_axis(figure, "y")
-    assert figure.layout.yaxis.ticktext[0] == "%0"
-    assert all(label.startswith("%") for label in figure.layout.yaxis.ticktext)
-    assert max(figure.layout.yaxis.tickvals) >= 0.104
-
-
-def test_unformatted_axes_get_turkish_months_and_thousands() -> None:
+def test_unformatted_axes_get_english_months_and_thousands() -> None:
     import plotly.express as px
 
     frame = pd.DataFrame(
         {"month": pd.date_range("2024-01-01", periods=3, freq="MS"), "mwh": [1500, 2500, 4000]}
     )
-    figure = visualization.turkish_axes(px.line(frame, x="month", y="mwh"))
-    assert figure.layout.xaxis.tickformat == "%m/%Y"
+    figure = visualization.format_axes(px.line(frame, x="month", y="mwh"))
+    assert figure.layout.xaxis.tickformat == "%b %Y"  # "Jan 2025"
     assert figure.layout.yaxis.tickformat == ",~f"
-    bars = visualization.turkish_axes(
+    bars = visualization.format_axes(
         px.bar(x=["a", "b"], y=[0.1, 0.2]).update_yaxes(tickformat=".0%")
     )
     assert bars.layout.xaxis.tickformat is None

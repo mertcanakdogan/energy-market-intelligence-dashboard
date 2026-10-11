@@ -1,4 +1,4 @@
-"""Landing page: the thesis, the fatura dökümü, three questions and the proof the model works."""
+"""Landing page: the thesis, the price breakdown, three questions and the proof the model works."""
 
 import streamlit as st
 
@@ -44,33 +44,33 @@ portfolio = portfolio_bill(waterfall)
 with st.container(key="hero"):
     st.title(leakage_thesis(portfolio.leakage_rate, highlight=True))
     style.lead(
-        f"{FOCUS_COMPANY} kurgusal bir elektrik perakendecisidir ve tüm veriler sentetiktir; "
-        "tutarlar TL cinsinden, sabit 2025 fiyatlarıyla gösterilir."
+        f"{FOCUS_COMPANY} is a fictional electricity retailer and all data are synthetic. "
+        "Amounts are in TRY at constant 2025 prices."
     )
 
-# 2. The fatura dökümü next to the waterfall it summarises.
+# 2. The price breakdown next to the waterfall it summarises.
 segments = [name for name in SEGMENT_ORDER if name in set(waterfall["customer_segment_name"])]
 scope = st.segmented_control(
-    "Fatura dökümünün kapsamı", [PORTFOLIO, *segments], default=PORTFOLIO, key="home_scope"
+    "Scope of the price breakdown", [PORTFOLIO, *segments], default=PORTFOLIO, key="home_scope"
 )
 bill = portfolio_bill(waterfall, None if scope in (None, PORTFOLIO) else scope)
 left, right = st.columns([6, 5], gap="large")
 with left:
     st.markdown(style.bill_html(bill), unsafe_allow_html=True)
 with right:
-    st.markdown("**Liste fiyatından net fiyata** (TL/MWh)")
+    st.markdown("**From list price to net price** (TRY/MWh)")
     show_chart(
         bill_waterfall_figure(bill),
-        alt=f"Liste fiyatından net fiyata kalemler, TL/MWh ({bill.scope})",
+        alt=f"Items from list price to net price, TRY/MWh ({bill.scope})",
     )
-    st.caption("Eksen kesiktir: kalemler arasındaki fark okunabilsin diye sıfırdan başlamaz.")
+    st.caption("The axis does not start at zero, so the gaps between the items stay readable.")
 
 # 3. Three questions, each with its one-line answer.
-st.subheader("Üç soru, veriyle cevap")
+st.subheader("Three questions, answered with data")
 cards = (
     ("views/price_waterfall.py", None, leakage_answer(portfolio, flags)),
     ("views/pvm_bridge.py", None, bridge_answer(pvm_summary)),
-    ("views/price_recommendation.py", "Ne yapmalı?", action_answer(recommendation)),
+    ("views/price_recommendation.py", "What should the company do?", action_answer(recommendation)),
 )
 for index, (column, (path, label, answer)) in enumerate(
     zip(st.columns(3, gap="medium"), cards, strict=True)
@@ -80,48 +80,52 @@ for index, (column, (path, label, answer)) in enumerate(
         style.answer(answer)
 
 # 4. Why the model can be trusted: true versus estimated elasticity.
-st.subheader("Modele neden güvenebilirsiniz?")
+st.subheader("Why can you trust the model?")
 recovered = int(elasticities["truth_in_ci"].sum())
 st.write(
-    "Veri sentetik olduğu için gerçek fiyat esneklikleri bilinir; model onları görmeden tahmin "
-    f"eder. {len(elasticities)} segmentin {recovered} tanesinde gerçek değer tahminin %95 güven "
-    "aralığının içinde kalır."
+    "The data are synthetic, so the true price elasticities are known; the model estimates them "
+    f"without seeing them. In {recovered} of {len(elasticities)} segments the true value lies "
+    "inside the 95% confidence interval of the estimate."
 )
 st.markdown(style.trust_strip_html(elasticities), unsafe_allow_html=True)
 st.page_link("views/elasticity.py", label=page_spec("views/elasticity.py").question)
 
-with st.expander("Terimler sözlüğü (bu sayfalarda geçen kavramlar)"):
+with st.expander("Glossary (terms used in this app)"):
     st.markdown(
         """
-- **Liste fiyatı:** Fiyat listesinde yazan birim fiyat (TL/MWh).
-- **Fatura dökümü:** Liste fiyatından net fiyata inen kalemlerin fatura gibi sıralanmış hâli.
-- **Fatura içi iskonto:** Faturada liste fiyatın üzerinden düşülen indirim.
-- **Fatura dışı prim:** Fatura kesildikten sonra geri ödenen prim ve iskontolar.
-- **Net (cebe kalan) fiyat:** Liste fiyatından tüm indirimler, primler, vade ve nakliye maliyeti
-  düşüldükten sonra şirketin gerçekte eline geçen birim fiyat.
-- **Kaçak oranı:** Liste fiyatının müşteriye ulaşmadan kaybolan kısmı: 1 - net fiyat / liste fiyatı.
-- **Fiyat gerçekleşme oranı:** Net ciro / liste fiyatlı ciro (kaçak oranının tamamlayıcısı).
-- **Politika üstü indirim:** Bir segment için izin verilen indirim sınırını aşan kısım.
-- **PVM köprüsü (fiyat-hacim-karışım):** Ciro veya kârdaki değişimi fiyat, satılan hacim, ürün ve
-  müşteri karışımı ile maliyet etkisine ayıran analiz.
-- **Fiyat esnekliği:** Fiyat %1 artınca hacmin yüzde kaç değiştiği. -1,6 ise %1 zam hacmi yaklaşık
-  %1,6 düşürür. -1'den küçükse (örneğin -1,6) talep *esnek*, -1'den büyükse (örneğin -0,6)
-  talep *esnek değil*, yani fiyata az duyarlıdır.
-- **Farkların farkı (DiD):** Kampanya yapılan bölgelerin, kampanya yapılmayan bölgelere göre
-  ek değişimini ölçerek kampanyanın gerçek etkisini ayıklayan yöntem.
-- **Güven aralığı (GA):** Tahminin makul olarak yer alabileceği aralık; %95 GA geniş ise
-  tahmin belirsizdir.
-- **Brüt kâr / brüt marj:** Net ciro eksi enerji (değişken) maliyeti; marj bunun ciroya oranı.
-- **Sabit 2025 fiyatları:** Tüm TL tutarlar enflasyondan arındırılmıştır; yıllar arası
-  karşılaştırmada fiyat düzeyi etkisi yoktur.
-- **MWh / GWh / TWh:** Megawatt-saat; 1 GWh = 1.000 MWh, 1 TWh = 1.000 GWh.
-- **PTF, YEK-G:** PTF piyasa takas fiyatı (toptan elektrik fiyatı); YEK-G yenilenebilir enerji
-  kaynak garantisi belgesidir.
+- **List price:** the unit price on the price list (TRY/MWh).
+- **Price breakdown:** the steps from list price to net price, listed like the lines of a bill.
+- **On-invoice discount:** a discount taken off the list price on the invoice itself.
+- **Off-invoice rebate:** money paid back to the customer after the invoice, such as rebates
+  and bonuses.
+- **Net (pocket) price:** the unit price the company really keeps after all discounts, rebates,
+  payment-term costs and service and freight costs.
+- **Leakage rate:** the part of the list price that the company does not keep:
+  1 - net price / list price.
+- **Price realisation:** net revenue / revenue at list price (100% minus the leakage rate).
+- **Above-policy discount:** the part of a discount that goes above the limit set for a segment.
+- **PVM (price-volume-mix) bridge:** splits a change in revenue or profit into the effects of
+  price, volume sold, the mix of products and customers, and cost.
+- **Price elasticity:** the percent change in volume when the price rises 1%. At -1.6, a 1%
+  price rise cuts volume by about 1.6%. Below -1 (for example -1.6) demand is *elastic*; between
+  -1 and 0 (for example -0.6) it is *inelastic*, that is, less sensitive to price.
+- **Difference-in-differences (DiD):** measures the true effect of a promotion by comparing the
+  change in the promotion provinces with the change in provinces without the promotion.
+- **Confidence interval (CI):** the range in which the true value plausibly lies; a wide 95% CI
+  means the estimate is uncertain.
+- **Gross profit / gross margin:** net revenue minus energy (variable) cost; the margin is gross
+  profit as a share of net revenue.
+- **Constant 2025 prices:** all TRY amounts are adjusted for inflation, so years can be compared
+  without the effect of rising price levels.
+- **MWh / GWh / TWh:** megawatt-hour; 1 GWh = 1,000 MWh and 1 TWh = 1,000 GWh.
+- **PTF, YEK-G:** PTF is Turkey's day-ahead market price for electricity (the wholesale
+  price); the product name "Index-linked (PTF+)" refers to a tariff linked to it. YEK-G is a
+  renewable-energy guarantee certificate; "Green energy (YEK-G)" is a tariff backed by it.
         """
     )
 
 note(
-    "Bu uygulamadaki tüm veriler ve iş mantığı kamuya açık bir gösterim için yeniden "
-    "tasarlanmıştır. Uygulama otomatik ticari karar vermez.",
-    label="Gösterim amaçlıdır",
+    "All data and business logic in this app were redesigned for a public demonstration. "
+    "The app does not make automatic business decisions.",
+    label="For demonstration only",
 )

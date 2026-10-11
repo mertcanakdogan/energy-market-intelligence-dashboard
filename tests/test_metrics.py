@@ -7,7 +7,6 @@ from energy_market_intelligence.metrics import (
     add_growth_metrics,
     add_rolling_metrics,
     calculate_company_market_share,
-    generate_management_observations,
     safe_divide,
 )
 
@@ -49,19 +48,3 @@ def test_rolling_metrics_use_requested_windows() -> None:
     frame = pd.DataFrame({"group": ["a"] * 4, "date": range(4), "value": [1.0, 2.0, 3.0, 4.0]})
     result = add_rolling_metrics(frame, "value", ["group"], windows=(3,))
     assert result["value_rolling_3"].tolist() == [1.0, 1.5, 2.0, 3.0]
-
-
-def test_management_observations_are_metric_derived() -> None:
-    kpis = {"share_change_pp": 1.2, "market_yoy_growth_pct": 4.5, "gross_margin_change_pp": -0.8}
-    regions = pd.DataFrame(
-        {
-            "region_name": ["R1"],
-            "market_growth": [0.08],
-            "focus_share": [0.12],
-            "opportunity_score": [80],
-        }
-    )
-    text = " ".join(generate_management_observations(kpis, regions))
-    assert "1.2 pp" in text
-    assert "4.5%" in text
-    assert "R1" in text

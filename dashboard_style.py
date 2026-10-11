@@ -1,9 +1,9 @@
 """Visual layer of the Streamlit app: one CSS block and the small HTML components.
 
-The design follows docs/DESIGN.md. Colours each carry one meaning: lacivert (navy) for prices and
-headings, kaçak kırmızısı (red) only for deductions, leakage and policy breaches, sertifika
-yeşili (green) only for gains and positive outcomes. The web fonts are loaded by Streamlit from
-``.streamlit/config.toml``; this module only refers to them by name.
+The design follows docs/DESIGN.md. Colours each carry one meaning: grid navy for prices and
+headings, leak red only for deductions, leakage and policy breaches, certificate green only for
+gains and positive outcomes, transformer grey for secondary text. The web fonts are loaded by
+Streamlit from ``.streamlit/config.toml``; this module only refers to them by name.
 """
 
 from __future__ import annotations
@@ -66,21 +66,21 @@ h2, h3 {letter-spacing: 0;}
 .tv-callout--gain {border-top-color: var(--tv-gain);}
 .tv-callout--gain .tv-label {color: var(--tv-gain);}
 
-/* The signature: fatura dökümü (bill-style itemisation). */
-.fatura {
+/* The signature: the price breakdown (bill-style itemisation). */
+.bill {
   background: #FFFFFF; border: 1px solid var(--tv-rule); border-top: 4px solid var(--tv-navy);
   padding: 1rem 1.3rem 1.1rem; max-width: 36rem; color: var(--tv-ink);
   container-type: inline-size;
 }
-.fatura-head {
+.bill-head {
   display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap;
   gap: 0.2rem 1rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--tv-rule);
 }
-.fatura-title {
+.bill-title {
   font-family: var(--tv-head); font-weight: 700; letter-spacing: 0.16em; font-size: 1.1rem;
   color: var(--tv-navy);
 }
-.fatura-meta {font-size: 0.875rem; color: var(--tv-slate);}
+.bill-meta {font-size: 0.875rem; color: var(--tv-slate);}
 .fl {display: flex; align-items: baseline; gap: 0.45rem; padding: 0.42rem 0; font-size: 1.05rem;}
 .fl-op {
   flex: 0 0 0.9rem; font-family: var(--tv-mono); color: var(--tv-slate); text-align: center;
@@ -106,10 +106,10 @@ h2, h3 {letter-spacing: 0;}
 .fl--net .fl-op, .fl--net .fl-pct {color: var(--tv-navy);}
 .fl--net .fl-amt {font-weight: 600;}
 @container (min-width: 27rem) {.fl--net .fl-label {white-space: nowrap;}}
-.fatura-foot {margin: 0.65rem 0 0; font-size: 0.92rem; color: var(--tv-slate);}
-.fatura-foot b {color: var(--tv-leak); font-family: var(--tv-mono); font-weight: 600;}
+.bill-foot {margin: 0.65rem 0 0; font-size: 0.92rem; color: var(--tv-slate);}
+.bill-foot b {color: var(--tv-leak); font-family: var(--tv-mono); font-weight: 600;}
 /* The bill sits in a column, so it adapts to its own width, not the viewport's. */
-@media (max-width: 520px) {.fatura {padding: 0.9rem 0.9rem 1rem;}}
+@media (max-width: 520px) {.bill {padding: 0.9rem 0.9rem 1rem;}}
 @container (max-width: 27rem) {
   .fl {font-size: 1rem;}
   .fl--net {font-size: 1.1rem;}
@@ -223,7 +223,7 @@ def bill_display_amounts(bill: Bill) -> list[float]:
 
 
 def bill_html(bill: Bill) -> str:
-    """The "fatura dökümü": per-MWh itemisation with dotted leaders and tabular amounts."""
+    """The "price breakdown": per-MWh itemisation with dotted leaders and tabular amounts."""
 
     amounts = bill_display_amounts(bill)
     rows = []
@@ -237,15 +237,15 @@ def bill_html(bill: Bill) -> str:
             f'<span class="fl-label">{_html(line.label)}</span>'
             '<span class="fl-dots" aria-hidden="true"></span>'
             f'<span class="fl-amt">{sign}{format_number(amount, 2)}</span>'
-            f'<span class="fl-pct" aria-label="liste fiyatın yüzdesi">{share}</span>'
+            f'<span class="fl-pct" aria-label="percentage of list price">{share}</span>'
             "</div>"
         )
     return (
-        f'<section class="fatura" aria-label="Fatura dökümü, {_html(bill.scope)}">'
-        '<div class="fatura-head"><span class="fatura-title">FATURA DÖKÜMÜ</span>'
-        f'<span class="fatura-meta">{_html(bill.scope)} · TL/MWh · 2025</span></div>'
+        f'<section class="bill" aria-label="Price breakdown, {_html(bill.scope)}">'
+        '<div class="bill-head"><span class="bill-title">PRICE BREAKDOWN</span>'
+        f'<span class="bill-meta">{_html(bill.scope)} · TRY/MWh · 2025</span></div>'
         + "".join(rows)
-        + f'<div class="fatura-foot">Kaçak oranı: <b>{format_pct(bill.leakage_rate, 1)}</b></div>'
+        + f'<div class="bill-foot">Leakage rate: <b>{format_pct(bill.leakage_rate, 1)}</b></div>'
         "</section>"
     )
 
@@ -269,7 +269,9 @@ def trust_strip_html(table: pd.DataFrame) -> str:
     cards = []
     for row in ordered.itertuples(index=False):
         verdict = (
-            "Gerçek değer aralığın içinde" if row.truth_in_ci else "Gerçek değer aralığın dışında"
+            "True value is inside the interval"
+            if row.truth_in_ci
+            else "True value is outside the interval"
         )
         verdict_class = "tv-trust-ok" if row.truth_in_ci else "tv-trust-row"
         width = place(row.ci_high) - place(row.ci_low)
@@ -282,15 +284,15 @@ def trust_strip_html(table: pd.DataFrame) -> str:
             f'<span class="tv-scale-est" style="left:{place(row.elasticity):.1f}%"></span>'
             f'<span class="tv-scale-true" style="left:{place(row.true_elasticity):.1f}%"></span>'
             "</div>"
-            f"{_row('Gerçek', format_number(row.true_elasticity, 2))}"
-            f"{_row('Tahmin', format_number(row.elasticity, 2))}"
-            f"{_row('%95 aralık', f'{format_number(row.ci_low, 2)} / {format_number(row.ci_high, 2)}')}"
+            f"{_row('True', format_number(row.true_elasticity, 2))}"
+            f"{_row('Estimate', format_number(row.elasticity, 2))}"
+            f"{_row('95% interval', f'{format_number(row.ci_low, 2)} / {format_number(row.ci_high, 2)}')}"
             f'<div class="{verdict_class}">{verdict}</div>'
             "</div>"
         )
     legend = (
-        '<div class="tv-legend">Dolu daire: tahmin. Açık baklava: gerçek değer. '
-        "Açık mavi şerit: %95 güven aralığı. Esneklik: fiyat %1 artınca hacmin yüzde kaç "
-        "değiştiği.</div>"
+        '<div class="tv-legend">Filled dot: estimate. Open diamond: true value. '
+        "Light blue band: 95% confidence interval. Elasticity: the percent change in volume "
+        "when the price rises 1%.</div>"
     )
     return f'<div class="tv-trust">{"".join(cards)}</div>{legend}'

@@ -1,4 +1,4 @@
-"""Fiyat şelalesi: liste fiyattan cebe kalan fiyata."""
+"""Price waterfall: from list price to pocket price, and the discount-policy check."""
 
 import plotly.express as px
 import streamlit as st
@@ -17,7 +17,7 @@ from energy_market_intelligence.localization import (
     SEGMENT_ORDER,
     format_number,
     format_pct,
-    format_tl,
+    format_try,
 )
 from energy_market_intelligence.pricing_visualization import (
     DEDUCTION_LABELS,
@@ -29,21 +29,20 @@ from energy_market_intelligence.visualization import (
     LEAK_RED,
     NAVY,
     apply_business_theme,
-    percent_axis,
 )
 
 page_intro(
     "views/price_waterfall.py",
-    "Bir MWh elektriğin liste fiyatından, indirimler, iskontolar, vade ve servis maliyetleri "
-    "düşüldükten sonra şirketin eline geçen (cebe kalan) fiyata nasıl inildiğini gösterir. "
-    "Veri: 2025.",
+    "How the list price of one MWh of electricity comes down to the price the company really "
+    "keeps (the pocket price) once discounts, rebates, payment terms and service costs are "
+    "taken off. Data: 2025.",
 )
 detail = load_view("vw_price_waterfall")
 flags = load_view("vw_discount_policy_flags")
 regions = select_regions(detail, key="waterfall_regions")
 selected = detail[detail["region_name"].isin(regions)]
 if selected.empty:
-    st.info("En az bir bölge seçin.")
+    st.info("Select at least one province.")
     st.stop()
 
 list_revenue = selected["list_revenue"].sum()
@@ -52,58 +51,61 @@ volume = selected["volume_mwh"].sum()
 selected_flags = flags[flags["region_name"].isin(regions)]
 cards = st.columns(4)
 cards[0].metric(
-    "Liste fiyat (TL/MWh)",
+    "List price (TRY/MWh)",
     format_number(list_revenue / volume, 0),
-    help="Hacim ağırlıklı ortalama liste fiyat.",
+    help="Volume-weighted average list price.",
 )
 cards[1].metric(
-    "Cebe kalan (TL/MWh)",
+    "Pocket price (TRY/MWh)",
     format_number(pocket_revenue / volume, 0),
-    help="Tüm indirim ve maliyet kalemleri düşüldükten sonra kalan hacim ağırlıklı fiyat.",
+    help="Volume-weighted price left after all discounts and cost items are taken off.",
 )
 cards[2].metric(
-    "Fiyat gerçekleşme",
+    "Price realisation",
     format_pct(pocket_revenue / list_revenue),
-    help="Cebe kalan ciro / liste fiyatlı ciro.",
+    help="Pocket revenue / revenue at list price.",
 )
 cards[3].metric(
-    "Politika üstü indirim",
-    format_tl(selected_flags["revenue_leakage_above_policy"].sum()),
-    help="Her segment için izin verilen indirim oranının üstünde verilen indirimin yıllık tutarı.",
+    "Discount above policy",
+    format_try(selected_flags["revenue_leakage_above_policy"].sum()),
+    help="Yearly amount of discount given above the limit allowed for each segment.",
 )
 takeaway(price_waterfall_insight(selected, selected_flags))
 
 show_chart(price_waterfall_figure(selected))
 st.caption(
-    "Lacivert çubuklar liste fiyatı ve ara toplamları (fatura fiyatı, net fiyat), kırmızı "
-    "çubuklar fiyattan düşülen kalemleri gösterir. Dikey eksen, farkların okunabilmesi için "
-    "kesilmiştir."
+    "Navy bars show the list price and the subtotals (invoice price, net price); red bars show "
+    "the items taken off the price. The vertical axis does not start at zero, so the "
+    "differences stay readable."
 )
 
-st.subheader("İndirim politikaya uygun mu?")
+st.subheader("Are discounts within policy?")
 available = [name for name in SEGMENT_ORDER if name in set(flags["customer_segment_name"])]
-segment = st.selectbox("Müşteri segmenti", available)
+segment = st.selectbox("Customer segment", available)
 view = selected_flags[selected_flags["customer_segment_name"] == segment].sort_values(
     "excess_discount_pp", ascending=False
 )
-status = view["exceeds_policy"].map({True: "Politika sınırını aşıyor", False: "Sınır içinde"})
+status = view["exceeds_policy"].map({True: "Above the policy limit", False: "Within the limit"})
 figure = px.bar(
     view.assign(status=status),
     x="region_name",
     y="on_invoice_discount_pct",
     color="status",
-    color_discrete_map={"Politika sınırını aşıyor": LEAK_RED, "Sınır içinde": NAVY},
-    title=f"{segment}: bölgelere göre fatura içi iskonto oranı ve politika sınırı",
-    labels={"on_invoice_discount_pct": "İndirim oranı (liste fiyata göre)", "region_name": "Bölge"},
+    color_discrete_map={"Above the policy limit": LEAK_RED, "Within the limit": NAVY},
+    title=f"{segment}: on-invoice discount by province and the policy limit",
+    labels={
+        "on_invoice_discount_pct": "Discount (% of list price)",
+        "region_name": "Province",
+    },
 )
 figure.update_layout(legend_title=None)
 figure.add_hline(
     y=float(view["policy_max_discount_pct"].iloc[0]),
     line_dash="dash",
-    annotation_text="politika üst sınırı",
+    annotation_text="policy limit",
 )
-percent_axis(figure, "y")
-apply_business_theme(figure, y_title="İndirim oranı (liste fiyata göre)")
+figure.update_yaxes(tickformat=".0%")
+apply_business_theme(figure, y_title="Discount (% of list price)")
 figure.update_xaxes(title=None)
 show_chart(figure)
 
@@ -111,11 +113,11 @@ breaches = selected_flags[selected_flags["exceeds_policy"]].sort_values(
     "revenue_leakage_above_policy", ascending=False
 )
 if breaches.empty:
-    st.caption("Seçilen bölgelerde hiçbir segment indirim politikasının sınırını aşmıyor.")
+    st.caption("In the selected provinces no segment goes above the discount policy limit.")
 else:
     breach(
-        f"{len(breaches)} bölge-segment çifti indirim politikasının sınırını aşıyor. "
-        "Politika üstü indirim = (indirim oranı - politika sınırı) x liste fiyatlı ciro."
+        f"{len(breaches)} province-segment pairs give discounts above the policy limit. "
+        "Discount above policy = (discount rate - policy limit) x revenue at list price."
     )
 show_table(
     breaches[
@@ -130,15 +132,15 @@ show_table(
     ].assign(excess_discount_pp=lambda frame: frame["excess_discount_pp"] * 100),
     fractions={"on_invoice_discount_pct", "policy_max_discount_pct"},
 )
-with st.expander("MWh başına şelale tablosu (segmentlere göre)"):
+with st.expander("Waterfall per MWh by segment"):
     show_table(
         segment_waterfall_table(selected).rename(
             columns={
-                "on_invoice_discount": f"{DEDUCTION_LABELS['on_invoice_discount']} (TL/MWh)",
-                "invoice_price": f"{INVOICE_LABEL} (TL/MWh)",
-                "off_invoice_rebate": f"{DEDUCTION_LABELS['off_invoice_rebate']} (TL/MWh)",
-                "payment_term_cost": f"{DEDUCTION_LABELS['payment_term_cost']} (TL/MWh)",
-                "freight_service_cost": f"{DEDUCTION_LABELS['freight_service_cost']} (TL/MWh)",
+                "on_invoice_discount": f"{DEDUCTION_LABELS['on_invoice_discount']} (TRY/MWh)",
+                "invoice_price": f"{INVOICE_LABEL} (TRY/MWh)",
+                "off_invoice_rebate": f"{DEDUCTION_LABELS['off_invoice_rebate']} (TRY/MWh)",
+                "payment_term_cost": f"{DEDUCTION_LABELS['payment_term_cost']} (TRY/MWh)",
+                "freight_service_cost": f"{DEDUCTION_LABELS['freight_service_cost']} (TRY/MWh)",
             }
         )
     )
