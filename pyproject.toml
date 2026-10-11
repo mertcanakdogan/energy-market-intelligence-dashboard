@@ -7,7 +7,7 @@ name = "energy-market-intelligence-dashboard"
 version = "2.3.0"
 description = "Synthetic pricing and revenue analytics case study for a fictional Turkish electricity retailer: price waterfall, PVM bridge, elasticity, promotion DiD and price recommendations (TRY)"
 readme = "README.md"
-requires-python = ">=3.12,<3.15"
+requires-python = ">=3.12,<3.16"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{name = "Mert Can Akdoğan"}]
@@ -18,8 +18,8 @@ classifiers = [
 dependencies = [
   "duckdb>=1.2,<2",
   "numpy>=2.0,<3",
-  "pandas>=2.2,<3",
-  "plotly>=5.24,<7",
+  "pandas>=2.2,<4",
+  "plotly>=5.24,<8",
   "PyYAML>=6.0,<7",
   "statsmodels>=0.14,<1",
   "streamlit>=1.65,<2",

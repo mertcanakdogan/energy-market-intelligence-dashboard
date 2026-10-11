@@ -114,7 +114,7 @@ The project started as a market-intelligence dashboard. Its market-share, compet
 
 ## Run it
 
-Python 3.12 is the reference version used by CI. Chrome or Chromium is only needed by Kaleido for PNG export in the pipeline.
+Python 3.14 is the main version (CI, Streamlit Cloud and the devcontainer); CI also tests 3.12. Python 3.15 runs in CI as an informational job until DuckDB ships Python 3.15 wheels. Chrome or Chromium is only needed by Kaleido for PNG export in the pipeline.
 
 ```bash
 python -m venv .venv

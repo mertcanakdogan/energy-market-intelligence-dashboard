@@ -224,7 +224,12 @@ def localize_frame(frame: pd.DataFrame, *, translate_values: bool = True) -> pd.
     if translate_values:
         for column in result.columns:
             series = result[column]
-            if pd.api.types.is_bool_dtype(series) or pd.api.types.is_object_dtype(series):
+            # pandas 3 stores text as the "str" dtype, earlier versions as object.
+            if (
+                pd.api.types.is_bool_dtype(series)
+                or pd.api.types.is_object_dtype(series)
+                or (pd.api.types.is_string_dtype(series))
+            ):
                 result[column] = series.map(translate_value)
     return result.rename(columns=COLUMN_LABELS)
 

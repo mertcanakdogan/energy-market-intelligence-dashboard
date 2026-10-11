@@ -6,6 +6,10 @@ All notable changes to this project are documented here.
 
 The whole project and the app are now in English, and the app shows only the pricing story. All numeric results are unchanged: elasticities, promotion uplift, waterfall amounts and recommendation totals are the same as in 2.2.0.
 
+### Python
+
+- Python 3.14 is the main version; CI tests 3.12 and 3.14 and runs 3.15 as an informational job (DuckDB has no 3.15 wheels yet). The devcontainer uses Python 3.14. Dependency ranges allow pandas 3 and Plotly 7; text columns stored as pandas 3's `str` dtype are now translated in tables too.
+
 ### Changed
 
 - Language: the app, README, design notes, Power BI notes and generated data are in English. The README no longer has a Turkish summary.

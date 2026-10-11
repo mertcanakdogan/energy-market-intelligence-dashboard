@@ -34,7 +34,7 @@ streamlit run app.py
    public app from GitHub**.
 3. Select the repository and branch `main`.
 4. Set **Main file path** to `app.py`.
-5. Open **Advanced settings** and select **Python 3.12** (the version used by CI). No secrets are
+5. Open **Advanced settings** and select **Python 3.14** (the main version in CI; DuckDB has no Python 3.15 wheels yet). No secrets are
    needed.
 6. Deploy. Dependencies come from `requirements.txt`, which installs the project itself in
    editable mode (`-e .`) and therefore everything declared in `pyproject.toml`. Editable matters:
