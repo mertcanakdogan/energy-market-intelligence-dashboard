@@ -555,12 +555,24 @@ def _promotion_vrect(figure: go.Figure, window: tuple[int, int], **position) -> 
     )
 
 
+def _baseline_line(figure: go.Figure, **position) -> None:
+    """The base of the index: 100 is the average of the months before the promotion.
+
+    Unlabelled: the lines cross it everywhere, and the chart title already names it.
+    """
+
+    figure.add_hline(
+        y=100, line_dash="dot", line_color=SLATE, line_width=1.5, layer="below", **position
+    )
+
+
 def promo_trend_figure(trend: pd.DataFrame, window: tuple[int, int]) -> go.Figure:
     """Monthly volume index of the promotion and control provinces, with the promotion band."""
 
     figure = go.Figure(_trend_traces(trend))
     _promotion_vrect(figure, window)
-    figure.update_layout(title="Volume index (before the promotion = 100)", height=420)
+    _baseline_line(figure)
+    figure.update_layout(title="Volume index (average before the promotion = 100)", height=420)
     apply_business_theme(figure, y_title="Index (axis does not start at zero)")
     return figure.update_yaxes(range=_trend_range(trend))
 
@@ -600,7 +612,7 @@ def promo_did_figure(
     """Volume index and DiD estimates against the true uplift, side by side (PNG export)."""
 
     titles = (
-        "Volume index (before the promotion = 100)",
+        "Volume index (average before the promotion = 100)",
         "Estimated promotion effect and true value",
     )
     figure = make_subplots(
@@ -613,6 +625,7 @@ def promo_did_figure(
     for trace in _trend_traces(trend):
         figure.add_trace(trace, row=1, col=1)
     _promotion_vrect(figure, window, row=1, col=1)
+    _baseline_line(figure, row=1, col=1)
     frame = _estimate_frame(estimates)
     figure.add_trace(
         _interval_trace(

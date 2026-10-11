@@ -55,7 +55,9 @@ takeaway(promo_insight(estimates))
 show_chart(promo_trend_figure(trend, (promo.start_month_id, promo.end_month_id)))
 st.caption(
     f"The promotion ran in {adjusted['treated_regions']} provinces; "
-    f"{adjusted['control_regions']} provinces without it are the control group."
+    f"{adjusted['control_regions']} provinces without it are the control group. 100 is each "
+    "group's average month before the promotion (dotted line); the swings are seasonal, so what "
+    "matters is the gap between the two lines during the promotion."
 )
 show_chart(promo_estimate_figure(estimates))
 st.caption(
