@@ -35,7 +35,7 @@ LINKEDIN_URL = "https://www.linkedin.com/in/mertcanakdogan/"
 BILL_TERMS = (
     (DEDUCTION_LABELS["on_invoice_discount"], "comes off the price on the invoice."),
     (DEDUCTION_LABELS["off_invoice_rebate"], "is paid back to the customer later."),
-    (DEDUCTION_LABELS["payment_term_cost"], "is what waiting to be paid costs."),
+    (DEDUCTION_LABELS["payment_term_cost"], "is the cost of letting customers pay later."),
     (DEDUCTION_LABELS["freight_service_cost"], "covers delivery and support."),
     (NET_LABEL, "is the price the company keeps."),
     ("Leakage rate", "is the share of the list price it does not keep."),
@@ -403,8 +403,10 @@ def segment_leakage_html(waterfall: pd.DataFrame) -> str:
     return (
         '<section class="tv-seg" aria-label="Leakage by customer segment">'
         '<div class="tv-seg-title">Where leakage differs</div>'
-        '<p class="tv-seg-sub">Leakage rate by customer segment, with the pocket price in TRY/MWh. '
-        "Bars show the list price: navy is kept, red leaks away.</p>" + "".join(rows) + "</section>"
+        '<p class="tv-seg-sub">The red % is the share of the list price the company does not '
+        "keep on this segment's sales. Each bar is the list price as 100%: navy is kept, red "
+        "leaks. "
+        "Pocket price in TRY/MWh.</p>" + "".join(rows) + "</section>"
     )
 
 
@@ -427,9 +429,9 @@ def trust_strip_html(table: pd.DataFrame) -> str:
     cards = []
     for row in ordered.itertuples(index=False):
         verdict = (
-            "True value is inside the interval"
+            "True value is inside the likely range"
             if row.truth_in_ci
-            else "True value is outside the interval"
+            else "True value is outside the likely range"
         )
         verdict_class = "tv-trust-ok" if row.truth_in_ci else "tv-trust-row"
         width = place(row.ci_high) - place(row.ci_low)
@@ -444,7 +446,7 @@ def trust_strip_html(table: pd.DataFrame) -> str:
             "</div>"
             f"{_row('True', format_number(row.true_elasticity, 2))}"
             f"{_row('Estimate', format_number(row.elasticity, 2))}"
-            f"{_row('95% interval', f'{format_number(row.ci_low, 2)} / {format_number(row.ci_high, 2)}')}"
+            f"{_row('Likely range (95%)', f'{format_number(row.ci_low, 2)} to {format_number(row.ci_high, 2)}')}"
             f'<div class="{verdict_class}">{verdict}</div>'
             "</div>"
         )
@@ -454,6 +456,7 @@ def trust_strip_html(table: pd.DataFrame) -> str:
         '<span class="tv-key"><i class="tv-key-diamond" aria-hidden="true"></i>True value</span>'
         '<span class="tv-key"><i class="tv-key-band" aria-hidden="true"></i>'
         "95% confidence interval</span></div>"
-        "Elasticity: the percent change in volume when the price rises 1%.</div>"
+        "Elasticity: the % change in volume when the price rises 1% (\u22121.60: volume falls "
+        "1.6%). All three strips share one scale: further left is more price-sensitive.</div>"
     )
     return f'{legend}<div class="tv-trust">{"".join(cards)}</div>'

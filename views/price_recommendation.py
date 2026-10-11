@@ -30,12 +30,12 @@ with st.expander("Change the limits"):
     limits = st.columns(3, gap="medium")
     with limits[0]:
         max_step = percent_slider(
-            "Largest price step",
+            "Largest price change",
             1.0,
             15.0,
             defaults.max_price_step_pct * 100,
             signed=False,
-            help="The pocket price changes by at most this much in one step.",
+            help="The recommended pocket price moves at most this much from today's price.",
         )
     with limits[1]:
         margin_floor = percent_slider(
@@ -44,8 +44,8 @@ with st.expander("Change the limits"):
             40.0,
             defaults.margin_floor_pct * 100,
             signed=False,
-            help="The pocket margin at the recommended price does not fall below this value "
-            "(if it can be reached).",
+            help="Pocket margin = (pocket price \u2212 unit cost) \u00f7 pocket price. At the "
+            "recommended price it does not fall below this value (if it can be reached).",
         )
     with limits[2]:
         volume_guard = percent_slider(
@@ -73,7 +73,9 @@ cards[0].metric(
     "Expected gross profit change",
     format_try(total_change, signed=True),
     format_pct(total_change / table["baseline_gross_profit"].sum(), 1, signed=True),
-    help="Estimated change in yearly gross profit if the recommended price steps are applied.",
+    help="Estimated change in yearly gross profit if the recommended price steps are "
+    "applied. The green figure is the same change as a share of today's gross profit "
+    f"({format_try(table['baseline_gross_profit'].sum())}).",
 )
 cards[1].metric(
     "Average price change",
@@ -81,9 +83,15 @@ cards[1].metric(
     help="Volume-weighted average change in the pocket price.",
 )
 cards[2].metric(
-    "Segments below the margin floor",
+    f"Segments still below the {format_pct(margin_floor / 100, 0)} margin floor",
     int(table["binding_constraint"].str.contains("not reachable").sum()),
-    help="Number of segments that cannot reach the margin floor in one price step.",
+    help="Counted per segment. Single provinces can still fall short; see the table by segment "
+    "and province.",
+)
+st.caption(
+    f"Limits used: price change at most {format_pct(max_step / 100, 1)}, volume loss at most "
+    f"{format_pct(volume_guard / 100, 1)}, pocket margin at least "
+    f"{format_pct(margin_floor / 100, 1)}. Change them under \u201cChange the limits\u201d."
 )
 takeaway(recommendation_insight(table))
 
@@ -106,9 +114,9 @@ columns = [
     "gross_profit_range",
     "price_change_pct",
     "expected_volume_change_pct",
+    "binding_constraint",
     "current_pocket_price",
     "current_margin_pct",
-    "binding_constraint",
 ]
 
 
@@ -139,7 +147,7 @@ with st.expander("Recommendation by segment and province"):
 with st.expander("Rules applied"):
     st.markdown(
         """
-1. For elastic segments (elasticity below −1) the target is the pocket price that maximises
+1. For price-sensitive segments (elasticity below −1) the target is the pocket price that maximises
    profit: `c * e / (1 + e)` (c: unit cost, e: elasticity). For inelastic segments the target
    is the largest allowed rise.
 2. Every change is capped at the largest price step.

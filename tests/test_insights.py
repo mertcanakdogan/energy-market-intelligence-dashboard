@@ -72,8 +72,8 @@ def test_elasticity_and_promo_insights_state_the_truth_check(
 ) -> None:
     elasticity, promo = estimates
     text = elasticity_insight(elasticity)
-    assert "Residential \u22121.60" in text and "Industrial \u22120.61" in text
-    assert "If prices rise 5%, volume falls about" in text
+    assert text.startswith("Residential customers are the most price-sensitive: a 5% price")
+    assert "for Commercial (SME)" in text and "for Industrial" in text
     assert "3 of 3 segments" in text
     assert "true values are known" not in elasticity_insight(elasticity.drop(columns="truth_in_ci"))
     promo_text = promo_insight(promo)

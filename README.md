@@ -20,7 +20,7 @@ All money is in Turkish lira (TRY) at **constant 2025 prices**, so the numbers c
 | **PVM bridge** | Price-volume-mix bridge. It splits a change in revenue or profit into a price effect, a volume effect and a mix effect (and a unit-cost effect for profit). |
 | **Elasticity** | How much sales volume changes when the price rises by 1%. An elasticity of -1.6 means a 1% price rise loses about 1.6% of volume. Below -1, customers are price sensitive ("elastic"). |
 | **DiD (difference-in-differences)** | Compares provinces that ran a promotion with provinces that did not, to find the extra volume the promotion really created. |
-| **95% CI (confidence interval)** | The range that should contain the true value in 95 out of 100 repeated draws. |
+| **95% CI (confidence interval)** | The likely range around an estimate. If the data were made again 100 times, about 95 of these ranges would contain the true value. |
 | **Gross margin** | Net revenue minus energy cost, divided by net revenue. |
 
 ## Executive summary
@@ -33,9 +33,9 @@ All figures are for 2025 (compared with 2024 where stated), in constant 2025 TRY
 
 **Three findings**
 
-1. **14.8% of the list price never reaches the company.** Of TRY 5.50bn list revenue, the company keeps TRY 4.69bn (price realization 85.2%). The gap is widest for Industrial customers: list price 3,735 TRY/MWh, pocket price 2,918 TRY/MWh, a 21.9% gap. It is 9.7% for Residential and 14.4% for Commercial (SME) customers. In four provinces (Izmir, Antalya, Adana and Erzurum; 12 province-segment cases) discounts go beyond the policy limit. That costs TRY 23.4m a year. Industrial customers in the weakest provinces earn a pocket margin of only 7.1% to 10.6%.
+1. **14.8% of the list price never reaches the company.** Of TRY 5.50bn list revenue, the company keeps TRY 4.69bn (price realization 85.2%). The gap is widest for Industrial customers: list price 3,735 TRY/MWh, pocket price 2,918 TRY/MWh, a 21.9% gap. It is 9.7% for Residential and 14.4% for Commercial (SME) customers. In four provinces (Izmir, Antalya, Adana and Erzurum; 12 province-segment cases) discounts go beyond the policy limit. That costs TRY 23.4m a year. In the weakest provinces the company's pocket margin on Industrial sales is only 7.1% to 10.6%.
 2. **Revenue grew, gross profit did not.** Net revenue rose by TRY 186.9m (volume +TRY 130.4m, price +TRY 57.9m, mix −TRY 1.4m). Gross profit fell by TRY 36.3m, because higher unit energy costs took TRY 122.4m. Price increases covered only about 47% of the cost increase.
-3. **Each segment reacts to price differently, and the model finds it.** Estimated elasticities: Residential -1.60 (price sensitive), Commercial (SME) -1.10 (borderline; its 95% CI of -1.23 to -0.98 includes -1) and Industrial -0.61 (not very price sensitive). The January-April 2025 discount campaign really added 8% volume. The model estimates 8.7% (95% CI 7.9% to 9.6%) after it adjusts for the price cut. A simple before/after comparison says 12.0%.
+3. **Each segment reacts to price differently, and the model finds it.** Estimated elasticities: Residential -1.60 (price sensitive), Commercial (SME) -1.10 (price sensitive, but close to -1: its 95% CI of -1.23 to -0.98 includes -1) and Industrial -0.61 (not very price sensitive). The January-April 2025 discount campaign really added 8% volume. The model estimates 8.7% (95% CI 7.9% to 9.6%) after it adjusts for the price cut. A simple before/after comparison says 12.0%.
 
 **Recommendation:** raise the pocket price a little in every segment: Industrial +5.0%, Commercial (SME) +4.8%, Residential +3.3%. Each step is capped at 5%, and no segment may lose more than 5% of its volume. Also stop the extra discounts in the four provinces above. The model expects gross profit to rise by TRY 145.2m a year (+14.9% on a TRY 973.1m baseline; TRY 139.6m to TRY 150.9m across the elasticity confidence interval). The cost is a 2.9% to 5.0% volume loss. This is a decision aid built on simple assumptions; see [Limitations](#limitations).
 
@@ -55,8 +55,8 @@ Promotion uplift by difference-in-differences (5 promotion provinces and 13 cont
 
 | Estimator | True uplift | Estimate | 95% CI | Truth inside CI |
 |---|---:|---:|---|:---:|
-| Simple 2 × 2 DiD | 8.0% | 12.0% | [10.2%, 13.8%] | no (biased: it also counts the campaign price cut and list-price changes) |
-| Price-adjusted two-way fixed-effects DiD | 8.0% | 8.7% | [7.9%, 9.6%] | yes |
+| Simple comparison (2 × 2 DiD) | 8.0% | 12.0% | [10.2%, 13.8%] | no (too high: it also counts the campaign price cut and list-price changes) |
+| Adjusted for price (two-way fixed-effects DiD) | 8.0% | 8.7% | [7.9%, 9.6%] | yes |
 
 ![Estimated price elasticity against the known true value, per segment](outputs/examples/elasticity_recovery.png)
 
@@ -91,7 +91,7 @@ The [live app](https://tavra-energy-pricing.streamlit.app) has six pages, all ab
 
 | Page | Question it answers | What you see |
 |---|---|---|
-| **Overview** (home) | Start here: the main finding at a glance | One headline sentence computed from the data, the price breakdown read like the line items of a bill next to the matching waterfall chart, three short answers, and how well the model recovers the known true values |
+| **Overview** (home) | Start here: the main finding at a glance | One headline sentence computed from the data, the price breakdown read like the line items of a bill next to the leakage rate of each customer segment, three short answers, and how well the model recovers the known true values |
 | **Price leakage** | Where does price leak? | The price waterfall by segment and the provinces that discount beyond policy |
 | **Revenue bridge** | Why did revenue change? | The price-volume-mix bridge for net revenue and gross profit |
 | **Price sensitivity** | How sensitive are customers to price? | Estimated elasticity per segment next to the true value |

@@ -58,12 +58,13 @@ cards = st.columns(4)
 cards[0].metric(
     "List price (TRY/MWh)",
     format_number(list_revenue / volume, 0),
-    help="Volume-weighted average list price.",
+    help="Average list price per MWh sold, weighted by how much each customer buys.",
 )
 cards[1].metric(
     "Pocket price (TRY/MWh)",
     format_number(pocket_revenue / volume, 0),
-    help="Volume-weighted price left after all discounts and cost items are taken off.",
+    help="Average price per MWh the company keeps after all discounts and cost items, "
+    "weighted by how much each customer buys.",
 )
 cards[2].metric(
     "Leakage rate",
@@ -72,9 +73,10 @@ cards[2].metric(
     "1 \u2212 pocket price / list price.",
 )
 cards[3].metric(
-    "Discount above policy",
+    "Discount above policy (2025)",
     format_try(selected_flags["revenue_leakage_above_policy"].sum()),
-    help="Yearly amount of discount given above the limit allowed for each segment.",
+    help="Discount given in 2025 above the limit allowed for each segment. It is part of the "
+    "leakage, not on top of it.",
 )
 takeaway(price_waterfall_insight(selected, selected_flags))
 
@@ -110,7 +112,7 @@ figure = px.bar(
     orientation="h",
     color="status",
     color_discrete_map={"Above the policy limit": LEAK_RED, "Within the limit": NAVY},
-    title=f"{segment}: on-invoice discount by province and the policy limit",
+    title=f"{segment}: on-invoice discount by province and the policy limit (2025)",
     labels={
         "on_invoice_discount_pct": "Discount (% of list price)",
         "region_name": "Province",
@@ -143,16 +145,19 @@ if breaches.empty:
     st.caption("In the selected provinces no segment goes above the discount policy limit.")
 else:
     breach(
-        f"Across all segments, {len(breaches)} combinations of province and customer segment "
-        "give discounts above the policy limit. Discount above policy = (discount rate − "
-        "policy limit) × revenue at list price."
+        f"Across all segments, {len(breaches)} of {len(selected_flags)} combinations of "
+        "province and customer segment give discounts above their segment's limit. Extra "
+        "discount = (discount rate \u2212 limit) \u00d7 sales at list price."
     )
-    # The money column comes straight after the names, so it stays visible on a phone.
+    # One name column and the money right after it, so the amount stays visible on a phone.
     show_table(
-        breaches[
+        breaches.assign(
+            province_and_segment=lambda frame: (
+                frame["region_name"] + " \u00b7 " + frame["customer_segment_name"]
+            )
+        )[
             [
-                "customer_segment_name",
-                "region_name",
+                "province_and_segment",
                 "revenue_leakage_above_policy",
                 "on_invoice_discount_pct",
                 "policy_max_discount_pct",
@@ -160,7 +165,7 @@ else:
             ]
         ]
         .assign(excess_discount_pp=lambda frame: frame["excess_discount_pp"] * 100)
-        .rename(columns={"revenue_leakage_above_policy": "Above policy (TRY)"}),
+        .rename(columns={"revenue_leakage_above_policy": "Extra discount (TRY)"}),
         fractions={"on_invoice_discount_pct", "policy_max_discount_pct"},
     )
 with st.expander("Price breakdown per MWh by segment (table)"):

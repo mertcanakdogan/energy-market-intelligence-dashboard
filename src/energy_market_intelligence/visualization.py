@@ -57,6 +57,7 @@ def _build_template() -> go.layout.Template:
             "yanchor": "top",
             "pad": {"t": 22},
             "font": {"family": FONT_HEADING, "size": 22, "weight": 400, "color": NAVY},
+            "subtitle": {"font": {"family": FONT_BODY, "size": 15, "color": SLATE}},
         },
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
@@ -301,7 +302,7 @@ def profit_bridge_figure(bridge: pd.DataFrame) -> go.Figure:
     ]
     figure = go.Figure(
         go.Waterfall(
-            x=["Volume effect", "Price effect", "Interaction", "Revenue change"],
+            x=["Volume effect", "Price effect", "Price and volume together", "Revenue change"],
             y=values,
             measure=["relative", "relative", "relative", "total"],
             text=[format_number(value, 1, signed=True) for value in values],
@@ -315,7 +316,7 @@ def profit_bridge_figure(bridge: pd.DataFrame) -> go.Figure:
         )
     )
     figure.update_layout(
-        title=f"{FOCUS_COMPANY}: revenue bridge (latest month vs the same month a year earlier)"
+        title=f"{FOCUS_COMPANY}: one month only, revenue change vs the same month a year earlier"
     )
     return apply_business_theme(figure, y_title=TRY_AXIS)
 
@@ -327,8 +328,12 @@ def write_png(figure: go.Figure, path: Path) -> None:
     try:
         export = format_axes(go.Figure(figure))
         export.update_layout(paper_bgcolor="#FFFFFF", plot_bgcolor="#FFFFFF")
-        if not has_legend(export) and export.layout.margin.t in (None, TEMPLATE_TOP):
-            export.update_layout(margin={"t": 72})  # the template's room for a legend stays empty
+        top = export.layout.margin.t
+        if not has_legend(export) and top in (None, TEMPLATE_TOP):
+            top = 72  # the template's room for a legend would stay empty
+        if export.layout.title.subtitle.text:
+            top = (top or TEMPLATE_TOP) + 30  # room for the one-line finding under the title
+        export.update_layout(margin={"t": top})
         # Charts with few rows set their own height; the rest use the standard 1200 x 680.
         export.write_image(path, width=1200, height=export.layout.height or 680, scale=1.5)
     except Exception as exc:  # pragma: no cover - exercised only when renderer is unavailable

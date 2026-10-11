@@ -97,7 +97,7 @@ def test_translate_and_localize_frame() -> None:
         }
     )
     shown = localize_frame(frame)
-    assert list(shown.columns) == ["Province", "Trend", "Above the limit?", "Elasticity"]
+    assert list(shown.columns) == ["Province", "Trend", "Above the limit?", "Estimated elasticity"]
     assert shown.iloc[0].tolist() == ["Ankara", "Gaining share", "Yes", -1.6]
     raw = localize_frame(frame, translate_values=False)
     assert raw.iloc[0]["Trend"] == "Gaining"

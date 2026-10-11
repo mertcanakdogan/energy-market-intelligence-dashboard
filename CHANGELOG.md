@@ -17,6 +17,7 @@ A design audit of all six pages, at laptop and phone width, and of every exporte
 
 ### Changed
 
+- Plain-reading pass: every title, axis, number and term was read as a first-time, non-expert visitor would read it, and anything that could be misread was rewritten. The overview says what the 14.8% leak is made of (discounts, rebates and the cost of serving customers; only TRY 23.4m is above policy) and that the action is a 3.3% to 5.0% price rise, not a cut in leakage. Bridge cards show "vs 2024" percentages, the cost effect says it hit gross profit, and the detail table adds up. Promotion and elasticity pages say "likely range" instead of "CI" and "set in the synthetic data" instead of "data generator". The recommendation page shows the limits it used. Exported charts carry their finding in the title or a subtitle, so they stand alone in the README and on LinkedIn.
 - One term for the price the company keeps: "pocket price" (the bill line, the segment comparison, the glossary and the charts). The price leakage page shows the leakage rate, like the overview.
 - Numbers use a true minus sign (−1.60), money keeps "TRY" and the amount on one line, millions have one decimal (TRY 1.4m) and table percentages one decimal (9.3%).
 - Tables show the columns that answer the page's question; standard errors, volumes and prices behind the effects are one click away.

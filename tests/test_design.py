@@ -159,9 +159,10 @@ def test_trust_strip_lists_every_segment_with_the_true_value() -> None:
     assert html.index("Residential") < html.index("Industrial")
     assert "\u22121.60" in html and "\u22120.61" in html
     assert html.count("tv-trust-ok") == 1
-    assert "True value is outside the interval" in html
-    assert "True value is inside the interval" in html
-    assert "95% interval" in html and "Estimate" in html
+    assert "True value is outside the likely range" in html
+    assert "True value is inside the likely range" in html
+    assert "Likely range (95%)" in html and "Estimate" in html
+    assert "further left is more price-sensitive" in html
     # The key comes before the strip, and the estimate dot sits inside the larger diamond.
     assert html.index("tv-keys") < html.index("tv-trust-card")
     assert "True value</span>" in html and "95% confidence interval</span>" in html
@@ -210,7 +211,7 @@ def test_landing_answers_are_computed_from_the_data(
 
     summary = query_dataframe(analytics_db, "SELECT * FROM vw_pvm_bridge_summary")
     cause = bridge_answer(summary)
-    assert cause.startswith("Prices rose, but costs rose faster: net revenue rose by TRY")
+    assert cause.startswith("2025 vs 2024: net revenue rose by TRY")
     assert "gross profit fell by TRY" in cause and "higher unit costs took TRY" in cause
     assert "-TRY" not in cause  # no signed money in the card answers
 
@@ -225,13 +226,15 @@ def test_landing_answers_are_computed_from_the_data(
         guard.margin_floor_pct,
         max_volume_loss=guard.max_volume_loss_pct,
     )
-    assert "gross profit could rise by TRY" in action_answer(table)
-    assert re.search(r"a year \(\+\d+\.\d%\)\.$", action_answer(table))
+    answer = action_answer(table)
+    assert answer.startswith("Raise pocket prices by ")
+    assert "Gross profit could rise by TRY" in answer and answer.endswith("less volume.")
 
     lines = dict(overview_takeaway(bill, waterfall_frame, table))
     assert list(lines) == ["Finding", "Size", "Action"]
     assert lines["Finding"].startswith("The largest leak is the on-invoice discount, ")
     assert f"TRY{nbsp}{round(bill.leakage_rate * 100, 1)} of every TRY{nbsp}100" in lines["Size"]
+    assert lines["Action"].startswith("Raising pocket prices by ")
     assert re.search(r"add TRY\s\d+\.\dm of gross profit a year \(\+\d+\.\d%\)", lines["Action"])
 
 
@@ -280,7 +283,7 @@ def test_bridge_answer_falls_back_to_plain_effects_when_costs_did_not_win() -> N
     )
     text = bridge_answer(summary)
     assert text.startswith(
-        "Net revenue fell by TRY\u00a02.0m while gross profit rose by TRY\u00a05.0m."
+        "2025 vs 2024: net revenue fell by TRY\u00a02.0m while gross profit rose by TRY\u00a05.0m."
     )
     assert "Price changes added TRY\u00a07.0m; unit costs took TRY\u00a02.0m." in text
 
@@ -293,7 +296,9 @@ def test_trust_and_promotion_lines_are_computed() -> None:
         }
     )
     assert trust_note(table) == (
-        "Estimated without seeing the true values; largest miss 0.02. Real data would be noisier."
+        "The model did not see the true values; its estimates miss them by at most 0.02. This "
+        "matters because the price recommendation is built on these estimates. Real data would "
+        "be noisier."
     )
     estimates = pd.DataFrame(
         {
@@ -303,7 +308,8 @@ def test_trust_and_promotion_lines_are_computed() -> None:
         }
     )
     assert promo_proof(estimates) == (
-        "The same test works for the promotion: uplift estimated at 8.7% against a true 8.0%."
+        "Same check for the promotion: estimated +8.7% extra volume; the true effect set in the "
+        "data was +8.0%."
     )
 
 

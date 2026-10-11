@@ -24,13 +24,13 @@ table = order_segments(load_elasticities()).reset_index(drop=True)
 cards = st.columns(len(table))
 for column, row in zip(cards, table.itertuples(index=False), strict=True):
     column.metric(
-        row.customer_segment_name,
+        f"{row.customer_segment_name}: elasticity",
         format_number(row.elasticity, 2),
-        f"95% CI: {format_number(row.ci_low, 2)} to {format_number(row.ci_high, 2)}",
+        f"Likely range: {format_number(row.ci_low, 2)} to {format_number(row.ci_high, 2)}",
         delta_color="off",
         delta_arrow="off",
-        help="Estimated price elasticity. Below \u22121 demand is elastic (price-sensitive); "
-        "above \u22121 it is inelastic.",
+        help="\u22121.60 means a 1% price rise loses about 1.6% of volume. The further below "
+        "\u22121, the more price-sensitive the segment.",
     )
 takeaway(elasticity_insight(table))
 
@@ -38,8 +38,10 @@ figure = elasticity_recovery_figure(table)
 figure.update_xaxes(title="Price elasticity")  # the long export title would be cut on a phone
 show_chart(figure)
 st.caption(
-    "Price elasticity: the percent change in volume when the pocket price rises 1%. The line "
-    "around each estimate is its 95% confidence interval; the diamond is the true value."
+    "Price elasticity: the % change in volume when the pocket price rises 1%. The line around "
+    "each estimate is its likely range (95% confidence interval); the diamond is the true value. "
+    "At \u22121 (dotted line) a price rise leaves revenue unchanged. The less price-sensitive a "
+    "segment, the further its price can rise: see Price recommendation."
 )
 show_table(
     table[
@@ -66,7 +68,9 @@ with st.expander("More statistics"):
         ]
     )
     st.caption(
-        "Competitor-price elasticity: the percent change in volume when competitor prices rise 1%."
+        "Standard error: how uncertain the estimate is (smaller is more certain). Absolute error: "
+        "the gap between the estimate and the true value. Competitor-price elasticity: the % "
+        "change in volume when competitor prices rise 1%."
     )
 with st.expander("Method and assumptions"):
     st.markdown(

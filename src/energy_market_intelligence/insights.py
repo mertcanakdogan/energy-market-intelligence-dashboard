@@ -14,7 +14,6 @@ from energy_market_intelligence.localization import (
     format_pct,
     format_try,
     format_try_per_mwh,
-    order_segments,
 )
 from energy_market_intelligence.pricing_visualization import (
     Bill,
@@ -93,28 +92,25 @@ def pvm_insight(summary: pd.DataFrame) -> str:
 def elasticity_insight(table: pd.DataFrame, price_step: float = 0.05) -> str:
     """Per-segment elasticity in words and how many true values the intervals recover."""
 
-    ordered = order_segments(table)
-    estimates = ", ".join(
-        f"{row.customer_segment_name} {format_number(row.elasticity, 2)}"
-        for row in ordered.itertuples(index=False)
-    )
-    losses = _join(
-        [
-            format_pct(1 - (1 + price_step) ** row.elasticity, 1)
-            for row in ordered.itertuples(index=False)
-        ]
-    )
-    recovered = int(table["truth_in_ci"].sum()) if "truth_in_ci" in table else 0
+    # Most price-sensitive first: the most negative elasticity loses the most volume.
+    ranked = table.sort_values("elasticity").reset_index(drop=True)
+    losses = [
+        (row.customer_segment_name, format_pct(1 - (1 + price_step) ** row.elasticity, 1))
+        for row in ranked.itertuples(index=False)
+    ]
+    first_name, first_loss = losses[0]
+    others = _join([f"{loss} for {name}" for name, loss in losses[1:]])
     text = (
-        f"Estimated elasticities: {estimates}. If prices rise {format_pct(price_step, 0)}, "
-        f"volume falls about {losses} respectively: the most price-sensitive segment loses "
-        "the most volume."
+        f"{first_name} customers are the most price-sensitive: a "
+        f"{format_pct(price_step, 0)} price rise loses about {first_loss} of their volume"
+        + (f", against {others}." if others else ".")
     )
     if "truth_in_ci" in table:
+        recovered = int(table["truth_in_ci"].sum())
         text += (
             " The data are synthetic, so the true values are known: in "
-            f"{recovered} of {len(table)} segments the true elasticity lies inside the 95% "
-            "confidence interval of the estimate."
+            f"{recovered} of {len(table)} segments the true value lies inside the likely range "
+            "(95% confidence interval) of the estimate."
         )
     return text
 
@@ -125,17 +121,18 @@ def promo_insight(estimates: pd.DataFrame) -> str:
     by_method = estimates.set_index("method")
     adjusted, naive = by_method.loc["price_adjusted"], by_method.loc["naive"]
     text = (
-        f"The promotion added about {format_pct(adjusted['uplift'])} extra volume "
-        f"(95% confidence interval: {format_pct(adjusted['ci_low'])} to "
-        f"{format_pct(adjusted['ci_high'])}). "
-        f"A simple before/after comparison shows {format_pct(naive['uplift'])}; "
-        "the difference comes from the effect of the promotion discount and the list-price "
-        "increases on volume."
+        f"In the promotion provinces, during the promotion months, it added about "
+        f"{format_pct(adjusted['uplift'])} extra volume on top of what its lower price alone "
+        "would sell (likely range "
+        f"{format_pct(adjusted['ci_low'])} to {format_pct(adjusted['ci_high'])}). "
+        f"A simple comparison shows {format_pct(naive['uplift'])}, but part of that is just "
+        "cheaper power selling more, plus list-price rises that reached provinces at different "
+        "times."
     )
     if "true_uplift" in adjusted:
         text += (
-            f" The true value set in the data generator is {format_pct(adjusted['true_uplift'])}: "
-            "the price-adjusted estimate is close to it, the simple comparison overstates it."
+            f" The true value set in the synthetic data is {format_pct(adjusted['true_uplift'])}: "
+            "the adjusted estimate is close to it; the simple comparison overstates it."
         )
     return text
 
@@ -158,6 +155,12 @@ def recommendation_insight(table: pd.DataFrame) -> str:
         f"{price_word} by {format_pct(abs(price_change), 1)} on average, volume {volume_word} "
         f"by about {format_pct(abs(volume_change), 1)} and gross profit {direction} by "
         f"{format_try(abs(change))} a year ({format_pct(change / baseline, 1, signed=True)})."
+        + (
+            " Volume falls, but gross profit still rises: every MWh still sold earns more, and "
+            "the energy cost of the lost volume is saved."
+            if change > 0 and volume_change < 0
+            else ""
+        )
     )
 
 
@@ -214,13 +217,15 @@ def bridge_answer(summary: pd.DataFrame) -> str:
         f"net revenue {_rose_or_fell(revenue)} by {format_try(abs(revenue))} "
         f"while gross profit {_rose_or_fell(profit)} by {format_try(abs(profit))}"
     )
+    volume_mix = row["gp_volume_effect"] + row["gp_mix_effect"] if "gp_volume_effect" in row else 0
     if revenue > 0 > profit and price_gain > 0 > cost_hit and -cost_hit > price_gain:
+        more_volume = f" and higher volume about {format_try(volume_mix)}" if volume_mix > 0 else ""
         return (
-            f"Prices rose, but costs rose faster: {movement}. Price rises added "
-            f"{format_try(price_gain)}; higher unit costs took {format_try(-cost_hit)}."
+            f"2025 vs 2024: {movement}. Price rises added {format_try(price_gain)}{more_volume}; "
+            f"higher unit costs took {format_try(-cost_hit)}."
         )
     return (
-        f"{movement[0].upper()}{movement[1:]}. Price changes {_added_or_took(price_gain)} "
+        f"2025 vs 2024: {movement}. Price changes {_added_or_took(price_gain)} "
         f"{format_try(abs(price_gain))}; unit costs {_added_or_took(cost_hit)} "
         f"{format_try(abs(cost_hit))}."
     )
@@ -236,14 +241,39 @@ def action_answer(table: pd.DataFrame) -> str:
     change = table["expected_gross_profit_change"].sum()
     share = change / table["baseline_gross_profit"].sum()
     direction = "rise" if change >= 0 else "fall"
+    volume = table["baseline_volume_mwh"]
+    average = (table["price_change_pct"] * volume).sum() / volume.sum()
+    volume_change = (table["expected_volume_change_pct"] * volume).sum() / volume.sum()
     return (
-        f"With the recommended price steps, gross profit could {direction} by "
-        f"{format_try(abs(change))} a year ({format_pct(share, 1, signed=True)})."
+        f"{_price_step_range(table)} ({format_pct(average, 1)} on average). Gross profit could "
+        f"{direction} by {format_try(abs(change))} a year ({format_pct(share, 1, signed=True)}), "
+        f"with about {format_pct(abs(volume_change), 1)} "
+        f"{'less' if volume_change < 0 else 'more'} volume."
+    )
+
+
+def _price_step_range(table: pd.DataFrame, *, gerund: bool = False) -> str:
+    """'Raise pocket prices by 3.3% to 5.0% per segment' ('Raising ...' with ``gerund``)."""
+
+    low, high = table["price_change_pct"].min(), table["price_change_pct"].max()
+    if low >= 0:
+        span = (
+            format_pct(low, 1)
+            if round(low, 3) == round(high, 3)
+            else (f"{format_pct(low, 1)} to {format_pct(high, 1)}")
+        )
+        return f"{'Raising' if gerund else 'Raise'} pocket prices by {span} per segment"
+    return (
+        f"{'Changing' if gerund else 'Change'} pocket prices by "
+        f"{format_pct(low, 1, signed=True)} to {format_pct(high, 1, signed=True)} per segment"
     )
 
 
 def overview_takeaway(
-    bill: Bill, waterfall: pd.DataFrame, recommendation: pd.DataFrame
+    bill: Bill,
+    waterfall: pd.DataFrame,
+    recommendation: pd.DataFrame,
+    flags: pd.DataFrame | None = None,
 ) -> list[tuple[str, str]]:
     """The three lines under the overview hero: finding, size and action, as (lead, text)."""
 
@@ -253,6 +283,12 @@ def overview_takeaway(
     change = recommendation["expected_gross_profit_change"].sum()
     share = change / recommendation["baseline_gross_profit"].sum()
     verb = "add" if change >= 0 else "cost"
+    above_policy = (
+        f" Only {format_try(flags['revenue_leakage_above_policy'].sum())} of it is discount "
+        "above the policy limit."
+        if flags is not None
+        else ""
+    )
     return [
         (
             "Finding",
@@ -262,13 +298,14 @@ def overview_takeaway(
         (
             "Size",
             f"{CURRENCY}{NBSP}{format_number(leaked, 1)} of every {CURRENCY}{NBSP}100 at list "
-            f"price never reaches the company, or {format_try(leaked_revenue)} a year.",
+            "price goes on discounts, rebates and the cost of serving customers: "
+            f"{format_try(leaked_revenue)} in 2025.{above_policy}",
         ),
         (
             "Action",
-            f"The recommended price steps {verb} {format_try(abs(change))} of gross profit a "
-            f"year ({format_pct(share, 1, signed=True)}). This is an estimate that assumes no "
-            "reaction from competitors.",
+            f"{_price_step_range(recommendation, gerund=True)} could {verb} "
+            f"{format_try(abs(change))} of gross profit a year "
+            f"({format_pct(share, 1, signed=True)}), assuming competitors do not react.",
         ),
     ]
 
@@ -278,8 +315,9 @@ def trust_note(elasticities: pd.DataFrame) -> str:
 
     miss = (elasticities["elasticity"] - elasticities["true_elasticity"]).abs().max()
     return (
-        "Estimated without seeing the true values; largest miss "
-        f"{format_number(miss, 2)}. Real data would be noisier."
+        "The model did not see the true values; its estimates miss them by at most "
+        f"{format_number(miss, 2)}. This matters because the price recommendation is built on "
+        "these estimates. Real data would be noisier."
     )
 
 
@@ -288,8 +326,9 @@ def promo_proof(estimates: pd.DataFrame) -> str:
 
     row = estimates.set_index("method").loc["price_adjusted"]
     return (
-        f"The same test works for the promotion: uplift estimated at {format_pct(row['uplift'])} "
-        f"against a true {format_pct(row['true_uplift'])}."
+        "Same check for the promotion: estimated "
+        f"{format_pct(row['uplift'], 1, signed=True)} extra volume; the true effect set in the "
+        f"data was {format_pct(row['true_uplift'], 1, signed=True)}."
     )
 
 

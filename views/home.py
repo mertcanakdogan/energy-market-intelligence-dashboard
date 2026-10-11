@@ -44,10 +44,10 @@ with st.container(key="hero"):
     st.title(leakage_thesis(portfolio.leakage_rate, highlight=True))
     style.lead(
         f"{FOCUS_COMPANY} is a fictional electricity retailer and all data are synthetic. "
-        "Amounts are in TRY at constant 2025 prices."
+        "Amounts are in Turkish lira (TRY), adjusted for inflation to 2025 prices."
     )
 
-takeaway(overview_takeaway(portfolio, waterfall, recommendation))
+takeaway(overview_takeaway(portfolio, waterfall, recommendation, flags))
 
 # 2. The price breakdown, and where leakage differs between the customer segments.
 left, right = st.columns([6, 5], gap="large")
@@ -80,7 +80,7 @@ recovered = int(elasticities["truth_in_ci"].sum())
 st.write(
     "The data are synthetic, so the true price elasticities are known; the model estimates them "
     f"without seeing them. In {recovered} of {len(elasticities)} segments the true value lies "
-    "inside the 95% confidence interval of the estimate."
+    "inside the likely range (95% confidence interval) of the estimate."
 )
 st.markdown(style.trust_strip_html(elasticities), unsafe_allow_html=True)
 st.caption(trust_note(elasticities))
@@ -96,6 +96,8 @@ with st.expander("Glossary (terms used in this app)"):
         """
 - **List price:** the unit price on the price list (TRY/MWh).
 - **Price breakdown:** the steps from list price to pocket price, listed like the lines of a bill.
+- **Invoice price:** the list price minus the on-invoice discount; the price printed on the
+  invoice.
 - **On-invoice discount:** a discount taken off the list price on the invoice itself.
 - **Off-invoice rebate:** money paid back to the customer after the invoice, such as rebates
   and bonuses.
@@ -106,15 +108,20 @@ with st.expander("Glossary (terms used in this app)"):
 - **Above-policy discount:** the part of a discount that goes above the limit set for a segment.
 - **PVM (price-volume-mix) bridge:** splits a change in revenue or profit into the effects of
   price, volume sold, the mix of products and customers, and cost.
+- **Mix:** the effect of a shift in which products and customer segments buy, for example
+  more sales to segments with lower prices.
+- **Percentage points (pp):** the difference between two percentages, for example 9.3% and
+  6.5% are 2.8 points apart.
 - **Price elasticity:** the percent change in volume when the price rises 1%. At -1.6, a 1%
   price rise cuts volume by about 1.6%. Below -1 (for example -1.6) demand is *elastic*; between
   -1 and 0 (for example -0.6) it is *inelastic*, that is, less sensitive to price.
 - **Difference-in-differences (DiD):** measures the true effect of a promotion by comparing the
   change in the promotion provinces with the change in provinces without the promotion.
-- **Confidence interval (CI):** the range in which the true value plausibly lies; a wide 95% CI
-  means the estimate is uncertain.
+- **Confidence interval (CI), likely range:** the range in which the true value plausibly
+  lies; a wide 95% CI means the estimate is uncertain.
 - **Gross profit / gross margin:** net revenue minus energy (variable) cost; the margin is gross
-  profit as a share of net revenue.
+  profit as a share of net revenue. **Pocket margin** is the same margin per MWh:
+  (pocket price − unit cost) ÷ pocket price.
 - **Constant 2025 prices:** all TRY amounts are adjusted for inflation, so years can be compared
   without the effect of rising price levels.
 - **MWh / GWh / TWh:** megawatt-hour; 1 GWh = 1,000 MWh and 1 TWh = 1,000 GWh.

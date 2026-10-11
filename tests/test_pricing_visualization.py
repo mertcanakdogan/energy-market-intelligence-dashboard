@@ -57,7 +57,7 @@ def test_elasticity_and_promo_figures_include_the_truth(
     recovery = elasticity_recovery_figure(elasticity)
     # The truth is drawn first, so the estimate dot stays on top of the diamond.
     assert [trace.name for trace in recovery.data] == [
-        "True value (data generator)",
+        "True value (set in the synthetic data)",
         "Estimate (95% confidence interval)",
     ]
     window = (pricing_config.promotion.start_month_id, pricing_config.promotion.end_month_id)

@@ -47,7 +47,7 @@ def test_landing_page_leads_with_the_thesis_and_the_bill(project_root: Path) -> 
     text = " ".join(item.value for item in app.markdown)
     assert "PRICE BREAKDOWN" in text
     assert "Leakage rate:" in text
-    assert "fictional" in text and "synthetic" in text and "constant 2025 prices" in text
+    assert "fictional" in text and "synthetic" in text and "adjusted for inflation" in text
     assert "Pocket price" in text
     assert "day-ahead market price" in text
     headers = [item.value for item in app.header]
@@ -69,7 +69,7 @@ def test_landing_page_compares_segments_instead_of_offering_a_scope_control(
     for segment in ("Residential", "Commercial (SME)", "Industrial"):
         assert segment in text
     assert "What it means" in text and "Finding" in text and "Action" in text
-    assert "The same test works for the promotion" in text
+    assert "Same check for the promotion" in text
     assert "Built by" in text and "Synthetic data and a fictional company" in " ".join(
         item.value for item in app.caption
     )
@@ -137,7 +137,7 @@ def test_price_recommendation_page_reacts_to_the_limits(project_root: Path) -> N
     app = AppTest.from_file(
         str(project_root / "views/price_recommendation.py"), default_timeout=TIMEOUT
     ).run()
-    step = next(slider for slider in app.select_slider if slider.label == "Largest price step")
+    step = next(slider for slider in app.select_slider if slider.label == "Largest price change")
     step.set_value(2.0).run()
     assert not app.exception, [item.value for item in app.exception]
     text = " ".join(item.value for item in app.markdown)

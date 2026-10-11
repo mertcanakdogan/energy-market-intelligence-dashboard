@@ -178,6 +178,9 @@ def _rounded_levels(levels: list[float]) -> list[float]:
     """Waterfall levels rounded to whole TRY so that every subtotal adds up on the chart."""
 
     rounded = [float(round(level)) for level in levels]
+    relative = [i for i, (_l, _f, measure) in enumerate(WATERFALL_STEPS) if measure == "relative"]
+    largest = max(relative, key=lambda i: rounded[i])
+    rounded[largest] += rounded[0] - sum(rounded[i] for i in relative) - round(levels[-1])
     running = rounded[0]
     for index, (_label, _field, measure) in enumerate(WATERFALL_STEPS):
         if measure == "relative":
@@ -195,7 +198,12 @@ def price_waterfall_figure(waterfall: pd.DataFrame) -> go.Figure:
     figure = make_subplots(
         rows=1,
         cols=len(segments),
-        subplot_titles=segments,
+        # Each panel says how much of the list price its segment keeps.
+        subplot_titles=[
+            f"{row.customer_segment_name}: company keeps "
+            f"{format_pct(row.pocket_price / row.list_price, 0)}"
+            for row in table.itertuples(index=False)
+        ],
         shared_yaxes=True,
         horizontal_spacing=0.04,
     )
@@ -230,8 +238,20 @@ def price_waterfall_figure(waterfall: pd.DataFrame) -> go.Figure:
             row=1,
             col=column,
         )
-    figure.update_layout(title="From list price to pocket price (TRY/MWh, 2025)")
+    kept = table["pocket_price"] / table["list_price"]
+    weakest = table.loc[kept.idxmin()]
+    figure.update_layout(
+        title={
+            "text": "From list price to pocket price (TRY/MWh, 2025)",
+            "subtitle": {
+                "text": "The company keeps the least on "
+                f"{weakest['customer_segment_name']} sales: {format_pct(kept.min(), 0)} of the "
+                "list price. Red bars are what is taken off."
+            },
+        }
+    )
     apply_business_theme(figure)
+    figure.update_layout(margin={"t": 100})  # the title, the finding and the panel titles
     figure.update_annotations(
         font={"family": FONT_HEADING, "size": 18, "weight": 400, "color": NAVY}
     )
@@ -250,7 +270,7 @@ def _bridge_panels(summary: pd.DataFrame) -> list[tuple[str, list[tuple[str, flo
     row = summary.iloc[0]
     return [
         (
-            "Net revenue change",
+            "Net revenue: change 2024 \u2192 2025",
             [
                 ("Volume", row["volume_effect"] / 1e6),
                 ("Mix", row["mix_effect"] / 1e6),
@@ -259,7 +279,7 @@ def _bridge_panels(summary: pd.DataFrame) -> list[tuple[str, list[tuple[str, flo
             row["total_revenue_change"] / 1e6,
         ),
         (
-            "Gross profit change",
+            "Gross profit: change 2024 \u2192 2025",
             [
                 ("Volume", row["gp_volume_effect"] / 1e6),
                 ("Mix", row["gp_mix_effect"] / 1e6),
@@ -358,7 +378,17 @@ def pvm_bridge_figure(summary: pd.DataFrame) -> go.Figure:
     y_range = _bridge_range(summary)
     for column, (_title, effects, total) in enumerate(panels, start=1):
         figure.add_trace(_bridge_trace(effects, total), row=1, col=column)
-    figure.update_layout(title=f"{FOCUS_COMPANY}: price-volume-mix bridge (2025 vs 2024)")
+    row = summary.iloc[0]
+    figure.update_layout(
+        title={
+            "text": f"{FOCUS_COMPANY}: why revenue and gross profit changed (2025 vs 2024)",
+            "subtitle": {
+                "text": f"Net revenue {format_try(row['total_revenue_change'], signed=True)}, "
+                f"gross profit {format_try(row['total_gp_change'], signed=True)}. "
+                "Light bars add, grey bars take away, the dark bar is the total."
+            },
+        }
+    )
     apply_business_theme(figure)
     figure.update_annotations(
         font={"family": FONT_HEADING, "size": 18, "weight": 400, "color": NAVY}
@@ -396,7 +426,7 @@ def _truth_trace(x: pd.Series, y: pd.Series) -> go.Scatter:
         x=x,
         y=y,
         mode="markers",
-        name="True value (data generator)",
+        name="True value (set in the synthetic data)",
         marker={
             "color": "rgba(255,255,255,0)",
             "size": 18,
@@ -459,7 +489,12 @@ def elasticity_recovery_figure(table: pd.DataFrame) -> go.Figure:
             showarrow=False,
             font={"family": FONT_BODY, "size": 13, "color": SLATE},
         )
-    figure.update_layout(title="Price elasticity: estimate and known true value", height=420)
+    title = (
+        "Estimated price sensitivity matches the true values (synthetic data)"
+        if "truth_in_ci" in table and bool(table["truth_in_ci"].all())
+        else "Price sensitivity: estimate and true value (synthetic data)"
+    )
+    figure.update_layout(title=title, height=420)
     apply_business_theme(figure, mono_axis="x")
     _category_axis(figure)
     figure.update_yaxes(range=[-1.0, len(table) - 0.5])
@@ -594,7 +629,9 @@ def promo_estimate_figure(estimates: pd.DataFrame) -> go.Figure:
         ]
     )
     _estimate_on_top(figure)
-    figure.update_layout(title="Estimated promotion effect and true value", height=320)
+    figure.update_layout(
+        title="Extra volume from the promotion: two estimates and the true value", height=320
+    )
     apply_business_theme(figure, mono_axis="x")
     _category_axis(figure)
     figure.update_xaxes(
@@ -639,7 +676,19 @@ def promo_did_figure(
         col=2,
     )
     figure.add_trace(_truth_trace(frame["truth"], frame["label"]), row=1, col=2)
-    figure.update_layout(title="Promotion effect: difference-in-differences (DiD) method")
+    first, last = month_dates(pd.Series(window)).tolist()
+    adjusted = estimates.set_index("method").loc["price_adjusted"]
+    figure.update_layout(
+        title={
+            "text": f"Promotion ({first:%b}\u2013{last:%b %Y}): "
+            f"{format_pct(adjusted['uplift'], 1, signed=True)} extra volume after adjusting for "
+            f"price; true value {format_pct(adjusted['true_uplift'], 1, signed=True)}",
+            "subtitle": {
+                "text": "Difference-in-differences: promotion provinces compared with the others, "
+                "before and during the promotion."
+            },
+        }
+    )
     apply_business_theme(figure)
     for title in titles:
         figure.update_annotations(
@@ -715,23 +764,33 @@ def price_recommendation_figure(table: pd.DataFrame) -> go.Figure:
             y=position + 0.24,
             yanchor="bottom",
             text=(
-                f"<b>{row.customer_segment_name}</b>   "
+                f"<b>{row.customer_segment_name}</b>  "
                 f"price {format_pct(row.price_change_pct, 1, signed=True)}, "
                 f"volume {format_pct(row.expected_volume_change_pct, 1, signed=True)}"
             ),
             showarrow=False,
-            font={"family": FONT_BODY, "size": 14, "color": INK},
+            font={"family": FONT_BODY, "size": 13, "color": INK},
         )
+    total = ordered["expected_gross_profit_change"].sum()
+    base = ordered["baseline_gross_profit"].sum() if "baseline_gross_profit" in ordered else 0
+    share = f" ({format_pct(total / base, 1, signed=True)})" if base else ""
     figure.update_layout(
-        title="Recommended price step: expected 12-month change in gross profit", height=420
+        title={
+            "text": "Recommended price step: expected 12-month change in gross profit",
+            "subtitle": {
+                "text": f"Total {format_try(total, signed=True)} a year{share}. Assumes "
+                "competitors do not react."
+            },
+        },
+        height=440,
     )
     apply_business_theme(figure, mono_axis="x")
     figure.update_yaxes(
         showticklabels=False, showgrid=False, zeroline=False, range=[-0.5, len(ordered) - 0.15]
     )
     figure.update_xaxes(
-        title="TRY m, constant 2025 prices; the line shows the range from the elasticity's "
-        "95% confidence interval",
+        title="TRY m a year, constant 2025 prices; black line: likely range (95% confidence "
+        "interval of the price elasticity)",
         range=[min(0.0, float(low.min()) * 1.1), float(high.max()) * 1.06],
         showgrid=True,
         gridcolor=GRID,
