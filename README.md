@@ -14,7 +14,7 @@ All money is in Turkish lira (TRY) at **constant 2025 prices**, so the numbers c
 |---|---|
 | **List price** | The price on the price list, in TRY per MWh (megawatt-hour of electricity). |
 | **Pocket price** | What is left after every discount, rebate, payment-term cost and service cost. This is the price that matters for profit. |
-| **Price leakage** | The share of the list price that never reaches the company. |
+| **Price leakage** | The share of the list price the company does not keep: discounts, rebates and the cost of serving customers. |
 | **Price realization** | Pocket revenue divided by list revenue: how much of the list price survives. |
 | **Price waterfall** | A chart that walks from the list price down to the pocket price, one deduction at a time. |
 | **PVM bridge** | Price-volume-mix bridge. It splits a change in revenue or profit into a price effect, a volume effect and a mix effect (and a unit-cost effect for profit). |
@@ -33,17 +33,17 @@ All figures are for 2025 (compared with 2024 where stated), in constant 2025 TRY
 
 **Three findings**
 
-1. **14.8% of the list price never reaches the company.** Of TRY 5.50bn list revenue, the company keeps TRY 4.69bn (price realization 85.2%). The gap is widest for Industrial customers: list price 3,735 TRY/MWh, pocket price 2,918 TRY/MWh, a 21.9% gap. It is 9.7% for Residential and 14.4% for Commercial (SME) customers. In four provinces (Izmir, Antalya, Adana and Erzurum; 12 province-segment cases) discounts go beyond the policy limit. That costs TRY 23.4m a year. In the weakest provinces the company's pocket margin on Industrial sales is only 7.1% to 10.6%.
+1. **The company keeps 85.2% of the list price; 14.8% goes on discounts, rebates and the cost of serving customers.** Of TRY 5.50bn list revenue, the company keeps TRY 4.69bn (price realization 85.2%). The gap is widest for Industrial customers: list price 3,735 TRY/MWh, pocket price 2,918 TRY/MWh, a 21.9% gap. It is 9.7% for Residential and 14.4% for Commercial (SME) customers. In four provinces (Izmir, Antalya, Adana and Erzurum; 12 province-segment cases) discounts go beyond the policy limit. That part costs TRY 23.4m a year; the rest of the leak is within policy. In the weakest provinces the company's pocket margin on Industrial sales is only 7.1% to 10.6%.
 2. **Revenue grew, gross profit did not.** Net revenue rose by TRY 186.9m (volume +TRY 130.4m, price +TRY 57.9m, mix −TRY 1.4m). Gross profit fell by TRY 36.3m, because higher unit energy costs took TRY 122.4m. Price increases covered only about 47% of the cost increase.
-3. **Each segment reacts to price differently, and the model finds it.** Estimated elasticities: Residential -1.60 (price sensitive), Commercial (SME) -1.10 (price sensitive, but close to -1: its 95% CI of -1.23 to -0.98 includes -1) and Industrial -0.61 (not very price sensitive). The January-April 2025 discount campaign really added 8% volume. The model estimates 8.7% (95% CI 7.9% to 9.6%) after it adjusts for the price cut. A simple before/after comparison says 12.0%.
+3. **Each segment reacts to price differently, and the model finds it.** Estimated elasticities: Residential -1.60 (price sensitive), Commercial (SME) -1.10 (price sensitive, but close to -1: its 95% CI of -1.23 to -0.98 includes -1) and Industrial -0.61 (not very price sensitive). In the five promotion provinces, the January-April 2025 discount campaign added 8.0% extra volume (the true value set in the synthetic data). The model estimates 8.7% (95% CI 7.9% to 9.6%) once it takes out the effect of the lower price. A simple comparison says 12.0%, because it also counts that price effect.
 
-**Recommendation:** raise the pocket price a little in every segment: Industrial +5.0%, Commercial (SME) +4.8%, Residential +3.3%. Each step is capped at 5%, and no segment may lose more than 5% of its volume. Also stop the extra discounts in the four provinces above. The model expects gross profit to rise by TRY 145.2m a year (+14.9% on a TRY 973.1m baseline; TRY 139.6m to TRY 150.9m across the elasticity confidence interval). The cost is a 2.9% to 5.0% volume loss. This is a decision aid built on simple assumptions; see [Limitations](#limitations).
+**Recommendation:** raise the pocket price a little in every segment: Industrial +5.0%, Commercial (SME) +4.8%, Residential +3.3%. Each step is capped at 5%, and no segment may lose more than 5% of its volume. Also stop the extra discounts in the four provinces above (TRY 23.4m a year, not included in the figure below). The model expects gross profit to rise by TRY 145.2m a year (+14.9% on a TRY 973.1m baseline; TRY 139.6m to TRY 150.9m across the elasticity confidence interval). The cost is a 2.9% to 5.0% volume loss. This is a decision aid built on simple assumptions; see [Limitations](#limitations).
 
 ![Recommended price step and expected gross-profit change](outputs/examples/price_recommendation.png)
 
 ## How we know the model works
 
-The data generator uses known true values, so we can test whether the estimates recover them. Elasticities come from a log-log regression per customer segment. The model controls for month of year, province x product, a trend and the competitor price, and its standard errors are clustered by province:
+The data generator uses known true values, so we can test whether the estimates recover them. Elasticities come from a log-log regression per customer segment. The model controls for month of year, province × product, a trend and the competitor price, and its standard errors are clustered by province:
 
 | Segment | True elasticity | Estimate | Std. error | 95% CI | Truth inside CI |
 |---|---:|---:|---:|---|:---:|
@@ -250,7 +250,7 @@ This is an independent portfolio project built entirely with synthetic data. It 
 
 ## Author
 
-**Mert Can Akdoğan**
+**Mert Can Akdoğan**, sales analytics, working toward strategic pricing and revenue management. [LinkedIn](https://www.linkedin.com/in/mertcanakdogan/) · [Live app](https://tavra-energy-pricing.streamlit.app)
 
 ## License
 
