@@ -15,8 +15,10 @@ import yaml
 
 from energy_market_intelligence.database import build_database, query_dataframe
 from energy_market_intelligence.opportunity import calculate_opportunity_scores
-from energy_market_intelligence.synthetic_data import GeneratorConfig, generate_synthetic_data
-from energy_market_intelligence.validation import validate_bundle
+from energy_market_intelligence.pricing_config import PricingConfig
+from energy_market_intelligence.pricing_data import generate_full_bundle
+from energy_market_intelligence.synthetic_data import GeneratorConfig
+from energy_market_intelligence.validation import validate_bundle, validate_pricing_bundle
 from energy_market_intelligence.visualization import (
     competitor_change_figure,
     gross_margin_trend_figure,
@@ -138,8 +140,9 @@ def run_pipeline(
         months=int(project_config["months"]),
     )
     LOGGER.info("Generating deterministic synthetic star-schema data")
-    bundle = generate_synthetic_data(generator_config)
+    bundle = generate_full_bundle(generator_config, PricingConfig.from_mapping(config["pricing"]))
     validate_bundle(bundle, tolerance=float(config["validation"]["financial_tolerance"]))
+    validate_pricing_bundle(bundle)
     _write_raw_tables(bundle, paths.raw_dir)
     executed_scripts = build_database(bundle, paths.database_path, paths.sql_dir)
     paths.output_dir.mkdir(parents=True, exist_ok=True)
