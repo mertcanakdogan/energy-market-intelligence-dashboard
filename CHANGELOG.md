@@ -4,6 +4,25 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-10-11
+
+Turkish setting, TL currency and a clearer app and README. The ground truth is unchanged: all elasticity and promotion estimates are identical to 2.0.0 to three decimals.
+
+### Changed
+
+- Fictional Turkish setting: focus company Tavra Enerji and six fictional competitors ("<invented word> Enerji", web-screened against real companies), 18 sales regions based on Turkey's geography (for example İstanbul Avrupa, Ege Kuzey, Doğu Karadeniz), customer segments Mesken, Ticarethane / KOBİ and Sanayi (English gloss in `dim_customer_segment.customer_segment_en`) and Turkish product names.
+- All money is Turkish lira at constant 2025 prices; prices are TL per MWh at realistic 2025 levels (list about 3,300 to 4,200 TL/MWh). Seasonality now peaks in summer and winter. The latest 12 months are calendar year 2025.
+- Streamlit app is fully Turkish, with `st.navigation` in two sections ("Fiyatlama / Pricing", "Pazar / Market"), readable page titles, "Bu sayfa ne gösteriyor?" and data-driven "Ne anlama geliyor?" boxes, compact KPI cards with help tooltips, a glossary, Turkish charts (TL axes, Turkish number separators) and a scenario baseline restricted to 2025. The `pages/` directory became `views/`; page URLs changed.
+- README rewritten for a non-technical reader first: key terms, Turkish summary, three findings and one recommendation, a description of the fictional setting and the random stream used.
+- SQL and output column names `northstar_*` became `focus_*`, and `vw_northstar_profitability_monthly` became `vw_focus_profitability_monthly`; SQL filters the focus company by `company_type`, not by name.
+- `run_metadata.json` is written as UTF-8 without escaping Turkish characters. Power BI measures, DEPLOY.md and the sample-data note describe the new names and units; DEPLOY.md links the live app.
+
+### Added
+
+- `localization.py` (Turkish number, percent, TL and volume formats; column and value labels) and `insights.py` (takeaway sentences computed from the data).
+- `generate_management_observations(..., language="tr")`.
+- Tests for the Turkish setting (names, prices, calendar), localization, insights, navigation and page explanations; the hygiene test also blocks real Turkish retailers, distribution companies and fuel brands.
+
 ## [2.0.0] - 2026-10-11
 
 Repositioned as a pricing and revenue analytics case study for the fictional focus company Northstar Energy. All data remain synthetic.

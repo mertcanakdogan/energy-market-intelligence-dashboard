@@ -16,15 +16,20 @@ the export code is `src/energy_market_intelligence/powerbi_export.py`):
 
 | File | Grain | Role |
 |---|---|---|
-| `fact_pricing.csv` | month x region x product x customer segment | fact |
+| `fact_pricing.csv` | month x region x product x customer segment | fact (amounts in TL, prices in TL/MWh, constant 2025 prices) |
 | `dim_date.csv` | month | dimension (first-of-month dates) |
 | `dim_region.csv` | region | dimension |
 | `dim_product.csv` | product | dimension |
-| `dim_customer_segment.csv` | customer segment | dimension |
+| `dim_customer_segment.csv` | customer segment | dimension (`customer_segment_name` is Turkish: Mesken, Ticarethane / KOBİ, Sanayi; `customer_segment_en` holds the English gloss) |
 | `dim_discount_policy.csv` | customer segment | policy threshold (`max_discount_pct`) |
 
 Load them with *Get data > Text/CSV*. Set `dim_date[date]` to type Date and `promo_flag` to whole
 number. Hide the key columns in report view.
+
+Entity names (regions, products, segments) are Turkish and fictional. The data run from January
+2023 to December 2025, so "L12M" in the measures below is calendar year 2025 and "P12M" is 2024.
+For Turkish number formatting set the report language to Turkish (Türkiye) and use the format
+string `#,0 "TL"` for amounts and `#,0 "TL/MWh"` for prices.
 
 ## 2. Data model
 
@@ -48,7 +53,7 @@ dim_customer_segment ◄──1:1──► dim_discount_policy
 last-12-month measures therefore shift `month_id` instead of using `DATEADD`.
 
 Fact amount columns (`*_amount`, `*_revenue`, `variable_cost`, `gross_profit`) are totals in
-synthetic currency units; per-unit columns (`list_price`, `pocket_price`, ...) are per MWh and must
+Turkish lira (TL) at constant 2025 prices; per-unit columns (`list_price`, `pocket_price`, ...) are per MWh and must
 be volume-weighted, never averaged. The measures below do that.
 
 ## 3. Waterfall measures

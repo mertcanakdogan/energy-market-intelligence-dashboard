@@ -3,7 +3,7 @@
 The Streamlit app can run locally or on Streamlit Community Cloud. No API keys, secrets, external
 databases or paid services are needed: all data are synthetic and generated deterministically.
 
-**Live demo:** not published yet. Once deployed, add the public app URL here and in the README.
+**Live demo:** <https://northstar-pricing.streamlit.app> (deploys from branch `main`, main file `app.py`). The app text is in Turkish.
 
 ## How the app finds its data
 
@@ -16,7 +16,7 @@ databases or paid services are needed: all data are synthetic and generated dete
    spinner) and then reuses it. If the repository directory is read-only, the database is
    written to the system temp directory instead.
 
-The first-start build does not touch `outputs/examples/`, so running the app locally never
+The app navigation (`st.navigation`) is defined in `app.py` and `dashboard_support.PAGE_SPECS`; the pages live in `views/`. The first-start build does not touch `outputs/examples/`, so running the app locally never
 modifies tracked files.
 
 ## Local run
@@ -48,5 +48,6 @@ streamlit run app.py
 |---|---|
 | Spinner never finishes | Check the app logs for the traceback; the pipeline needs about 1 GB of memory. |
 | `Could not create the analytical database` | Neither the repository nor the temp directory is writable. Set `EMID_DATABASE_PATH` to a writable path. |
+| Old page names (`app`, `price waterfall`) in the sidebar | Browser cache of an older deployment; reload the page. Version 2.1.0 replaced the `pages/` directory with `st.navigation`. |
 | Stale numbers after changing `config/default.yaml` | Delete `data/energy_market.duckdb` (and the temp copy) and clear the Streamlit cache. |
 | `ModuleNotFoundError: energy_market_intelligence` | `requirements.txt` was not picked up; confirm it contains a single `.` line. |
