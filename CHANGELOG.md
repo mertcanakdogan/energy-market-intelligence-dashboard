@@ -6,6 +6,10 @@ All notable changes to this project are documented here.
 
 Redesign of the Streamlit app around the fatura dökümü; analysis results are unchanged.
 
+### Fixed
+
+- A deployed app rebuilds its database when it was built from an earlier dataset version (`DATASET_VERSION` stamp next to the DuckDB file); before, a Streamlit Cloud app kept serving the 2.0.0 data after an update. Streamlit Cloud installs the package in editable mode, so new modules are importable after a push.
+
 ### Changed
 
 - Design: the "fiyat kaçağı" concept with one signature element, the fatura dökümü (bill-style price itemisation) on the landing page. The home page now leads with a computed thesis sentence, the bill next to a matching waterfall, three question cards and a model-trust strip instead of the metric-card row. See `docs/DESIGN.md`.
@@ -13,6 +17,7 @@ Redesign of the Streamlit app around the fatura dökümü; analysis results are 
 - One Plotly template (`tavra`) for all charts and PNG exports; colours have fixed meanings (red only for leakage and breaches, green only for gains). Theme and fonts (Source Sans 3, Barlow Semi Condensed, IBM Plex Mono) are set in `.streamlit/config.toml`; Streamlit 1.65 or newer is required.
 - Public URL is `https://tavra-enerji-fiyatlama.streamlit.app`.
 - Every number reads the Turkish way regardless of the browser locale: tables are formatted through a Styler (sorting still uses raw values), share axes show `%10` instead of `10%`, month axes `01/2025`, numeric axes have thousands separators, and percentage sliders show `+%2,5`.
+- The bill block adapts to its own column width (container queries), so it stays aligned on tablets as well as phones; landing-card titles wrap instead of being cut off.
 - Callouts use a top rule like the bill and the landing cards instead of a side stripe. The scenario page hides zero deltas and says plainly when nothing changes.
 
 ## [2.1.0] - 2026-10-11

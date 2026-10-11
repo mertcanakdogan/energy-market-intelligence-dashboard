@@ -42,6 +42,25 @@ from energy_market_intelligence.visualization import (
 
 LOGGER = logging.getLogger(__name__)
 
+# Bump when the generated data or the SQL models change. A deployed app keeps its database
+# between commits, and the stamp lets it notice a database left over from an earlier version.
+DATASET_VERSION = "2.1.0"
+
+
+def dataset_stamp_path(database_path: Path) -> Path:
+    """Sidecar file next to the database that records the dataset version it was built from."""
+
+    return database_path.with_name(database_path.name + ".version")
+
+
+def dataset_is_current(database_path: Path) -> bool:
+    """True when the database exists and was built from the current ``DATASET_VERSION``."""
+
+    stamp = dataset_stamp_path(database_path)
+    if not (database_path.exists() and stamp.exists()):
+        return False
+    return stamp.read_text(encoding="utf-8").strip() == DATASET_VERSION
+
 
 @dataclass(frozen=True)
 class PipelinePaths:
@@ -124,6 +143,7 @@ def build_dataset(paths: PipelinePaths, *, write_raw: bool = True) -> Dataset:
     if write_raw:
         _write_raw_tables(bundle, paths.raw_dir)
     executed = build_database(bundle, paths.database_path, paths.sql_dir)
+    dataset_stamp_path(paths.database_path).write_text(DATASET_VERSION + "\n", encoding="utf-8")
     return Dataset(config, pricing_config, generator_config, bundle, executed)
 
 

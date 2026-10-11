@@ -70,6 +70,7 @@ h2, h3 {letter-spacing: 0;}
 .fatura {
   background: #FFFFFF; border: 1px solid var(--tv-rule); border-top: 4px solid var(--tv-navy);
   padding: 1rem 1.3rem 1.1rem; max-width: 36rem; color: var(--tv-ink);
+  container-type: inline-size;
 }
 .fatura-head {
   display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap;
@@ -104,11 +105,12 @@ h2, h3 {letter-spacing: 0;}
 }
 .fl--net .fl-op, .fl--net .fl-pct {color: var(--tv-navy);}
 .fl--net .fl-amt {font-weight: 600;}
-@media (min-width: 521px) {.fl--net .fl-label {white-space: nowrap;}}
+@container (min-width: 27rem) {.fl--net .fl-label {white-space: nowrap;}}
 .fatura-foot {margin: 0.65rem 0 0; font-size: 0.92rem; color: var(--tv-slate);}
 .fatura-foot b {color: var(--tv-leak); font-family: var(--tv-mono); font-weight: 600;}
-@media (max-width: 520px) {
-  .fatura {padding: 0.9rem 0.9rem 1rem;}
+/* The bill sits in a column, so it adapts to its own width, not the viewport's. */
+@media (max-width: 520px) {.fatura {padding: 0.9rem 0.9rem 1rem;}}
+@container (max-width: 27rem) {
   .fl {font-size: 1rem;}
   .fl--net {font-size: 1.1rem;}
   .fl-pct {display: none;}
@@ -127,7 +129,10 @@ h2, h3 {letter-spacing: 0;}
 [data-testid="stPageLink"] p {font-weight: 600; color: var(--tv-navy);}
 [class*="st-key-card-"] [data-testid="stPageLink"] p {
   font-family: var(--tv-head); font-weight: 700; font-size: 1.35rem; color: var(--tv-navy);
+  white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.2;
 }
+[class*="st-key-card-"] [data-testid="stPageLink"] a,
+[class*="st-key-card-"] [data-testid="stPageLink"] a > div {max-width: 100%; overflow: visible;}
 [data-testid="stPageLink"] a::after {content: "\\2192"; margin-left: 0.4rem; color: var(--tv-navy);}
 .tv-chart-title {
   font-family: var(--tv-head); font-weight: 700; font-size: 1.3rem; line-height: 1.2;

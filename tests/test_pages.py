@@ -128,6 +128,25 @@ def test_missing_database_is_built_on_first_start(
         dashboard_support.ensure_database.clear()
 
 
+def test_database_from_an_earlier_dataset_version_is_rebuilt(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from energy_market_intelligence.pipeline import dataset_is_current, dataset_stamp_path
+
+    stale = tmp_path / "energy_market.duckdb"
+    stale.write_bytes(b"left over from an earlier deployment")
+    dataset_stamp_path(stale).write_text("1.0.0", encoding="utf-8")
+    monkeypatch.delenv(dashboard_support.DATABASE_ENV_VAR, raising=False)
+    monkeypatch.setattr(dashboard_support, "DATABASE_PATH", stale)
+    dashboard_support.ensure_database.clear()
+    try:
+        assert not dataset_is_current(stale)
+        assert Path(dashboard_support.ensure_database()) == stale
+        assert dataset_is_current(stale)
+    finally:
+        dashboard_support.ensure_database.clear()
+
+
 def test_unknown_view_is_rejected() -> None:
     with pytest.raises(ValueError, match="Unknown analytical view"):
         dashboard_support.load_view.__wrapped__("fact_pricing; DROP TABLE x")

@@ -24,7 +24,7 @@ from energy_market_intelligence.localization import (
     format_pct,
     localize_frame,
 )
-from energy_market_intelligence.pipeline import PipelinePaths, build_dataset
+from energy_market_intelligence.pipeline import PipelinePaths, build_dataset, dataset_is_current
 from energy_market_intelligence.pricing_config import PricingConfig
 from energy_market_intelligence.promotion import estimate_promo_uplift, treated_control_trend
 from energy_market_intelligence.visualization import turkish_axes
@@ -67,23 +67,27 @@ def configured_database_path() -> Path:
     show_spinner="Sentetik veri tabanı oluşturuluyor (yalnızca ilk açılışta, yaklaşık 30 sn)..."
 )
 def ensure_database() -> str:
-    """Return the database path, generating the synthetic data first if it does not exist.
+    """Return the database path, generating the synthetic data first if needed.
 
     Local use after running the pipeline is unchanged. On a fresh deployment (for example
     Streamlit Community Cloud) the deterministic dataset is built once at first start; if the
-    repository directory is read-only the database is placed in the system temp directory.
+    repository directory is read-only the database is placed in the system temp directory. A
+    database built from an earlier dataset version is rebuilt, because a deployment keeps its
+    files between commits. A path set through ``EMID_DATABASE_PATH`` is used as it is.
     """
 
     primary = configured_database_path()
-    if primary.exists():
+    if os.environ.get(DATABASE_ENV_VAR) and primary.exists():
         return str(primary)
     fallback = Path(tempfile.gettempdir()) / "energy_market_intelligence" / primary.name
-    if fallback.exists():
-        return str(fallback)
+    for candidate in (primary, fallback):
+        if dataset_is_current(candidate):
+            return str(candidate)
     paths = PipelinePaths.for_root(PROJECT_ROOT)
     last_error: OSError | None = None
     for candidate in (primary, fallback):
         try:
+            candidate.unlink(missing_ok=True)  # generated file from an earlier dataset version
             build_dataset(replace(paths, database_path=candidate), write_raw=False)
         except OSError as error:
             candidate.unlink(missing_ok=True)

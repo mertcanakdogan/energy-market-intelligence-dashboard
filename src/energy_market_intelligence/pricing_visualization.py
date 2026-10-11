@@ -139,6 +139,7 @@ def bill_waterfall_figure(bill: Bill) -> go.Figure:
             measure=measure,
             text=text,
             textposition="outside",
+            cliponaxis=False,  # the list-price label sits past the axis end on narrow screens
             textfont={"family": FONT_MONO, "size": 13, "color": INK},
             decreasing={"marker": {"color": LEAK_RED}},
             increasing={"marker": {"color": NAVY}},
@@ -150,7 +151,7 @@ def bill_waterfall_figure(bill: Bill) -> go.Figure:
     )
     list_price, net = bill.lines[0].amount, bill.lines[-1].amount
     apply_business_theme(figure, mono_axis="x")
-    figure.update_layout(margin={"l": 8, "r": 24, "t": 12, "b": 48}, height=380)
+    figure.update_layout(margin={"l": 8, "r": 56, "t": 12, "b": 48}, height=380)
     figure.update_yaxes(
         autorange="reversed",
         showgrid=False,
