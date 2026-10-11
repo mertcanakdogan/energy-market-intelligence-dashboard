@@ -47,9 +47,9 @@ def price_waterfall_insight(waterfall: pd.DataFrame, flags: pd.DataFrame) -> str
     realization = waterfall["pocket_revenue"].sum() / waterfall["list_revenue"].sum()
     worst = _worst_row(table, "gap")
     text = (
-        f"Of every {CURRENCY} 100 of sales at list price, the company keeps "
-        f"{CURRENCY} {format_number(realization * 100, 1)} on average. The gap is widest in the "
-        f"{worst['customer_segment_name']} segment: list price "
+        f"Of every {CURRENCY}{NBSP}100 of sales at list price, the company keeps "
+        f"{CURRENCY}{NBSP}{format_number(realization * 100, 1)} on average. The gap is widest "
+        f"in the {worst['customer_segment_name']} segment: list price "
         f"{format_try_per_mwh(worst['list_price'])}, pocket price "
         f"{format_try_per_mwh(worst['pocket_price'])} "
         f"({format_pct(worst['gap'])} lower)."
@@ -60,8 +60,9 @@ def price_waterfall_insight(waterfall: pd.DataFrame, flags: pd.DataFrame) -> str
     provinces = breaches.groupby("region_name")["revenue_leakage_above_policy"].sum()
     top = provinces.sort_values(ascending=False).head(3).index.tolist()
     return (
-        text + f" In {breaches['region_name'].nunique()} provinces the discount is above the "
-        "policy limit; this extra discount costs "
+        text + f" In {breaches['region_name'].nunique()} provinces ({len(breaches)} province "
+        "and segment combinations) the discount is above the policy limit; this extra "
+        "discount costs "
         f"{format_try(breaches['revenue_leakage_above_policy'].sum())} a year "
         f"(most in {_join(top)})."
     )
@@ -156,9 +157,7 @@ def recommendation_insight(table: pd.DataFrame) -> str:
         "If the recommended steps are applied, the pocket price "
         f"{price_word} by {format_pct(abs(price_change), 1)} on average, volume {volume_word} "
         f"by about {format_pct(abs(volume_change), 1)} and gross profit {direction} by "
-        f"{format_try(abs(change))} a year ({format_pct(change / baseline, 1, signed=True)}). "
-        "This is a decision-support calculation; it assumes a constant elasticity and no "
-        "reaction from competitors."
+        f"{format_try(abs(change))} a year ({format_pct(change / baseline, 1, signed=True)})."
     )
 
 
@@ -193,15 +192,15 @@ def _largest_deduction(bill: Bill) -> BillLine:
 
 
 def leakage_answer(bill: Bill, flags: pd.DataFrame) -> str:
-    """Largest bill deduction and the number of province and customer-group combinations above
-    the policy limit."""
+    """Largest bill deduction and the number of province and customer segment combinations
+    above the policy limit."""
 
     largest = _largest_deduction(bill)
     breaches = int(flags["exceeds_policy"].sum())
     return (
         f"The largest item is the {largest.label.lower()} "
-        f"({format_pct(largest.share_of_list)} of the list price); {breaches} province and "
-        "customer-group combinations give discounts above the policy limit."
+        f"({format_pct(largest.share_of_list)} of the list price); {breaches} combinations of "
+        "province and customer segment give discounts above the policy limit."
     )
 
 

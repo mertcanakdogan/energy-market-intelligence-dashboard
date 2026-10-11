@@ -115,7 +115,7 @@ def test_bill_html_shows_displayed_amounts_that_add_up(waterfall_frame: pd.DataF
     assert 'aria-label="percentage of list price"' in html
     assert ".bill {" in style.GLOBAL_CSS and ".bill-title" in style.GLOBAL_CSS
     assert html.count("fl--deduction") == 4 and html.count("fl--net") == 1
-    assert html.count("−") >= 8  # operator and sign of each deduction
+    assert html.count("−") == 4  # the sign of each deduction, once
     assert "\n" not in html, "blank lines or indentation would break the Markdown block"
 
 
@@ -150,7 +150,7 @@ def test_trust_strip_lists_every_segment_with_the_true_value() -> None:
     )
     html = style.trust_strip_html(table)
     assert html.index("Residential") < html.index("Industrial")
-    assert "-1.60" in html and "-0.61" in html
+    assert "\u22121.60" in html and "\u22120.61" in html
     assert html.count("tv-trust-ok") == 1
     assert "True value is outside the interval" in html
     assert "True value is inside the interval" in html
@@ -195,7 +195,8 @@ def test_landing_answers_are_computed_from_the_data(
     flags = query_dataframe(analytics_db, "SELECT * FROM vw_discount_policy_flags")
     answer = leakage_answer(bill, flags)
     assert (
-        f"{int(flags['exceeds_policy'].sum())} province and customer-group combinations" in answer
+        f"{int(flags['exceeds_policy'].sum())} combinations of province and customer segment"
+        in answer
     )
     assert "pairs" not in answer
     assert "on-invoice discount" in answer  # the largest deduction of the synthetic portfolio
@@ -224,7 +225,7 @@ def test_landing_answers_are_computed_from_the_data(
     assert list(lines) == ["Finding", "Size", "Action"]
     assert lines["Finding"].startswith("The largest leak is the on-invoice discount, ")
     assert f"TRY{nbsp}{round(bill.leakage_rate * 100, 1)} of every TRY{nbsp}100" in lines["Size"]
-    assert re.search(r"add TRY \d+\.\dm of gross profit a year \(\+\d+\.\d%\)", lines["Action"])
+    assert re.search(r"add TRY\s\d+\.\dm of gross profit a year \(\+\d+\.\d%\)", lines["Action"])
 
 
 def test_table_cells_use_english_separators_whatever_the_browser_locale() -> None:
@@ -232,7 +233,7 @@ def test_table_cells_use_english_separators_whatever_the_browser_locale() -> Non
 
     assert cell_formatter(2)(2.784) == "2.78"
     assert cell_formatter(0)(3180.47) == "3,180"
-    assert cell_formatter(2)(-1234.5) == "-1,234.50"
+    assert cell_formatter(2)(-1234.5) == "\u22121,234.50"
     assert cell_formatter(2, percent=True)(0.0928) == "9.28%"
     assert cell_formatter(2, percent=True)(0.084) == "8.40%"
     assert cell_formatter(2)(float("nan")) == "–"
@@ -271,8 +272,10 @@ def test_bridge_answer_falls_back_to_plain_effects_when_costs_did_not_win() -> N
         ]
     )
     text = bridge_answer(summary)
-    assert text.startswith("Net revenue fell by TRY 2.00m while gross profit rose by TRY 5.00m.")
-    assert "Price changes added TRY 7.00m; unit costs took TRY 2.00m." in text
+    assert text.startswith(
+        "Net revenue fell by TRY\u00a02.0m while gross profit rose by TRY\u00a05.0m."
+    )
+    assert "Price changes added TRY\u00a07.0m; unit costs took TRY\u00a02.0m." in text
 
 
 def test_trust_and_promotion_lines_are_computed() -> None:

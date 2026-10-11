@@ -24,10 +24,11 @@ PRICE_BASIS = "constant 2025 prices"
 SEGMENT_ORDER = ("Residential", "Commercial (SME)", "Industrial")
 
 MISSING = "–"
+MINUS = "\u2212"  # true minus sign, the same glyph Plotly uses on its axes
 
 
 def format_number(value: float, decimals: int = 0, *, signed: bool = False) -> str:
-    """Format ``value`` with English separators, e.g. ``1,234.5``."""
+    """Format ``value`` with English separators, e.g. ``1,234.5``; negatives get a true minus."""
 
     if value is None or not math.isfinite(value):
         return MISSING
@@ -36,7 +37,7 @@ def format_number(value: float, decimals: int = 0, *, signed: bool = False) -> s
         value = 0.0
     text = f"{abs(value):,.{decimals}f}"
     if value < 0:
-        return f"-{text}"
+        return f"{MINUS}{text}"
     return f"+{text}" if signed and value > 0 else text
 
 
@@ -63,16 +64,16 @@ def format_try(value: float, *, signed: bool = False) -> str:
     if magnitude >= 1e9:
         scaled, decimals, unit = value / 1e9, 2, "bn"
     elif magnitude >= 1e6:
-        scaled = value / 1e6
-        decimals, unit = (1 if abs(scaled) >= 10 else 2), "m"
+        scaled, decimals, unit = value / 1e6, 1, "m"
     elif magnitude >= 1e3:
         scaled = value / 1e3
         decimals, unit = (0 if abs(scaled) >= 100 else 1), "k"
     else:
         scaled, decimals, unit = value, 0, ""
     text = format_number(scaled, decimals, signed=signed)
-    sign = text[0] if text[0] in "+-" else ""
-    return f"{sign}{CURRENCY} {text[len(sign) :]}{unit}"
+    sign = text[0] if text[0] in ("+", MINUS) else ""
+    # Non-breaking space: the currency never ends a line apart from its amount.
+    return f"{sign}{CURRENCY}\u00a0{text[len(sign) :]}{unit}"
 
 
 def format_try_per_mwh(value: float, decimals: int = 0, *, signed: bool = False) -> str:
@@ -118,18 +119,18 @@ COLUMN_LABELS: dict[str, str] = {
     "pocket_revenue": "Pocket revenue (TRY)",
     "gross_profit": "Gross profit (TRY)",
     "revenue": "Revenue (TRY)",
-    "on_invoice_discount_pct": "On-invoice discount (% of list price)",
+    "on_invoice_discount_pct": "On-invoice discount",
     "policy_max_discount_pct": "Policy limit",
-    "excess_discount_pp": "Excess over limit (pp)",
+    "excess_discount_pp": "Over the limit (pp)",
     "revenue_leakage_above_policy": "Discount above policy (TRY)",
     "exceeds_policy": "Above the limit?",
     "pocket_margin_pct": "Pocket margin",
     "current_margin_pct": "Current margin",
     "new_margin_pct": "New margin",
-    "prior_volume": "Prior-year volume (MWh)",
-    "current_volume": "Latest-year volume (MWh)",
-    "prior_price": "Prior-year price (TRY/MWh)",
-    "current_price": "Latest-year price (TRY/MWh)",
+    "prior_volume": "2024 volume (MWh)",
+    "current_volume": "2025 volume (MWh)",
+    "prior_price": "2024 price (TRY/MWh)",
+    "current_price": "2025 price (TRY/MWh)",
     "volume_effect": "Volume effect (TRY)",
     "mix_effect": "Mix effect (TRY)",
     "price_effect": "Price effect (TRY)",
@@ -145,7 +146,7 @@ COLUMN_LABELS: dict[str, str] = {
     "abs_error": "Absolute error",
     "truth_in_ci": "True value inside the interval?",
     "cross_elasticity": "Competitor-price elasticity",
-    "classification": "Class",
+    "classification": "Demand",
     "n_obs": "Observations",
     "method": "Method",
     "uplift": "Estimated effect",
@@ -158,6 +159,7 @@ COLUMN_LABELS: dict[str, str] = {
     "expected_gross_profit_change": "Expected gross profit change (TRY)",
     "gross_profit_change_low": "Gross profit change, low (TRY)",
     "gross_profit_change_high": "Gross profit change, high (TRY)",
+    "gross_profit_range": "Range (TRY m)",
     "baseline_gross_profit": "Current gross profit (TRY)",
     "binding_constraint": "Deciding rule",
     "momentum_rank": "Rank",

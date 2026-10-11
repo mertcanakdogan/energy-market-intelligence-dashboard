@@ -55,13 +55,14 @@ def test_elasticity_and_promo_figures_include_the_truth(
 ) -> None:
     elasticity, promo = estimates
     recovery = elasticity_recovery_figure(elasticity)
+    # The truth is drawn first, so the estimate dot stays on top of the diamond.
     assert [trace.name for trace in recovery.data] == [
-        "Estimate (95% confidence interval)",
         "True value (data generator)",
+        "Estimate (95% confidence interval)",
     ]
     window = (pricing_config.promotion.start_month_id, pricing_config.promotion.end_month_id)
     did = promo_did_figure(promo, treated_control_trend(pricing_frame), window)
-    assert len(did.data) == 3
+    assert len(did.data) == 4  # two trends, the estimates and the truth
 
 
 def test_recommendation_figure_has_one_bar_per_segment(

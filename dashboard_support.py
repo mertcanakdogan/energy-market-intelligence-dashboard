@@ -27,7 +27,7 @@ from energy_market_intelligence.localization import (
 from energy_market_intelligence.pipeline import PipelinePaths, build_dataset, dataset_is_current
 from energy_market_intelligence.pricing_config import PricingConfig
 from energy_market_intelligence.promotion import estimate_promo_uplift, treated_control_trend
-from energy_market_intelligence.visualization import format_axes
+from energy_market_intelligence.visualization import format_axes, has_legend
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 DATABASE_PATH = PROJECT_ROOT / "data" / "energy_market.duckdb"
@@ -216,8 +216,8 @@ def show_chart(figure: go.Figure, *, alt: str | None = None) -> None:
     if title:
         plain = re.sub(r"<[^>]+>", " ", title)
         style.chart_title(plain)
-        top = figure.layout.margin.t
-        figure.update_layout(title=None, margin={"t": 44 if top is None else max(top - 40, 30)})
+        # Without the title the top margin only has to hold the legend, if there is one.
+        figure.update_layout(title=None, margin={"t": 64 if has_legend(figure) else 16})
         alt = alt or plain
     st.plotly_chart(
         figure,
@@ -233,7 +233,7 @@ def _table_rule(column: str, fractions: set[str]) -> tuple[float, int, bool, str
 
     label = COLUMN_LABELS.get(column, column)
     if column in fractions:
-        return 1.0, 2, True, None
+        return 1.0, 1, True, None
     if label.endswith("(TRY)"):
         return 1e6, 2, False, "(TRY m)"
     if label.endswith("(MWh)"):
@@ -242,6 +242,8 @@ def _table_rule(column: str, fractions: set[str]) -> tuple[float, int, bool, str
         return 1.0, 0, False, None
     if column == "hhi":
         return 1.0, 3, False, None
+    if label.endswith("(pp)"):
+        return 1.0, 1, False, None
     return 1.0, 2, False, None
 
 
@@ -321,8 +323,15 @@ def percent_slider(
     )
 
 
+ALL_PROVINCES = "All provinces"
+
+
 def select_regions(frame: pd.DataFrame, *, key: str) -> list[str]:
-    """Sidebar filter over the provinces (stored in the ``region_name`` column)."""
+    """Sidebar filter: all provinces or one of them (stored in the ``region_name`` column).
+
+    One choice instead of 18 removable chips: the page reads the same on a phone.
+    """
 
     options = sorted(frame["region_name"].dropna().unique().tolist())
-    return st.sidebar.multiselect("Provinces", options, default=options, key=key)
+    choice = st.sidebar.selectbox("Province", [ALL_PROVINCES, *options], key=key)
+    return options if choice == ALL_PROVINCES else [choice]

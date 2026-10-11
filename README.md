@@ -34,7 +34,7 @@ All figures are for 2025 (compared with 2024 where stated), in constant 2025 TRY
 **Three findings**
 
 1. **14.8% of the list price never reaches the company.** Of TRY 5.50bn list revenue, the company keeps TRY 4.69bn (price realization 85.2%). The gap is widest for Industrial customers: list price 3,735 TRY/MWh, pocket price 2,918 TRY/MWh, a 21.9% gap. It is 9.7% for Residential and 14.4% for Commercial (SME) customers. In four provinces (Izmir, Antalya, Adana and Erzurum; 12 province-segment cases) discounts go beyond the policy limit. That costs TRY 23.4m a year. Industrial customers in the weakest provinces earn a pocket margin of only 7.1% to 10.6%.
-2. **Revenue grew, gross profit did not.** Net revenue rose by TRY 186.9m (volume +TRY 130.4m, price +TRY 57.9m, mix -TRY 1.4m). Gross profit fell by TRY 36.3m, because higher unit energy costs took TRY 122.4m. Price increases covered only about 47% of the cost increase.
+2. **Revenue grew, gross profit did not.** Net revenue rose by TRY 186.9m (volume +TRY 130.4m, price +TRY 57.9m, mix −TRY 1.4m). Gross profit fell by TRY 36.3m, because higher unit energy costs took TRY 122.4m. Price increases covered only about 47% of the cost increase.
 3. **Each segment reacts to price differently, and the model finds it.** Estimated elasticities: Residential -1.60 (price sensitive), Commercial (SME) -1.10 (borderline; its 95% CI of -1.23 to -0.98 includes -1) and Industrial -0.61 (not very price sensitive). The January-April 2025 discount campaign really added 8% volume. The model estimates 8.7% (95% CI 7.9% to 9.6%) after it adjusts for the price cut. A simple before/after comparison says 12.0%.
 
 **Recommendation:** raise the pocket price a little in every segment: Industrial +5.0%, Commercial (SME) +4.8%, Residential +3.3%. Each step is capped at 5%, and no segment may lose more than 5% of its volume. Also stop the extra discounts in the four provinces above. The model expects gross profit to rise by TRY 145.2m a year (+14.9% on a TRY 973.1m baseline; TRY 139.6m to TRY 150.9m across the elasticity confidence interval). The cost is a 2.9% to 5.0% volume loss. This is a decision aid built on simple assumptions; see [Limitations](#limitations).
@@ -55,12 +55,12 @@ Promotion uplift by difference-in-differences (5 promotion provinces and 13 cont
 
 | Estimator | True uplift | Estimate | 95% CI | Truth inside CI |
 |---|---:|---:|---|:---:|
-| Simple 2 x 2 DiD | 8.0% | 12.0% | [10.2%, 13.8%] | no (biased: it also counts the campaign price cut and list-price changes) |
+| Simple 2 × 2 DiD | 8.0% | 12.0% | [10.2%, 13.8%] | no (biased: it also counts the campaign price cut and list-price changes) |
 | Price-adjusted two-way fixed-effects DiD | 8.0% | 8.7% | [7.9%, 9.6%] | yes |
 
-| Elasticity recovery | Promotion DiD |
-|---|---|
-| ![Elasticity recovery](outputs/examples/elasticity_recovery.png) | ![Promotion DiD](outputs/examples/promo_did.png) |
+![Estimated price elasticity against the known true value, per segment](outputs/examples/elasticity_recovery.png)
+
+![Promotion effect: volume index and the estimates against the true value](outputs/examples/promo_did.png)
 
 **Which random stream is used, and why.** The default run uses seed 20260815. It is the seed of the original market generator (version 1.0.0). It was set before any pricing analysis existed, and it has not been changed to make the estimates look better. Later changes (Turkish price levels in version 2.1.0, English names and provinces in version 2.3.0) leave every estimate above unchanged to three decimals.
 
@@ -172,7 +172,7 @@ Numbered files in [`sql/`](sql/) run in order against the registered data frames
 
 **Price waterfall.** Per-MWh values are weighted by volume (`SUM(amount) / SUM(volume)`). Leakage = (list - pocket) / list. A province-segment case breaks policy when its on-invoice discount depth (weighted by list revenue) is above the segment maximum. Revenue above policy = excess depth x list revenue.
 
-**PVM bridge.** 2025 against 2024 at product x segment level, on net (pocket) revenue and on gross profit. With total volumes VT0/VT1, cell shares s and cell net prices P0/P1:
+**PVM bridge.** 2025 against 2024 at product × segment level, on net (pocket) revenue and on gross profit. With total volumes VT0/VT1, cell shares s and cell net prices P0/P1:
 
 ```text
 Volume effect = (VT1 - VT0) x s0 x P0
@@ -184,7 +184,7 @@ These add up exactly to the revenue change (view column `reconciliation_gap`, ch
 
 **Elasticity.** Log-log OLS (ordinary least squares regression) per segment: `log(volume) ~ log(pocket price) + log(competitor price) + trend + month-of-year + province x product fixed effects + promo`, with standard errors clustered by province and t-based 95% intervals. The slope is identified by price changes that have nothing to do with demand (the planned list-price increases and the discount noise). The province and product fixed effects absorb lasting differences, such as the leakage provinces.
 
-**Promotion DiD.** Treated = provinces that ever carry the campaign flag; before = months before the campaign, after = campaign months. The adjusted model has province x product x segment and month fixed effects, a pocket-price slope per segment and the competitor price. Key assumption: without the campaign, treated and control provinces would have moved in parallel once price is controlled for.
+**Promotion DiD.** Treated = provinces that ever carry the campaign flag; before = months before the campaign, after = campaign months. The adjusted model has province × product × segment and month fixed effects, a pocket-price slope per segment and the competitor price. Key assumption: without the campaign, treated and control provinces would have moved in parallel once price is controlled for.
 
 **Price recommendation** (`price_recommendation.py`). Per segment (optionally per province), using the estimated elasticity `e`, the current pocket price and the unit cost `c`:
 

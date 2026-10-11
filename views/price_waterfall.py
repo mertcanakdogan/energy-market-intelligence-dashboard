@@ -22,10 +22,15 @@ from energy_market_intelligence.localization import (
 from energy_market_intelligence.pricing_visualization import (
     DEDUCTION_LABELS,
     INVOICE_LABEL,
-    price_waterfall_figure,
+    PORTFOLIO,
+    bill_waterfall_figure,
+    portfolio_bill,
     segment_waterfall_table,
 )
 from energy_market_intelligence.visualization import (
+    FONT_BODY,
+    GRID,
+    INK,
     LEAK_RED,
     NAVY,
     apply_business_theme,
@@ -42,7 +47,7 @@ flags = load_view("vw_discount_policy_flags")
 regions = select_regions(detail, key="waterfall_regions")
 selected = detail[detail["region_name"].isin(regions)]
 if selected.empty:
-    st.info("Select at least one province.")
+    st.info("Select at least one province in the menu.")
     st.stop()
 
 list_revenue = selected["list_revenue"].sum()
@@ -61,9 +66,10 @@ cards[1].metric(
     help="Volume-weighted price left after all discounts and cost items are taken off.",
 )
 cards[2].metric(
-    "Price realisation",
-    format_pct(pocket_revenue / list_revenue),
-    help="Pocket revenue / revenue at list price.",
+    "Leakage rate",
+    format_pct(1 - pocket_revenue / list_revenue),
+    help="The share of the list price that the company does not keep: "
+    "1 \u2212 pocket price / list price.",
 )
 cards[3].metric(
     "Discount above policy",
@@ -72,24 +78,36 @@ cards[3].metric(
 )
 takeaway(price_waterfall_insight(selected, selected_flags))
 
-show_chart(price_waterfall_figure(selected))
+segments = [name for name in SEGMENT_ORDER if name in set(selected["customer_segment_name"])]
+scope = st.segmented_control(
+    "Show the price breakdown for", [PORTFOLIO, *segments], default=PORTFOLIO, key="bill_scope"
+)
+scope = scope or PORTFOLIO
+bill = portfolio_bill(selected, None if scope == PORTFOLIO else scope)
+figure = bill_waterfall_figure(bill)
+figure.update_layout(title=f"From list price to pocket price: {scope} (TRY/MWh, 2025)")
+show_chart(figure)
 st.caption(
-    "Navy bars show the list price and the subtotals (invoice price, net price); red bars show "
-    "the items taken off the price. The vertical axis does not start at zero, so the "
-    "differences stay readable."
+    "Navy bars show the list price and the pocket price; red bars show the items taken off the "
+    "price. The axis does not start at zero, so the differences stay readable."
 )
 
 st.header("Are discounts within policy?")
 available = [name for name in SEGMENT_ORDER if name in set(flags["customer_segment_name"])]
-segment = st.selectbox("Customer segment", available)
+segment = st.segmented_control(
+    "Customer segment", available, default=available[0], key="policy_segment"
+)
+segment = segment or available[0]
 view = selected_flags[selected_flags["customer_segment_name"] == segment].sort_values(
     "excess_discount_pp", ascending=False
 )
 status = view["exceeds_policy"].map({True: "Above the policy limit", False: "Within the limit"})
+# Horizontal bars: every province keeps its name on a phone, highest discount on top.
 figure = px.bar(
     view.assign(status=status),
-    x="region_name",
-    y="on_invoice_discount_pct",
+    x="on_invoice_discount_pct",
+    y="region_name",
+    orientation="h",
     color="status",
     color_discrete_map={"Above the policy limit": LEAK_RED, "Within the limit": NAVY},
     title=f"{segment}: on-invoice discount by province and the policy limit",
@@ -98,15 +116,24 @@ figure = px.bar(
         "region_name": "Province",
     },
 )
-figure.update_layout(legend_title=None)
-figure.add_hline(
-    y=float(view["policy_max_discount_pct"].iloc[0]),
+figure.update_layout(legend_title=None, height=40 + 26 * len(view) + 120, bargap=0.3)
+figure.add_vline(
+    x=float(view["policy_max_discount_pct"].iloc[0]),
     line_dash="dash",
+    line_color=INK,
     annotation_text="policy limit",
+    annotation_position="bottom right",
 )
-figure.update_yaxes(tickformat=".0%")
-apply_business_theme(figure, y_title="Discount (% of list price)")
-figure.update_xaxes(title=None)
+apply_business_theme(figure, y_title=None, mono_axis="x")
+figure.update_xaxes(
+    title="Discount (% of list price)", tickformat=".0%", showgrid=True, gridcolor=GRID
+)
+figure.update_yaxes(
+    categoryorder="array",
+    categoryarray=view["region_name"].tolist()[::-1],
+    showgrid=False,
+    tickfont={"family": FONT_BODY, "size": 13, "color": INK},
+)
 show_chart(figure)
 
 breaches = selected_flags[selected_flags["exceeds_policy"]].sort_values(
@@ -116,24 +143,27 @@ if breaches.empty:
     st.caption("In the selected provinces no segment goes above the discount policy limit.")
 else:
     breach(
-        f"{len(breaches)} province and customer-group combinations give discounts above the "
-        "policy limit. "
-        "Discount above policy = (discount rate - policy limit) x revenue at list price."
+        f"Across all segments, {len(breaches)} combinations of province and customer segment "
+        "give discounts above the policy limit. Discount above policy = (discount rate − "
+        "policy limit) × revenue at list price."
     )
-show_table(
-    breaches[
-        [
-            "customer_segment_name",
-            "region_name",
-            "on_invoice_discount_pct",
-            "policy_max_discount_pct",
-            "excess_discount_pp",
-            "revenue_leakage_above_policy",
+    # The money column comes straight after the names, so it stays visible on a phone.
+    show_table(
+        breaches[
+            [
+                "customer_segment_name",
+                "region_name",
+                "revenue_leakage_above_policy",
+                "on_invoice_discount_pct",
+                "policy_max_discount_pct",
+                "excess_discount_pp",
+            ]
         ]
-    ].assign(excess_discount_pp=lambda frame: frame["excess_discount_pp"] * 100),
-    fractions={"on_invoice_discount_pct", "policy_max_discount_pct"},
-)
-with st.expander("Waterfall per MWh by segment"):
+        .assign(excess_discount_pp=lambda frame: frame["excess_discount_pp"] * 100)
+        .rename(columns={"revenue_leakage_above_policy": "Above policy (TRY)"}),
+        fractions={"on_invoice_discount_pct", "policy_max_discount_pct"},
+    )
+with st.expander("Price breakdown per MWh by segment (table)"):
     show_table(
         segment_waterfall_table(selected).rename(
             columns={

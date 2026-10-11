@@ -2,6 +2,27 @@
 
 All notable changes to this project are documented here.
 
+## [2.3.1] - 2026-10-11
+
+A design audit of all six pages, at laptop and phone width, and of every exported chart. The data and all numeric results are unchanged.
+
+### Fixed
+
+- Phone layout: charts with two or three panels (price waterfall, revenue bridge, promotion) no longer squeeze their titles and labels into each other. The app shows them as separate charts that stack on a phone; the PNG exports keep the side-by-side layout.
+- Price leakage: the chart is now the itemised price breakdown as a horizontal waterfall, with a picker for the whole portfolio or one segment. The policy table puts the amount above policy straight after the names, so it stays visible on a phone.
+- Price recommendation: segment names and price steps sit above the bars, so the bars keep the full width and the amounts are never rotated or clipped. The limits moved from the sidebar into a "Change the limits" panel on the page, which phones can reach; the province-level table moved into its own panel.
+- Promotion impact: the month axis shows real months, the promotion band is labelled, and the estimate chart starts at zero with the true value drawn as the same hollow diamond as on the elasticity chart.
+- Price sensitivity: "unit elasticity (-1)" is replaced by plain labels for the two sides of -1; long axis titles that were cut on phones moved into captions.
+- Exports: labels outside bars are no longer clipped, charts without a legend lose the empty band under the title, line charts whose axis does not start at zero say so, the focus company is highlighted in the competitor chart and the palest opportunity bubbles stand out from the page.
+
+### Changed
+
+- One term for the price the company keeps: "pocket price" (the bill line, the segment comparison, the glossary and the charts). The price leakage page shows the leakage rate, like the overview.
+- Numbers use a true minus sign (−1.60), money keeps "TRY" and the amount on one line, millions have one decimal (TRY 1.4m) and table percentages one decimal (9.3%).
+- Tables show the columns that answer the page's question; standard errors, volumes and prices behind the effects are one click away.
+- The province filter is a single choice (all provinces or one) instead of 18 removable chips.
+- README: the elasticity and promotion charts are shown full width instead of side by side.
+
 ## [2.3.0] - 2026-10-11
 
 The whole project and the app are now in English, and the app shows only the pricing story. All numeric results are unchanged: elasticities, promotion uplift, waterfall amounts and recommendation totals are the same as in 2.2.0.

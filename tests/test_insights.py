@@ -40,10 +40,10 @@ def test_waterfall_insight_names_the_worst_segment_and_breaching_provinces(
 ) -> None:
     text = price_waterfall_insight(waterfall_frame, views["vw_discount_policy_flags"])
     realization = waterfall_frame["pocket_revenue"].sum() / waterfall_frame["list_revenue"].sum()
-    assert f"the company keeps TRY {realization * 100:.1f} on average" in text
+    assert f"the company keeps TRY\u00a0{realization * 100:.1f} on average" in text
     assert "Industrial segment" in text  # the segment with the widest list-to-pocket gap
     assert "TRY/MWh" in text and "provinces" in text
-    assert re.search(r"costs TRY \d+\.\dm a year", text)
+    assert re.search(r"costs TRY\s\d+\.\dm a year", text)
     assert any(province in text for province in ("Izmir", "Erzurum"))
 
 
@@ -72,7 +72,7 @@ def test_elasticity_and_promo_insights_state_the_truth_check(
 ) -> None:
     elasticity, promo = estimates
     text = elasticity_insight(elasticity)
-    assert "Residential -1.60" in text and "Industrial -0.61" in text
+    assert "Residential \u22121.60" in text and "Industrial \u22120.61" in text
     assert "If prices rise 5%, volume falls about" in text
     assert "3 of 3 segments" in text
     assert "true values are known" not in elasticity_insight(elasticity.drop(columns="truth_in_ci"))
@@ -97,7 +97,7 @@ def test_recommendation_insight_and_headline_findings(
         max_volume_loss=spec.max_volume_loss_pct,
     )
     text = recommendation_insight(table)
-    assert "gross profit rises by TRY" in text and "decision-support" in text
+    assert "gross profit rises by TRY" in text and "a year" in text
     findings = headline_findings(
         waterfall_frame,
         views["vw_discount_policy_flags"],

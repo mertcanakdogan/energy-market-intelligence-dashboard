@@ -205,7 +205,7 @@ The bill. White, 1px grey border, 4px navy top rule, max 36rem wide. A letter-sp
 White, 1px grey border, 3px navy top rule, square corners. The question is the page link (condensed 1.3rem navy, wraps, arrow after it, underline on hover); one data-driven answer sentence below. The cards share one height and their answers start on one line. The recommendation card comes first and is the primary card: panel grey background and a 4px rule. Below 900px the cards stack.
 
 ### Segment comparison
-Beside the bill on the overview: 1px grey border, 3px navy top rule, a headline title and a one-line key. One row per customer segment (Residential, Commercial (SME), Industrial): segment name and leakage rate in red mono on one line, a thin bar of the list price (navy part kept, red part leaked, both starting at zero), and the net price in mono. Plain HTML, no chart.
+Beside the bill on the overview: 1px grey border, 3px navy top rule, a headline title and a one-line key. One row per customer segment (Residential, Commercial (SME), Industrial): segment name and leakage rate in red mono on one line, a thin bar of the list price (navy part kept, red part leaked, both starting at zero), and the pocket price in mono. Plain HTML, no chart.
 
 ### Bill terms
 A compact grey paragraph under the bill that gives each bill line a one-line meaning; the bill itself stays clean.
@@ -226,7 +226,7 @@ Streamlit's sidebar navigation on the panel grey: one flat list of six short nou
 Page links, sidebar links and buttons show a 2px navy outline with a 2px offset on `:focus-visible`. Streamlit's own box-shadow ring on heading links and expanders is kept.
 
 ### Charts
-One Plotly template (`tavra`) shared by the app and the PNG exports: transparent background, grey gridlines, mono tick labels on numeric axes, navy for price series, red only for deductions and breaches, green only for gains. Axes that do not start at zero say so in their caption.
+One Plotly template (`tavra`) shared by the app and the PNG exports: transparent background, grey gridlines, mono tick labels on numeric axes, navy for price series, red only for deductions and breaches, green only for gains. Axes that do not start at zero say so in their caption. In the app a chart never has more than one panel: side-by-side exports are split into separate figures that stack on a phone, and long axis titles move into a caption. Labels sit above horizontal bars instead of beside them, so bars keep the full width on a phone.
 
 ## Do's and Don'ts
 

@@ -31,14 +31,15 @@ FONT_BODY = "'Source Sans 3', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
 FONT_HEADING = "'Barlow Semi Condensed', 'Arial Narrow', Arial, sans-serif"
 FONT_MONO = "'IBM Plex Mono', Consolas, Menlo, monospace"
 TEMPLATE_NAME = "tavra"
+TEMPLATE_TOP = 104  # top margin: the title plus a legend row under it
 
 
 def _build_template() -> go.layout.Template:
     """The single Plotly template shared by the Streamlit pages and the PNG exports."""
 
     axis = {
-        "tickfont": {"family": FONT_BODY, "size": 12, "color": SLATE},
-        "title": {"font": {"family": FONT_BODY, "size": 13, "color": SLATE}},
+        "tickfont": {"family": FONT_BODY, "size": 13, "color": SLATE},
+        "title": {"font": {"family": FONT_BODY, "size": 14, "color": SLATE}},
         "linecolor": GRID,
         "tickcolor": GRID,
         "automargin": True,
@@ -59,7 +60,7 @@ def _build_template() -> go.layout.Template:
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         colorway=[NAVY, SLATE, NAVY_SOFT, SLATE_SOFT, "#3E5C86"],
-        margin={"l": 65, "r": 30, "t": 104, "b": 60},
+        margin={"l": 65, "r": 30, "t": TEMPLATE_TOP, "b": 60},
         legend={
             "orientation": "h",
             "yanchor": "bottom",
@@ -137,6 +138,17 @@ def format_axes(figure: go.Figure) -> go.Figure:
     return figure
 
 
+def has_legend(figure: go.Figure) -> bool:
+    """Whether Plotly will draw a legend for ``figure`` (the template reserves room for one)."""
+
+    if figure.layout.showlegend is False:
+        return False
+    shown = [trace for trace in figure.data if trace.showlegend is not False]
+    if figure.layout.showlegend is True:
+        return bool(shown)
+    return len(shown) > 1 or any(trace.showlegend is True for trace in shown)
+
+
 def apply_business_theme(
     figure: go.Figure, *, y_title: str | None = None, mono_axis: str | None = "y"
 ) -> go.Figure:
@@ -150,7 +162,7 @@ def apply_business_theme(
     figure.update_xaxes(title=None)
     figure.update_yaxes(title=y_title)
     if mono_axis in {"x", "y"}:
-        mono = {"tickfont": {"family": FONT_MONO, "size": 12, "color": SLATE}}
+        mono = {"tickfont": {"family": FONT_MONO, "size": 13, "color": SLATE}}
         (figure.update_xaxes if mono_axis == "x" else figure.update_yaxes)(**mono)
     return figure
 
@@ -168,7 +180,7 @@ def market_share_trend_figure(frame: pd.DataFrame) -> go.Figure:
     figure.update_traces(line={"color": NAVY, "width": 3}, marker={"size": 5})
     figure.update_yaxes(tickformat=".1%")
     figure.update_traces(hovertemplate="%{x|%b %Y}: %{y:.1%}<extra></extra>")
-    return apply_business_theme(figure, y_title="Market share")
+    return apply_business_theme(figure, y_title="Market share (axis does not start at zero)")
 
 
 def opportunity_matrix_figure(frame: pd.DataFrame) -> go.Figure:
@@ -177,7 +189,7 @@ def opportunity_matrix_figure(frame: pd.DataFrame) -> go.Figure:
     chart_data = frame.copy()
     if "opportunity_rank" in chart_data:
         chart_data["display_label"] = chart_data["region_name"].where(
-            chart_data["opportunity_rank"] <= 3, ""
+            chart_data["opportunity_rank"] <= 5, ""
         )
     else:
         chart_data["display_label"] = ""
@@ -199,7 +211,25 @@ def opportunity_matrix_figure(frame: pd.DataFrame) -> go.Figure:
             "region_name": "Province",
         },
     )
-    figure.update_traces(textposition="top center", textfont={"size": 11})
+    figure.update_traces(
+        textposition="top center",
+        textfont={"size": 13, "color": INK},
+        marker={"line": {"color": "#FFFFFF", "width": 1}},
+    )
+    # Start the scale at a mid navy: the palest bubbles must still stand out from the page.
+    figure.update_layout(
+        coloraxis={
+            "colorscale": [[0, NAVY_SOFT], [1, NAVY]],
+            "colorbar": {
+                "title": {
+                    "text": "Opportunity<br>score",
+                    "font": {"family": FONT_BODY, "size": 13, "color": SLATE},
+                },
+                "tickfont": {"family": FONT_MONO, "size": 13, "color": SLATE},
+                "thickness": 14,
+            },
+        }
+    )
     figure.update_xaxes(tickformat=".0%")
     figure.update_yaxes(tickformat=".0%")
     apply_business_theme(figure, y_title="Market growth (last 12 months vs the 12 before)")
@@ -211,7 +241,8 @@ def competitor_change_figure(frame: pd.DataFrame) -> go.Figure:
     """Rank annual company-share movement in percentage points."""
 
     ordered = frame.sort_values("share_change_pp")
-    colors = [NAVY if value >= 0 else SLATE for value in ordered["share_change_pp"]]
+    # The focus company in navy, the competitors in grey; the bar direction carries the sign.
+    colors = [NAVY if name == FOCUS_COMPANY else SLATE_SOFT for name in ordered["company_name"]]
     figure = go.Figure(
         go.Bar(
             x=ordered["share_change_pp"],
@@ -223,12 +254,18 @@ def competitor_change_figure(frame: pd.DataFrame) -> go.Figure:
                 lambda value: f"{format_number(value, 2, signed=True)} pp"
             ),
             textposition="outside",
+            cliponaxis=False,
             hovertemplate="%{y}<br>Share change: %{x:+.2f} pp<extra></extra>",
         )
     )
     figure.update_layout(title="Change in market share by company: last 12 months vs the 12 before")
     apply_business_theme(figure, y_title=None, mono_axis="x")
-    figure.update_xaxes(title="Change in market share (percentage points)")
+    # Headroom on both sides so the outside labels never touch the company names or the edge.
+    reach = float(ordered["share_change_pp"].abs().max()) * 1.45
+    figure.update_xaxes(title="Change in market share (percentage points)", range=[-reach, reach])
+    figure.update_yaxes(
+        ticklabelstandoff=8, tickfont={"family": FONT_BODY, "size": 13, "color": INK}
+    )
     return figure
 
 
@@ -249,7 +286,7 @@ def gross_margin_trend_figure(frame: pd.DataFrame) -> go.Figure:
     figure.update_traces(line={"color": NAVY, "width": 3}, marker={"size": 5})
     figure.update_yaxes(tickformat=".1%")
     figure.update_traces(hovertemplate="%{x|%b %Y}: %{y:.1%}<extra></extra>")
-    return apply_business_theme(figure, y_title="Gross margin")
+    return apply_business_theme(figure, y_title="Gross margin (axis does not start at zero)")
 
 
 def profit_bridge_figure(bridge: pd.DataFrame) -> go.Figure:
@@ -289,7 +326,10 @@ def write_png(figure: go.Figure, path: Path) -> None:
     try:
         export = format_axes(go.Figure(figure))
         export.update_layout(paper_bgcolor="#FFFFFF", plot_bgcolor="#FFFFFF")
-        export.write_image(path, width=1200, height=680, scale=1.5)
+        if not has_legend(export) and export.layout.margin.t in (None, TEMPLATE_TOP):
+            export.update_layout(margin={"t": 72})  # the template's room for a legend stays empty
+        # Charts with few rows set their own height; the rest use the standard 1200 x 680.
+        export.write_image(path, width=1200, height=export.layout.height or 680, scale=1.5)
     except Exception as exc:  # pragma: no cover - exercised only when renderer is unavailable
         raise RuntimeError(
             "Static chart export failed. Install the project dev dependencies, including Kaleido."

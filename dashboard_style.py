@@ -140,12 +140,12 @@ h2, h3 {letter-spacing: 0;}
 }
 .fl--net .fl-op, .fl--net .fl-pct {color: var(--tv-navy);}
 .fl--net .fl-amt {font-weight: 600;}
-@container (min-width: 27rem) {.fl--net .fl-label {white-space: nowrap;}}
+@container (min-width: 22rem) {.fl--net .fl-label {white-space: nowrap;}}
 .bill-foot {margin: 0.65rem 0 0; font-size: 0.875rem; color: var(--tv-slate);}
 .bill-foot b {color: var(--tv-leak); font-family: var(--tv-mono); font-weight: 600;}
 /* The bill sits in a column, so it adapts to its own width, not the viewport's. */
 @media (max-width: 520px) {.bill {padding: 0.9rem 0.9rem 1rem;}}
-@container (max-width: 27rem) {
+@container (max-width: 22rem) {
   .fl--net {font-size: 1.1rem;}
   .fl-pct {display: none;}
   .fl-amt {min-width: 5.2rem;}
@@ -344,7 +344,8 @@ def bill_html(bill: Bill) -> str:
     amounts = bill_display_amounts(bill)
     rows = []
     for line, amount in zip(bill.lines, amounts, strict=True):
-        operator = {"list": "", "deduction": "−", "net": "="}[line.kind]
+        # The amount carries the minus sign; the operator column only marks the result line.
+        operator = {"list": "", "deduction": "", "net": "="}[line.kind]
         sign = "−" if line.kind == "deduction" else ""
         share = format_pct(line.share_of_list, 1)
         rows.append(
@@ -367,10 +368,10 @@ def bill_html(bill: Bill) -> str:
 
 
 def segment_leakage_html(waterfall: pd.DataFrame) -> str:
-    """Leakage rate and net price of each customer segment: where leakage differs.
+    """Leakage rate and pocket price of each customer segment: where leakage differs.
 
     One row per segment: its name and leakage rate, a bar of the list price split into the part
-    kept (navy) and the part that leaks (red), and the net price per MWh.
+    kept (navy) and the part that leaks (red), and the pocket price per MWh.
     """
 
     rows = []
@@ -387,14 +388,14 @@ def segment_leakage_html(waterfall: pd.DataFrame) -> str:
             '<div class="tv-seg-bar" aria-hidden="true">'
             f'<span class="tv-seg-kept" style="width:{100 * (1 - leak):.1f}%"></span>'
             f'<span class="tv-seg-leak" style="width:{100 * leak:.1f}%"></span></div>'
-            '<div class="tv-seg-line tv-seg-net"><span>Net price</span>'
+            '<div class="tv-seg-line tv-seg-net"><span>Pocket price</span>'
             f"<b>{format_number(net.amount, 2)}</b></div>"
             "</div>"
         )
     return (
         '<section class="tv-seg" aria-label="Leakage by customer segment">'
         '<div class="tv-seg-title">Where leakage differs</div>'
-        '<p class="tv-seg-sub">Leakage rate by customer segment, with the net price in TRY/MWh. '
+        '<p class="tv-seg-sub">Leakage rate by customer segment, with the pocket price in TRY/MWh. '
         "Bars show the list price: navy is kept, red leaks away.</p>" + "".join(rows) + "</section>"
     )
 

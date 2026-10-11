@@ -48,7 +48,7 @@ def test_landing_page_leads_with_the_thesis_and_the_bill(project_root: Path) -> 
     assert "PRICE BREAKDOWN" in text
     assert "Leakage rate:" in text
     assert "fictional" in text and "synthetic" in text and "constant 2025 prices" in text
-    assert "Net (pocket) price" in text
+    assert "Pocket price" in text
     assert "day-ahead market price" in text
     headers = [item.value for item in app.header]
     assert "Why can you trust the model?" in headers
@@ -123,24 +123,22 @@ def test_price_leakage_page_filters_by_province(project_root: Path) -> None:
     app = AppTest.from_file(
         str(project_root / "views/price_waterfall.py"), default_timeout=TIMEOUT
     ).run()
-    provinces = app.sidebar.multiselect[0]
-    assert provinces.label == "Provinces"
-    assert "Istanbul" in provinces.options
-    provinces.set_value(["Istanbul", "Ankara"]).run()
+    province = app.sidebar.selectbox[0]
+    assert province.label == "Province"
+    assert province.value == "All provinces"
+    assert "Istanbul" in province.options
+    portfolio_price = app.metric[1].value
+    province.set_value("Istanbul").run()
     assert not app.exception, [item.value for item in app.exception]
-    provinces.set_value([]).run()
-    assert not app.exception
-    assert any("Select at least one province" in item.value for item in app.info)
+    assert app.metric[1].value != portfolio_price
 
 
 def test_price_recommendation_page_reacts_to_the_limits(project_root: Path) -> None:
     app = AppTest.from_file(
         str(project_root / "views/price_recommendation.py"), default_timeout=TIMEOUT
     ).run()
-    step = next(slider for slider in app.select_slider if slider.label == "Largest price step (%)")
+    step = next(slider for slider in app.select_slider if slider.label == "Largest price step")
     step.set_value(2.0).run()
-    assert not app.exception, [item.value for item in app.exception]
-    app.sidebar.radio[0].set_value("Segment x province").run()
     assert not app.exception, [item.value for item in app.exception]
     text = " ".join(item.value for item in app.markdown)
     assert "What it means" in text and "TRY" in text

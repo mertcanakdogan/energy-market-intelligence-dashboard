@@ -95,15 +95,14 @@ with st.expander("Glossary (terms used in this app)"):
     st.markdown(
         """
 - **List price:** the unit price on the price list (TRY/MWh).
-- **Price breakdown:** the steps from list price to net price, listed like the lines of a bill.
+- **Price breakdown:** the steps from list price to pocket price, listed like the lines of a bill.
 - **On-invoice discount:** a discount taken off the list price on the invoice itself.
 - **Off-invoice rebate:** money paid back to the customer after the invoice, such as rebates
   and bonuses.
-- **Net (pocket) price:** the unit price the company really keeps after all discounts, rebates,
+- **Pocket price:** the unit price the company really keeps after all discounts, rebates,
   payment-term costs and service and freight costs.
 - **Leakage rate:** the part of the list price that the company does not keep:
-  1 - net price / list price.
-- **Price realisation:** net revenue / revenue at list price (100% minus the leakage rate).
+  1 − pocket price / list price.
 - **Above-policy discount:** the part of a discount that goes above the limit set for a segment.
 - **PVM (price-volume-mix) bridge:** splits a change in revenue or profit into the effects of
   price, volume sold, the mix of products and customers, and cost.
