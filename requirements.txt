@@ -1,2 +1,3 @@
 # Streamlit Community Cloud installs the project and its dependencies from pyproject.toml.
-.
+# Editable, so a redeploy after a push always imports the package from the checked-out source.
+-e .

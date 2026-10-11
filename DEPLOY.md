@@ -36,8 +36,10 @@ streamlit run app.py
 4. Set **Main file path** to `app.py`.
 5. Open **Advanced settings** and select **Python 3.12** (the version used by CI). No secrets are
    needed.
-6. Deploy. Dependencies come from `requirements.txt`, which installs the project itself
-   (`.`) and therefore everything declared in `pyproject.toml`. Kaleido and the other dev
+6. Deploy. Dependencies come from `requirements.txt`, which installs the project itself in
+   editable mode (`-e .`) and therefore everything declared in `pyproject.toml`. Editable matters:
+   Streamlit Cloud pulls new commits without reinstalling, so a regular install would keep
+   importing the package as it was at first deploy. Kaleido and the other dev
    tools are not installed, because PNG export is only used by the pipeline.
 7. The first page load builds the synthetic database, so allow up to a minute. Later visits reuse
    it until the app container is recycled.
@@ -57,4 +59,4 @@ The look of the app (colour tokens, fonts, the bill block) is documented in [doc
 | `Could not create the analytical database` | Neither the repository nor the temp directory is writable. Set `EMID_DATABASE_PATH` to a writable path. |
 | Old page names (`app`, `price waterfall`) in the sidebar | Browser cache of an older deployment; reload the page. Version 2.1.0 replaced the `pages/` directory with `st.navigation`. |
 | Stale numbers after changing `config/default.yaml` | Delete `data/energy_market.duckdb` (and the temp copy) and clear the Streamlit cache. |
-| `ModuleNotFoundError: energy_market_intelligence` | `requirements.txt` was not picked up; confirm it contains a single `.` line. |
+| `ModuleNotFoundError: energy_market_intelligence` (or one of its modules) | `requirements.txt` was not picked up, or the package was installed non-editable before a module was added; confirm it contains `-e .`, then reboot the app from **Manage app**. |
