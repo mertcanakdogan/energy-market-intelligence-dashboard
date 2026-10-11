@@ -51,10 +51,16 @@ def test_streamlit_theme_uses_the_design_tokens(theme: dict) -> None:
     assert theme["textColor"] == "#1B2430"
 
 
-def test_fonts_are_loaded_through_the_native_theme_options(theme: dict) -> None:
-    assert theme["font"].startswith("'Source Sans 3':https://fonts.googleapis.com/")
-    assert theme["headingFont"].startswith("'Barlow Semi Condensed':https://fonts.googleapis.com/")
-    assert theme["codeFont"].startswith("'IBM Plex Mono':https://fonts.googleapis.com/")
+def test_only_system_fonts_arial_and_georgia_are_used(theme: dict) -> None:
+    for option in ("font", "headingFont", "codeFont"):
+        assert theme[option] == "Arial, Helvetica, sans-serif"
+    assert "Georgia" in style.GLOBAL_CSS
+    families = set(re.findall(r"font-family: ([^;!}]+)", style.GLOBAL_CSS))
+    assert all(
+        f.strip().split(",")[0] in {"var(--tv-sans)", "var(--tv-serif)", "var(--tv-num)"}
+        for f in families
+    ), families
+    assert "fonts.googleapis.com" not in style.GLOBAL_CSS
 
 
 def test_plotly_template_is_registered_once_and_is_the_default() -> None:
@@ -65,7 +71,8 @@ def test_plotly_template_is_registered_once_and_is_the_default() -> None:
     assert layout.colorway[0] == NAVY
     # Red and green are reserved for leakage and gains, so they never serve as series colours.
     assert LEAK_RED not in layout.colorway and GAIN_GREEN not in layout.colorway
-    assert "Source Sans 3" in layout.font.family
+    assert layout.font.family.startswith("Arial")
+    assert layout.title.font.family.startswith("Georgia")
 
 
 def test_bill_reconciles_and_leakage_is_the_complement_of_realization(
@@ -383,11 +390,11 @@ def test_links_and_controls_get_a_two_pixel_navy_focus_ring() -> None:
 
 
 def test_section_headings_are_h2_in_the_theme(theme: dict) -> None:
-    assert theme["headingFontSizes"][1] == "1.75rem"
+    assert theme["headingFontSizes"][1] == "1.6rem"
     assert len(theme["headingFontSizes"]) == len(theme["headingFontWeights"]) == 6
 
 
 def test_small_text_stays_at_the_documented_sizes() -> None:
     sizes = set(re.findall(r"font-size: ([0-9.]+)rem", style.GLOBAL_CSS))
-    assert sizes <= {"0.875", "1.05", "1.1", "1.3", "1.4", "2.1"}, sizes
+    assert sizes <= {"0.875", "1.05", "1.1", "1.15", "1.3", "1.6", "1.9"}, sizes
     assert "font-size: 0.875rem" in style.GLOBAL_CSS.split(".fl-pct {")[1].split("}")[0]

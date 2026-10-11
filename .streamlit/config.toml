@@ -1,5 +1,6 @@
 # Theme tokens of the "price leakage" design. Meaning of each colour: DESIGN.md.
-# Fonts load from Google Fonts through Streamlit's native "<font name>:<css url>" syntax.
+# Two system families, present on every Windows and Mac and in Microsoft 365: Arial and
+# Georgia (Georgia is set in the CSS of dashboard_style.py). Nothing is downloaded.
 [theme]
 base = "light"
 primaryColor = "#1F3A5F"
@@ -17,11 +18,11 @@ greenTextColor = "#27704F"
 blueTextColor = "#1F3A5F"
 baseRadius = "4px"
 buttonRadius = "4px"
-font = "'Source Sans 3':https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap"
-headingFont = "'Barlow Semi Condensed':https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&display=swap"
-codeFont = "'IBM Plex Mono':https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap"
-headingFontSizes = ["2.75rem", "1.75rem", "1.5rem", "1.25rem", "1.125rem", "1rem"]
-headingFontWeights = [700, 600, 600, 600, 600, 600]
+font = "Arial, Helvetica, sans-serif"
+headingFont = "Arial, Helvetica, sans-serif"
+codeFont = "Arial, Helvetica, sans-serif"
+headingFontSizes = ["2.5rem", "1.6rem", "1.35rem", "1.125rem", "1rem", "1rem"]
+headingFontWeights = [700, 400, 400, 700, 700, 700]
 
 [theme.sidebar]
 backgroundColor = "#F2F4F5"

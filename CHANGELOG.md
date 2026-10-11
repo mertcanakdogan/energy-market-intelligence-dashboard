@@ -22,7 +22,7 @@ A design audit of all six pages, at laptop and phone width, and of every exporte
 - Tables show the columns that answer the page's question; standard errors, volumes and prices behind the effects are one click away.
 - The province filter is a single choice (all provinces or one) instead of 18 removable chips.
 - README: the elasticity and promotion charts are shown full width instead of side by side.
-- Exported charts use the brand fonts (Barlow Semi Condensed titles in bold, Source Sans 3, IBM Plex Mono for numbers) instead of system fallbacks; DEPLOY.md lists the fonts to install before regenerating them.
+- Typography uses two Office-safe system families and nothing else: bold Arial for page and card titles, Georgia for the introduction line, section headings and chart titles, plain Arial for text and every number (its figures are tabular, so amounts still line up). The app no longer downloads web fonts, and the PNG charts match the app on any Windows or Mac without installing fonts.
 
 ## [2.3.0] - 2026-10-11
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-11T20:56:45+00:00",
+  "generatedAt": "2026-10-11T21:32:46+00:00",
   "title": "Design System: Tavra Energy pricing case study",
   "extensions": {
     "colorMeta": {
@@ -336,12 +336,12 @@
   ],
   "narrative": {
     "northStar": "The Itemised Bill",
-    "overview": "Every screen should read like the breakdown on an electricity bill: line by line, plain, and easy to check. The finding of the case study is that part of the list price never reaches the company, so the app shows price as a bill that starts at the list price, subtracts each leak on its own line and ends at the price the company keeps. That bill, the price breakdown, is the one signature element. Everything around it is quiet, so the reader's eye goes to the numbers.\n\nThe system is flat and light. Depth comes from rules, not shadows: a heavy navy rule on top of each container says \"this is a unit\", thin grey rules separate rows. Colour is semantic, never decorative: navy is price, red is money lost, green is money gained. Numbers sit in a monospaced face with tabular figures so columns of amounts line up like a statement. Page titles are questions a hiring manager would ask; the answer comes first, the chart that proves it second.",
+    "overview": "Every screen should read like the breakdown on an electricity bill: line by line, plain, and easy to check. The finding of the case study is that part of the list price never reaches the company, so the app shows price as a bill that starts at the list price, subtracts each leak on its own line and ends at the price the company keeps. That bill, the price breakdown, is the one signature element. Everything around it is quiet, so the reader's eye goes to the numbers.\n\nThe system is flat and light. Depth comes from rules, not shadows: a heavy navy rule on top of each container says \"this is a unit\", thin grey rules separate rows. Colour is semantic, never decorative: navy is price, red is money lost, green is money gained. Numbers sit in Arial's tabular figures so columns of amounts line up like a statement. Page titles are questions a hiring manager would ask; the answer comes first, the chart that proves it second.",
     "keyCharacteristics": [
       "One signature element (the price breakdown); all other surfaces are quiet.",
       "Top rules instead of shadows, side stripes or rounded cards.",
       "Three semantic colours with fixed meanings on a white page.",
-      "Condensed headings, a humanist body face and monospaced numbers.",
+      "Two Office-safe families: bold Arial titles, Georgia for the introduction and subheaders, plain Arial text and tabular numbers.",
       "English throughout; numbers as `3,732.61`, `14.8%`, `TRY 23.4m`."
     ],
     "rules": [
@@ -361,8 +361,13 @@
         "section": "colors"
       },
       {
+        "name": "The Two Families Rule",
+        "body": "Only Arial and Georgia. Georgia never sets a number a reader compares: its old-style figures rise and fall, so metrics, tables, the bill and chart axes stay in Arial.",
+        "section": "typography"
+      },
+      {
         "name": "The Statement Numbers Rule",
-        "body": "Any number a reader compares sits in IBM Plex Mono with tabular figures, right-aligned when stacked.",
+        "body": "Any number a reader compares sits in Arial with tabular figures, right-aligned when stacked.",
         "section": "typography"
       },
       {
@@ -378,7 +383,7 @@
     ],
     "dos": [
       "**Do** answer the page's question in the title and the takeaway before showing a chart.",
-      "**Do** put every compared number in IBM Plex Mono with tabular figures.",
+      "**Do** put every compared number in Arial with tabular figures, never in Georgia.",
       "**Do** mark containers with a top rule (4px bill, 3px cards, 2px callouts).",
       "**Do** format numbers through the helpers in `localization.py` (`3,732.61`, `14.8%`, `TRY 23.4m`), never the browser locale.",
       "**Do** keep secondary text at least 14px with at least 4.5:1 contrast on white."

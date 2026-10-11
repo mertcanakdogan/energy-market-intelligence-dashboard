@@ -25,11 +25,12 @@ GRID = "#E3E7EA"  # gridlines and hairlines
 NAVY_SOFT = "#8197B4"  # lighter navy for second series and neutral increases
 SLATE_SOFT = "#B5BDC6"  # lighter slate for third series
 
-# Font stacks. The web fonts come from Google Fonts in the app; PNG exports (rendered by Kaleido)
-# use them when they are installed on the machine (see DEPLOY.md), else the fallbacks.
-FONT_BODY = "'Source Sans 3', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
-FONT_HEADING = "'Barlow Semi Condensed', 'Arial Narrow', Arial, sans-serif"
-FONT_MONO = "'IBM Plex Mono', Consolas, Menlo, monospace"
+# Two system families, so the app, the PNG exports and Office files look the same without
+# installing fonts: Arial for text and numbers (its figures are tabular, so columns align) and
+# Georgia for chart titles (the Subheader 1 role in DESIGN.md).
+FONT_BODY = "Arial, Helvetica, sans-serif"
+FONT_HEADING = "Georgia, 'Times New Roman', serif"
+FONT_DATA = FONT_BODY
 TEMPLATE_NAME = "tavra"
 TEMPLATE_TOP = 104  # top margin: the title plus a legend row under it
 
@@ -55,7 +56,7 @@ def _build_template() -> go.layout.Template:
             "y": 1,
             "yanchor": "top",
             "pad": {"t": 22},
-            "font": {"family": FONT_HEADING, "size": 22, "weight": 700, "color": NAVY},
+            "font": {"family": FONT_HEADING, "size": 22, "weight": 400, "color": NAVY},
         },
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
@@ -72,7 +73,7 @@ def _build_template() -> go.layout.Template:
             "namelength": -1,
             "bgcolor": "#FFFFFF",
             "bordercolor": GRID,
-            "font": {"family": FONT_MONO, "size": 13, "color": INK},
+            "font": {"family": FONT_DATA, "size": 13, "color": INK},
         },
         separators=".,",  # English: dot for decimals, comma for thousands
         xaxis={**axis, "showgrid": False, "zeroline": False},
@@ -155,14 +156,14 @@ def apply_business_theme(
     """Apply the shared template to a figure and set axis titles.
 
     ``mono_axis`` names the axis (``"x"`` or ``"y"``) that carries numbers; its tick labels use
-    the monospaced data font.
+    the data font in ink grey.
     """
 
     figure.update_layout(template=TEMPLATE_NAME)
     figure.update_xaxes(title=None)
     figure.update_yaxes(title=y_title)
     if mono_axis in {"x", "y"}:
-        mono = {"tickfont": {"family": FONT_MONO, "size": 13, "color": SLATE}}
+        mono = {"tickfont": {"family": FONT_DATA, "size": 13, "color": SLATE}}
         (figure.update_xaxes if mono_axis == "x" else figure.update_yaxes)(**mono)
     return figure
 
@@ -225,7 +226,7 @@ def opportunity_matrix_figure(frame: pd.DataFrame) -> go.Figure:
                     "text": "Opportunity<br>score",
                     "font": {"family": FONT_BODY, "size": 13, "color": SLATE},
                 },
-                "tickfont": {"family": FONT_MONO, "size": 13, "color": SLATE},
+                "tickfont": {"family": FONT_DATA, "size": 13, "color": SLATE},
                 "thickness": 14,
             },
         }
@@ -249,7 +250,7 @@ def competitor_change_figure(frame: pd.DataFrame) -> go.Figure:
             y=ordered["company_name"],
             orientation="h",
             marker_color=colors,
-            textfont={"family": FONT_MONO, "size": 13},
+            textfont={"family": FONT_DATA, "size": 13},
             text=ordered["share_change_pp"].map(
                 lambda value: f"{format_number(value, 2, signed=True)} pp"
             ),
@@ -308,7 +309,7 @@ def profit_bridge_figure(bridge: pd.DataFrame) -> go.Figure:
             increasing={"marker": {"color": NAVY_SOFT}},
             decreasing={"marker": {"color": SLATE}},
             totals={"marker": {"color": NAVY}},
-            textfont={"family": FONT_MONO, "size": 13},
+            textfont={"family": FONT_DATA, "size": 13},
             connector={"line": {"color": SLATE_SOFT}},
             hovertemplate="%{x}: TRY %{y:,.1f}m<extra></extra>",
         )

@@ -19,8 +19,8 @@ from energy_market_intelligence.localization import (
 from energy_market_intelligence.synthetic_data import FOCUS_COMPANY, GeneratorConfig
 from energy_market_intelligence.visualization import (
     FONT_BODY,
+    FONT_DATA,
     FONT_HEADING,
-    FONT_MONO,
     GAIN_GREEN,
     GRID,
     INK,
@@ -143,7 +143,7 @@ def bill_waterfall_figure(bill: Bill) -> go.Figure:
             text=text,
             textposition="outside",
             cliponaxis=False,  # the list-price label sits past the axis end on narrow screens
-            textfont={"family": FONT_MONO, "size": 13, "color": INK},
+            textfont={"family": FONT_DATA, "size": 13, "color": INK},
             decreasing={"marker": {"color": LEAK_RED}},
             increasing={"marker": {"color": NAVY}},
             totals={"marker": {"color": NAVY}},
@@ -222,7 +222,7 @@ def price_waterfall_figure(waterfall: pd.DataFrame) -> go.Figure:
                 increasing={"marker": {"color": NAVY}},
                 decreasing={"marker": {"color": LEAK_RED}},
                 totals={"marker": {"color": NAVY}},
-                textfont={"family": FONT_MONO, "size": 13, "color": INK},
+                textfont={"family": FONT_DATA, "size": 13, "color": INK},
                 connector={"line": {"color": SLATE_SOFT}},
                 hoverinfo="x+text",
                 showlegend=False,
@@ -233,7 +233,7 @@ def price_waterfall_figure(waterfall: pd.DataFrame) -> go.Figure:
     figure.update_layout(title="From list price to pocket price (TRY/MWh, 2025)")
     apply_business_theme(figure)
     figure.update_annotations(
-        font={"family": FONT_HEADING, "size": 18, "weight": 600, "color": NAVY}
+        font={"family": FONT_HEADING, "size": 18, "weight": 400, "color": NAVY}
     )
     figure.update_xaxes(tickangle=-40, tickfont={"family": FONT_BODY, "size": 13, "color": INK})
     figure.update_yaxes(
@@ -288,7 +288,7 @@ def _bridge_trace(
         increasing={"marker": {"color": NAVY_SOFT}},
         decreasing={"marker": {"color": SLATE}},
         totals={"marker": {"color": NAVY}},
-        textfont={"family": FONT_MONO, "size": 13, "color": INK},
+        textfont={"family": FONT_DATA, "size": 13, "color": INK},
         connector={"line": {"color": SLATE_SOFT}},
         hovertemplate=("%{y}: TRY %{x:,.1f}m" if horizontal else "%{x}: TRY %{y:,.1f}m")
         + "<extra></extra>",
@@ -361,7 +361,7 @@ def pvm_bridge_figure(summary: pd.DataFrame) -> go.Figure:
     figure.update_layout(title=f"{FOCUS_COMPANY}: price-volume-mix bridge (2025 vs 2024)")
     apply_business_theme(figure)
     figure.update_annotations(
-        font={"family": FONT_HEADING, "size": 18, "weight": 600, "color": NAVY}
+        font={"family": FONT_HEADING, "size": 18, "weight": 400, "color": NAVY}
     )
     figure.update_xaxes(tickfont={"family": FONT_BODY, "size": 13, "color": INK})
     figure.update_yaxes(range=y_range)
@@ -630,7 +630,7 @@ def promo_did_figure(
     apply_business_theme(figure)
     for title in titles:
         figure.update_annotations(
-            font={"family": FONT_HEADING, "size": 18, "weight": 600, "color": NAVY},
+            font={"family": FONT_HEADING, "size": 18, "weight": 400, "color": NAVY},
             selector={"text": title},
         )
     # The subplot titles sit where the legend would go, so the legend moves under the plots.
@@ -647,7 +647,7 @@ def promo_did_figure(
         range=_estimate_range(frame),
         showgrid=True,
         gridcolor=GRID,
-        tickfont={"family": FONT_MONO, "size": 13, "color": SLATE},
+        tickfont={"family": FONT_DATA, "size": 13, "color": SLATE},
         row=1,
         col=2,
     )
@@ -681,7 +681,7 @@ def price_recommendation_figure(table: pd.DataFrame) -> go.Figure:
             textposition="inside",
             insidetextanchor="start",
             textangle=0,
-            textfont={"family": FONT_MONO, "color": "white", "size": 14},
+            textfont={"family": FONT_DATA, "color": "white", "size": 14},
             error_x={
                 "type": "data",
                 "symmetric": False,

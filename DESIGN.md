@@ -18,45 +18,56 @@ colors:
   green-text: "#27704F"
 typography:
   display:
-    fontFamily: "'Barlow Semi Condensed', 'Arial Narrow', Arial, sans-serif"
+    fontFamily: "Arial, Helvetica, sans-serif"
+    fontSize: "2.5rem"
     fontWeight: 700
-    lineHeight: 1.12
-    letterSpacing: "-0.01em"
+    lineHeight: 1.1
+    letterSpacing: "-0.015em"
   display-mobile:
-    fontFamily: "'Barlow Semi Condensed', 'Arial Narrow', Arial, sans-serif"
-    fontSize: "2.1rem"
+    fontFamily: "Arial, Helvetica, sans-serif"
+    fontSize: "1.9rem"
     fontWeight: 700
-    lineHeight: 1.12
+    lineHeight: 1.1
+  introduction:
+    fontFamily: "Georgia, 'Times New Roman', serif"
+    fontSize: "1.15rem"
+    fontWeight: 400
+    lineHeight: 1.5
   section:
-    fontFamily: "'Barlow Semi Condensed', 'Arial Narrow', Arial, sans-serif"
-    fontSize: "1.75rem"
-    fontWeight: 600
+    fontFamily: "Georgia, 'Times New Roman', serif"
+    fontSize: "1.6rem"
+    fontWeight: 400
     lineHeight: 1.2
+  subheader:
+    fontFamily: "Georgia, 'Times New Roman', serif"
+    fontSize: "1.3rem"
+    fontWeight: 400
+    lineHeight: 1.25
   headline:
-    fontFamily: "'Barlow Semi Condensed', 'Arial Narrow', Arial, sans-serif"
+    fontFamily: "Arial, Helvetica, sans-serif"
     fontSize: "1.3rem"
     fontWeight: 700
     lineHeight: 1.2
   title:
-    fontFamily: "'Barlow Semi Condensed', 'Arial Narrow', Arial, sans-serif"
+    fontFamily: "Arial, Helvetica, sans-serif"
     fontSize: "1.1rem"
-    fontWeight: 600
+    fontWeight: 700
   body:
-    fontFamily: "'Source Sans 3', sans-serif"
-    fontSize: "1.05rem"
+    fontFamily: "Arial, Helvetica, sans-serif"
+    fontSize: "1rem"
     fontWeight: 400
     lineHeight: 1.5
   label:
-    fontFamily: "'Source Sans 3', sans-serif"
+    fontFamily: "Arial, Helvetica, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 400
   data:
-    fontFamily: "'IBM Plex Mono', Consolas, Menlo, monospace"
-    fontSize: "1.4rem"
-    fontWeight: 500
+    fontFamily: "Arial, Helvetica, sans-serif"
+    fontSize: "1.6rem"
+    fontWeight: 400
     fontFeature: "tnum"
   bill-title:
-    fontFamily: "'Barlow Semi Condensed', 'Arial Narrow', Arial, sans-serif"
+    fontFamily: "Arial, Helvetica, sans-serif"
     fontSize: "1.1rem"
     fontWeight: 700
     letterSpacing: "0.16em"
@@ -110,13 +121,13 @@ components:
 
 Every screen should read like the breakdown on an electricity bill: line by line, plain, and easy to check. The finding of the case study is that part of the list price never reaches the company, so the app shows price as a bill that starts at the list price, subtracts each leak on its own line and ends at the price the company keeps. That bill, the price breakdown, is the one signature element. Everything around it is quiet, so the reader's eye goes to the numbers.
 
-The system is flat and light. Depth comes from rules, not shadows: a heavy navy rule on top of each container says "this is a unit", thin grey rules separate rows. Colour is semantic, never decorative: navy is price, red is money lost, green is money gained. Numbers sit in a monospaced face with tabular figures so columns of amounts line up like a statement. Page titles are questions a hiring manager would ask; the answer comes first, the chart that proves it second.
+The system is flat and light. Depth comes from rules, not shadows: a heavy navy rule on top of each container says "this is a unit", thin grey rules separate rows. Colour is semantic, never decorative: navy is price, red is money lost, green is money gained. Numbers sit in Arial's tabular figures so columns of amounts line up like a statement. Page titles are questions a hiring manager would ask; the answer comes first, the chart that proves it second.
 
 **Key Characteristics:**
 - One signature element (the price breakdown); all other surfaces are quiet.
 - Top rules instead of shadows, side stripes or rounded cards.
 - Three semantic colours with fixed meanings on a white page.
-- Condensed headings, a humanist body face and monospaced numbers.
+- Two Office-safe families: bold Arial titles, Georgia for the introduction and subheaders, plain Arial text and tabular numbers.
 - English throughout; numbers as `3,732.61`, `14.8%`, `TRY 23.4m`.
 
 ## Colors
@@ -153,23 +164,26 @@ A cool, utility-bill palette: one dark navy, two signal colours used sparingly, 
 
 ## Typography
 
-**Display Font:** Barlow Semi Condensed (with Arial Narrow, Arial)
-**Body Font:** Source Sans 3 (with the system sans-serif)
-**Label/Mono Font:** IBM Plex Mono (with Consolas, Menlo)
+**Sans (titles, text and numbers):** Arial (with Helvetica)
+**Serif (introduction and subheaders):** Georgia (with Times New Roman)
 
-**Character:** A condensed, slightly industrial heading face, like the labels on a meter cabinet, over a calm humanist text face; numbers in a plain monospace so they read like a printed statement.
+**Character:** Office-safe type. Both families ship with every Windows and Mac and with Microsoft 365, so the app, the PNG charts, Power BI and slides look the same without installing or downloading a font. Bold Arial carries the questions and the card titles; Georgia gives the introduction line and the section headings the voice of an analyst's memo; plain Arial, whose figures are tabular, carries every number, so stacked amounts still line up like a printed statement. No other family is used.
 
 ### Hierarchy
-- **Display** (700, Streamlit H1 size; 2.1rem below 640px, 1.12 line height, -0.01em): page titles, written as questions, and the overview thesis sentence.
-- **Section** (600, 1.75rem, 1.2): section headings. They are h2, straight after the h1, and the size is set through the theme (`headingFontSizes`).
-- **Headline** (700, 1.3rem, 1.2): chart titles (rendered as HTML so they wrap on phones), the question on a card, the net line of the bill and the title of the segment comparison.
-- **Title** (600, 1.1rem): segment names in the trust strip and the segment comparison, and the bill's title and narrow net line. Callout labels use the body size (1.05rem).
-- **Body** (400, 1.05rem, 1.5): intro lines and callout text; intro lines are capped at 64rem.
-- **Label** (400, 0.875rem): metric labels, captions, the bill's meta line, percentage column and legends; never below 14px.
-- **Data** (500, 1.4rem in metrics, 1.05rem in the bill, tabular figures): every number that the reader compares.
+- **Display** (Arial Bold 700, 2.5rem; 1.9rem below 640px, 1.1 line height, -0.015em): page titles, written as questions, and the overview thesis sentence.
+- **Introduction** (Georgia 400, 1.15rem, 1.5): the "What this page shows" line under each title and the line under the overview thesis; capped at 64rem.
+- **Section** (Georgia 400, 1.6rem, 1.2): section headings (h2, set through the theme's `headingFontSizes`).
+- **Subheader** (Georgia 400, 1.3rem, 1.25): chart titles, rendered as HTML so they wrap on phones; the same face titles the PNG exports.
+- **Headline** (Arial Bold 700, 1.3rem, 1.2): the question on a card, the net line of the bill and the title of the segment comparison.
+- **Title** (Arial Bold 700, 1.1rem): segment names, the letter-spaced bill title and callout labels (1.05rem).
+- **Body** (Arial 400, 1rem, 1.5): callout text, answers and paragraphs.
+- **Label** (Arial 400, 0.875rem): metric labels, captions, the bill's meta line, percentage column and legends; never below 14px.
+- **Data** (Arial 400, 1.6rem in metrics, 1.05rem in the bill, tabular figures): every number that the reader compares.
 
 ### Named Rules
-**The Statement Numbers Rule.** Any number a reader compares sits in IBM Plex Mono with tabular figures, right-aligned when stacked.
+**The Two Families Rule.** Only Arial and Georgia. Georgia never sets a number a reader compares: its old-style figures rise and fall, so metrics, tables, the bill and chart axes stay in Arial.
+
+**The Statement Numbers Rule.** Any number a reader compares sits in Arial with tabular figures, right-aligned when stacked.
 
 **The Question Title Rule.** Page titles are questions; the sidebar uses short nouns.
 
@@ -177,7 +191,7 @@ A cool, utility-bill palette: one dark navy, two signal colours used sparingly, 
 
 A single reading column inside Streamlit's wide layout, capped at 1360px, with the sidebar holding one flat list of six pages. Each page follows the same order: question title, one-line "What this page shows", a "What it means" takeaway, then the evidence (metrics, charts, tables). On the overview a three-line "What it means" (finding, size, action) comes straight after the hero. The price breakdown sits beside a comparison of the three customer segments; three question cards follow in a row, the recommendation first, then the trust strip in three columns with its key above it, and a closing line with the author and links. Below 900px the cards stack.
 
-Spacing is compact: 2.4rem top padding, about 1.4rem between blocks, tight padding inside containers. Below 640px columns stack, the trust strip becomes one column and the H1 drops to 2.1rem. The price breakdown adapts to its own width with container queries: under 27rem it hides the percentage column and narrows the amount column, so it stays aligned in a tablet column as well as on a phone.
+Spacing is compact: 2.4rem top padding, about 1.4rem between blocks, tight padding inside containers. Below 640px columns stack, the trust strip becomes one column and the H1 drops to 1.9rem. The price breakdown adapts to its own width with container queries: under 22rem it hides the percentage column and narrows the amount column, so it stays aligned in a tablet column as well as on a phone.
 
 ## Elevation & Depth
 
@@ -193,7 +207,7 @@ Square. Containers (bill, callouts, cards) have no corner radius. Streamlit's ow
 ## Components
 
 ### Price breakdown (signature)
-The bill. White, 1px grey border, 4px navy top rule, max 36rem wide. A letter-spaced "PRICE BREAKDOWN" title with a grey meta line (scope · TRY/MWh · 2025). Each line: an operator column (blank, − or =), the label, dotted leaders, the amount in mono and, when there is room, the share of list price. Deductions are red; the net line sits under a 2px navy rule in bold navy. The leakage rate closes the bill in red mono. Displayed amounts are rounded so the lines add up exactly.
+The bill. White, 1px grey border, 4px navy top rule, max 36rem wide. A letter-spaced "PRICE BREAKDOWN" title with a grey meta line (scope · TRY/MWh · 2025). Each line: an operator column (blank, − or =), the label, dotted leaders, the amount in tabular Arial and, when there is room, the share of list price. Deductions are red; the net line sits under a 2px navy rule in bold navy. The leakage rate closes the bill in red. Displayed amounts are rounded so the lines add up exactly.
 
 ### Callouts
 - **Takeaway ("What it means"):** panel background, 2px navy top rule, bold navy label above body text.
@@ -202,10 +216,10 @@ The bill. White, 1px grey border, 4px navy top rule, max 36rem wide. A letter-sp
 - **Gain:** green rule and label, only for confirmed positive results.
 
 ### Question cards
-White, 1px grey border, 3px navy top rule, square corners. The question is the page link (condensed 1.3rem navy, wraps, arrow after it, underline on hover); one data-driven answer sentence below. The cards share one height and their answers start on one line. The recommendation card comes first and is the primary card: panel grey background and a 4px rule. Below 900px the cards stack.
+White, 1px grey border, 3px navy top rule, square corners. The question is the page link (Arial Bold 1.3rem navy, wraps, arrow after it, underline on hover); one data-driven answer sentence below. The cards share one height and their answers start on one line. The recommendation card comes first and is the primary card: panel grey background and a 4px rule. Below 900px the cards stack.
 
 ### Segment comparison
-Beside the bill on the overview: 1px grey border, 3px navy top rule, a headline title and a one-line key. One row per customer segment (Residential, Commercial (SME), Industrial): segment name and leakage rate in red mono on one line, a thin bar of the list price (navy part kept, red part leaked, both starting at zero), and the pocket price in mono. Plain HTML, no chart.
+Beside the bill on the overview: 1px grey border, 3px navy top rule, a headline title and a one-line key. One row per customer segment (Residential, Commercial (SME), Industrial): segment name and leakage rate in red on one line, a thin bar of the list price (navy part kept, red part leaked, both starting at zero), and the pocket price in tabular figures. Plain HTML, no chart.
 
 ### Bill terms
 A compact grey paragraph under the bill that gives each bill line a one-line meaning; the bill itself stays clean.
@@ -214,7 +228,7 @@ A compact grey paragraph under the bill that gives each bill line a one-line mea
 A 1px grey rule, then the author, links to the code and to LinkedIn, and a "Start with Price leakage" page link; the quiet disclaimer caption comes last.
 
 ### Metrics
-A 1px grey top rule, grey label, value in 1.4rem mono with tabular figures; deltas in small mono and hidden when they round to zero.
+A 1px grey top rule, grey label, value in 1.6rem Arial with tabular figures; deltas in small type and hidden when they round to zero.
 
 ### Trust strip
 A key above the strip (dot: estimate, diamond: true value, band: 95% interval, plus what elasticity means), then one column per customer segment: segment name, a scale with the interval band (`interval-band`, 3:1 against white), an outlined ink diamond for the true value with the filled navy estimate dot inside it, so both stay visible when they are equal, three label/value rows and a green "True value is inside the interval" line. One honest caption follows (largest miss, computed from the data; real data would be noisier).
@@ -226,13 +240,13 @@ Streamlit's sidebar navigation on the panel grey: one flat list of six short nou
 Page links, sidebar links and buttons show a 2px navy outline with a 2px offset on `:focus-visible`. Streamlit's own box-shadow ring on heading links and expanders is kept.
 
 ### Charts
-One Plotly template (`tavra`) shared by the app and the PNG exports: transparent background, grey gridlines, mono tick labels on numeric axes, navy for price series, red only for deductions and breaches, green only for gains. Axes that do not start at zero say so in their caption. In the app a chart never has more than one panel: side-by-side exports are split into separate figures that stack on a phone, and long axis titles move into a caption. Labels sit above horizontal bars instead of beside them, so bars keep the full width on a phone.
+One Plotly template (`tavra`) shared by the app and the PNG exports: transparent background, grey gridlines, Georgia titles, Arial labels and tick labels, navy for price series, red only for deductions and breaches, green only for gains. Axes that do not start at zero say so in their caption. In the app a chart never has more than one panel: side-by-side exports are split into separate figures that stack on a phone, and long axis titles move into a caption. Labels sit above horizontal bars instead of beside them, so bars keep the full width on a phone.
 
 ## Do's and Don'ts
 
 ### Do:
 - **Do** answer the page's question in the title and the takeaway before showing a chart.
-- **Do** put every compared number in IBM Plex Mono with tabular figures.
+- **Do** put every compared number in Arial with tabular figures, never in Georgia.
 - **Do** mark containers with a top rule (4px bill, 3px cards, 2px callouts).
 - **Do** format numbers through the helpers in `localization.py` (`3,732.61`, `14.8%`, `TRY 23.4m`), never the browser locale.
 - **Do** keep secondary text at least 14px with at least 4.5:1 contrast on white.

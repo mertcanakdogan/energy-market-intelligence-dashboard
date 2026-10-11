@@ -48,9 +48,9 @@ streamlit run app.py
 
 The look of the app (colour tokens, fonts, the bill block) is documented in [DESIGN.md](DESIGN.md). Two deployment-relevant points:
 
-- Fonts load from Google Fonts in the visitor's browser through the native `font`, `headingFont` and `codeFont` options in `.streamlit/config.toml` (Streamlit 1.65 or newer, see `requirements.txt`). Nothing is bundled and no secrets are involved. If the fonts cannot load, the browser falls back to system sans-serif and monospace fonts and the layout still works.
+- The app uses two system fonts, Arial and Georgia, set through the native `font`, `headingFont` and `codeFont` options in `.streamlit/config.toml` and in the app's CSS. Nothing is downloaded or bundled. Where Arial is missing (some Linux phones and desktops), the browser uses Helvetica or the system sans-serif.
 - The theme is light only; there is no dark-mode variant.
-- The PNG charts in `outputs/examples/` are rendered by Kaleido, which only sees fonts installed on the machine. Before regenerating them, install Barlow Semi Condensed (Regular, SemiBold, Bold), Source Sans 3 and IBM Plex Mono (Regular, Medium, SemiBold) from Google Fonts (SIL Open Font License). Without them the charts fall back to Arial Narrow, Segoe UI and Consolas and no longer match the app.
+- The PNG charts in `outputs/examples/` are rendered by Kaleido, which only sees fonts installed on the machine. Arial and Georgia ship with Windows and macOS, so the charts match the app there without extra steps; on Linux, install them first (for example the `ttf-mscorefonts-installer` package).
 
 ## Troubleshooting
 
