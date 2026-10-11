@@ -15,7 +15,7 @@ from energy_market_intelligence.synthetic_data import FOCUS_COMPANY
 
 TRY_AXIS = "TRY m (constant 2025 prices)"
 
-# Design tokens. Every colour carries exactly one meaning (see docs/DESIGN.md).
+# Design tokens. Every colour carries exactly one meaning (see DESIGN.md).
 NAVY = "#1F3A5F"  # Grid navy: prices, headings, primary series
 LEAK_RED = "#C8462B"  # Leak red: deductions, leakage and policy breaches only
 GAIN_GREEN = "#2E7D5B"  # Certificate green: gains from the recommendation, positive outcomes only

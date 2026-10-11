@@ -98,7 +98,7 @@ The [live app](https://tavra-energy-pricing.streamlit.app) has six pages, all ab
 | **Promotion impact** | Did the promotion really work? | The simple and the price-adjusted DiD estimates of the campaign uplift |
 | **Price recommendation** | Which price step is worth taking? | The capped price step per segment and the expected change in gross profit |
 
-Colours, fonts and design rules are described in [docs/DESIGN.md](docs/DESIGN.md).
+Colours, fonts and design rules are described in [DESIGN.md](DESIGN.md); who the app is for and what it must do are in [PRODUCT.md](PRODUCT.md).
 
 ## Also in the repository
 
@@ -225,7 +225,7 @@ src/energy_market_intelligence/
 app.py, dashboard_support.py     Streamlit app: navigation and shared helpers
 views/                           The six pages: home.py, price_waterfall.py, pvm_bridge.py,
                                  elasticity.py, promotion_impact.py, price_recommendation.py
-dashboard_style.py, .streamlit/  App stylesheet, bill block and theme (see docs/DESIGN.md)
+dashboard_style.py, .streamlit/  App stylesheet, bill block and theme (see DESIGN.md)
 powerbi/measures.md              Power BI model and DAX
 tests/                           Unit, SQL, pipeline, page-smoke and repository-hygiene tests
 outputs/examples/                Compact CSV and PNG results plus run_metadata.json

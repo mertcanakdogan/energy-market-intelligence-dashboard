@@ -1,6 +1,6 @@
 """Visual layer of the Streamlit app: one CSS block and the small HTML components.
 
-The design follows docs/DESIGN.md. Colours each carry one meaning: grid navy for prices and
+The design follows DESIGN.md. Colours each carry one meaning: grid navy for prices and
 headings, leak red only for deductions, leakage and policy breaches, certificate green only for
 gains and positive outcomes, transformer grey for secondary text. The web fonts are loaded by
 Streamlit from ``.streamlit/config.toml``; this module only refers to them by name.

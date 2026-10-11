@@ -46,7 +46,7 @@ streamlit run app.py
 
 ## Design notes
 
-The look of the app (colour tokens, fonts, the bill block) is documented in [docs/DESIGN.md](docs/DESIGN.md). Two deployment-relevant points:
+The look of the app (colour tokens, fonts, the bill block) is documented in [DESIGN.md](DESIGN.md). Two deployment-relevant points:
 
 - Fonts load from Google Fonts in the visitor's browser through the native `font`, `headingFont` and `codeFont` options in `.streamlit/config.toml` (Streamlit 1.65 or newer, see `requirements.txt`). Nothing is bundled and no secrets are involved. If the fonts cannot load, the browser falls back to system sans-serif and monospace fonts and the layout still works.
 - The theme is light only; there is no dark-mode variant.

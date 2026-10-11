@@ -1,0 +1,324 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-11T18:52:45+00:00",
+  "title": "Design System: Tavra Energy pricing case study",
+  "extensions": {
+    "colorMeta": {
+      "grid-navy": {
+        "role": "primary",
+        "displayName": "Grid Navy",
+        "canonical": "#1F3A5F",
+        "oklch": "oklch(34.7% 0.073 256.7)",
+        "tonalRamp": [
+          "#000F31",
+          "#0E294C",
+          "#284369",
+          "#48658D",
+          "#6A88B2",
+          "#8DADD9",
+          "#C1D3EC",
+          "#DEF0FF"
+        ]
+      },
+      "leak-red": {
+        "role": "secondary",
+        "displayName": "Leak Red",
+        "canonical": "#C8462B",
+        "oklch": "oklch(57.1% 0.171 33.5)",
+        "tonalRamp": [
+          "#430000",
+          "#640000",
+          "#860000",
+          "#AF2E11",
+          "#D9563B",
+          "#FF7C60",
+          "#EAC8C0",
+          "#FFE6DD"
+        ]
+      },
+      "certificate-green": {
+        "role": "tertiary",
+        "displayName": "Certificate Green",
+        "canonical": "#2E7D5B",
+        "oklch": "oklch(53.1% 0.095 161.9)",
+        "tonalRamp": [
+          "#001C04",
+          "#003619",
+          "#005132",
+          "#237452",
+          "#4B9874",
+          "#71BE98",
+          "#BBDAC9",
+          "#D8F7E6"
+        ]
+      },
+      "transformer-grey": {
+        "role": "neutral",
+        "displayName": "Transformer Grey",
+        "canonical": "#6B7480",
+        "oklch": "oklch(55.6% 0.022 255.6)",
+        "tonalRamp": [
+          "#0B121B",
+          "#222934",
+          "#3B434E",
+          "#5B6470",
+          "#7E8793",
+          "#A2ACB9",
+          "#C8D2DF",
+          "#E5F0FD"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#1B2430",
+        "oklch": "oklch(25.7% 0.026 255.8)",
+        "tonalRamp": [
+          "#0A121D",
+          "#202A36",
+          "#394350",
+          "#5A6472",
+          "#7C8796",
+          "#A0ACBC",
+          "#C6D2E2",
+          "#E3F0FF"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#FFFFFF",
+        "oklch": "oklch(100.0% 0.000 89.9)",
+        "tonalRamp": [
+          "#121212",
+          "#292929",
+          "#424242",
+          "#636363",
+          "#868686",
+          "#ABABAB",
+          "#D1D1D1",
+          "#EEEEEE"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel",
+        "canonical": "#F2F4F5",
+        "oklch": "oklch(96.6% 0.003 228.8)",
+        "tonalRamp": [
+          "#101212",
+          "#28292A",
+          "#414343",
+          "#626364",
+          "#858687",
+          "#A9ABAC",
+          "#CFD1D2",
+          "#EDEFF0"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Rule",
+        "canonical": "#E3E7EA",
+        "oklch": "oklch(92.6% 0.006 239.8)",
+        "tonalRamp": [
+          "#0F1214",
+          "#26292C",
+          "#404345",
+          "#606466",
+          "#838789",
+          "#A8ABAE",
+          "#CED1D4",
+          "#EBEFF2"
+        ]
+      },
+      "leader-dots": {
+        "role": "neutral",
+        "displayName": "Leader Dots",
+        "canonical": "#AAB2BB",
+        "oklch": "oklch(76.0% 0.016 251.2)",
+        "tonalRamp": [
+          "#0C1218",
+          "#232A31",
+          "#3C434B",
+          "#5D646C",
+          "#7F8790",
+          "#A4ACB5",
+          "#CAD2DB",
+          "#E7EFF9"
+        ]
+      },
+      "interval-blue": {
+        "role": "neutral",
+        "displayName": "Interval Blue",
+        "canonical": "#C5D0DF",
+        "oklch": "oklch(85.4% 0.024 256.1)",
+        "tonalRamp": [
+          "#0A121C",
+          "#212935",
+          "#3A434F",
+          "#5A6471",
+          "#7D8795",
+          "#A1ACBA",
+          "#C7D2E1",
+          "#E4F0FF"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page titles as questions; overview thesis."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Chart titles."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Segment names and callout labels."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Intro lines and callout text."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Metric labels, captions, legends."
+      },
+      "data": {
+        "displayName": "Data",
+        "purpose": "Every compared number, tabular figures."
+      },
+      "bill-title": {
+        "displayName": "Bill title",
+        "purpose": "The PRICE BREAKDOWN title."
+      }
+    },
+    "shadows": [],
+    "motion": [],
+    "breakpoints": [
+      {
+        "name": "stack",
+        "value": "640px"
+      },
+      {
+        "name": "phone-bill",
+        "value": "520px"
+      },
+      {
+        "name": "bill-compact (container query)",
+        "value": "27rem"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Price breakdown",
+      "kind": "custom",
+      "refersTo": "bill",
+      "description": "The signature bill: list price, each leak on its own line, the net price under a navy rule, the leakage rate at the foot.",
+      "html": "<section class=\"ds-bill\"><div class=\"ds-bill-head\"><span class=\"ds-bill-title\">PRICE BREAKDOWN</span><span class=\"ds-bill-meta\">All customers · TRY/MWh · 2025</span></div><div class=\"ds-fl\"><span class=\"ds-op\"></span><span class=\"ds-lab\">List price</span><span class=\"ds-dots\"></span><span class=\"ds-amt\">3,732.61</span></div><div class=\"ds-fl ds-ded\"><span class=\"ds-op\">−</span><span class=\"ds-lab\">On-invoice discount</span><span class=\"ds-dots\"></span><span class=\"ds-amt\">−366.43</span></div><div class=\"ds-fl ds-ded\"><span class=\"ds-op\">−</span><span class=\"ds-lab\">Service and freight</span><span class=\"ds-dots\"></span><span class=\"ds-amt\">−88.97</span></div><div class=\"ds-fl ds-net\"><span class=\"ds-op\">=</span><span class=\"ds-lab\">Net (pocket) price</span><span class=\"ds-dots\"></span><span class=\"ds-amt\">3,180.47</span></div><div class=\"ds-foot\">Leakage rate: <b>14.8%</b></div></section>",
+      "css": ":host{--tv-navy:#1F3A5F;--tv-leak:#C8462B;--tv-gain:#2E7D5B;--tv-slate:#6B7480;--tv-ink:#1B2430;--tv-rule:#E3E7EA;--tv-panel:#F2F4F5;--tv-mono:'IBM Plex Mono',Consolas,Menlo,monospace;--tv-head:'Barlow Semi Condensed','Arial Narrow',Arial,sans-serif;--tv-body:'Source Sans 3',sans-serif;}.ds-bill{background:#fff;border:1px solid var(--tv-rule);border-top:4px solid var(--tv-navy);padding:1rem 1.3rem 1.1rem;max-width:36rem;color:var(--tv-ink);font-family:var(--tv-body)}.ds-bill-head{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;padding-bottom:.6rem;border-bottom:1px solid var(--tv-rule)}.ds-bill-title{font-family:var(--tv-head);font-weight:700;letter-spacing:.16em;font-size:1.1rem;color:var(--tv-navy)}.ds-bill-meta{font-size:.875rem;color:var(--tv-slate)}.ds-fl{display:flex;align-items:baseline;gap:.45rem;padding:.42rem 0;font-size:1.05rem}.ds-op{flex:0 0 .9rem;font-family:var(--tv-mono);color:var(--tv-slate);text-align:center}.ds-dots{flex:1 1 .8rem;align-self:flex-end;margin-bottom:.38em;border-bottom:2px dotted #AAB2BB}.ds-amt{min-width:6.2rem;text-align:right;font-weight:500;font-family:var(--tv-mono);font-variant-numeric:tabular-nums}.ds-ded .ds-amt{color:var(--tv-leak)}.ds-net{margin-top:.45rem;padding-top:.7rem;border-top:2px solid var(--tv-navy);font-weight:700;color:var(--tv-navy);font-size:1.2rem}.ds-net .ds-op{color:var(--tv-navy)}.ds-foot{margin-top:.65rem;font-size:.92rem;color:var(--tv-slate)}.ds-foot b{color:var(--tv-leak);font-family:var(--tv-mono);font-weight:600}"
+    },
+    {
+      "name": "Takeaway callout",
+      "kind": "card",
+      "refersTo": "callout-takeaway",
+      "description": "\"What it means\": the data-driven answer of a page.",
+      "html": "<div class=\"ds-callout\"><span class=\"ds-label\">What it means</span>Of every TRY 100 at list price, the company keeps TRY 85.2.</div>",
+      "css": ":host{--tv-navy:#1F3A5F;--tv-leak:#C8462B;--tv-gain:#2E7D5B;--tv-slate:#6B7480;--tv-ink:#1B2430;--tv-rule:#E3E7EA;--tv-panel:#F2F4F5;--tv-mono:'IBM Plex Mono',Consolas,Menlo,monospace;--tv-head:'Barlow Semi Condensed','Arial Narrow',Arial,sans-serif;--tv-body:'Source Sans 3',sans-serif;}.ds-callout{border-top:2px solid var(--tv-navy);background:var(--tv-panel);padding:.75rem 1.1rem .85rem;color:var(--tv-ink);line-height:1.5;font-family:var(--tv-body)}.ds-label{display:block;font-family:var(--tv-head);font-weight:700;font-size:1.05rem;color:var(--tv-navy)}"
+    },
+    {
+      "name": "Note callout",
+      "kind": "card",
+      "refersTo": "callout-note",
+      "description": "Caveats and assumptions.",
+      "html": "<div class=\"ds-callout\"><span class=\"ds-label\">Assumptions</span>The data are synthetic, so the true elasticities are known.</div>",
+      "css": ":host{--tv-navy:#1F3A5F;--tv-leak:#C8462B;--tv-gain:#2E7D5B;--tv-slate:#6B7480;--tv-ink:#1B2430;--tv-rule:#E3E7EA;--tv-panel:#F2F4F5;--tv-mono:'IBM Plex Mono',Consolas,Menlo,monospace;--tv-head:'Barlow Semi Condensed','Arial Narrow',Arial,sans-serif;--tv-body:'Source Sans 3',sans-serif;}.ds-callout{border-top:2px solid var(--tv-slate);background:var(--tv-panel);padding:.75rem 1.1rem .85rem;color:var(--tv-ink);line-height:1.5;font-family:var(--tv-body)}.ds-label{display:block;font-family:var(--tv-head);font-weight:700;font-size:1.05rem;color:var(--tv-slate)}"
+    },
+    {
+      "name": "Breach callout",
+      "kind": "card",
+      "refersTo": "callout-breach",
+      "description": "Only for real policy breaches.",
+      "html": "<div class=\"ds-callout\"><span class=\"ds-label\">Policy breach</span>12 province and segment pairs give discounts above the policy limit.</div>",
+      "css": ":host{--tv-navy:#1F3A5F;--tv-leak:#C8462B;--tv-gain:#2E7D5B;--tv-slate:#6B7480;--tv-ink:#1B2430;--tv-rule:#E3E7EA;--tv-panel:#F2F4F5;--tv-mono:'IBM Plex Mono',Consolas,Menlo,monospace;--tv-head:'Barlow Semi Condensed','Arial Narrow',Arial,sans-serif;--tv-body:'Source Sans 3',sans-serif;}.ds-callout{border-top:2px solid var(--tv-leak);background:var(--tv-panel);padding:.75rem 1.1rem .85rem;color:var(--tv-ink);line-height:1.5;font-family:var(--tv-body)}.ds-label{display:block;font-family:var(--tv-head);font-weight:700;font-size:1.05rem;color:var(--tv-leak)}"
+    },
+    {
+      "name": "Question card",
+      "kind": "card",
+      "refersTo": "question-card",
+      "description": "Overview card: the question is the page link, one answer sentence below.",
+      "html": "<div class=\"ds-card\"><a class=\"ds-q\" href=\"#\">Where does price leak?</a><p class=\"ds-a\">The biggest item is the on-invoice discount (9.8% of list price).</p></div>",
+      "css": ":host{--tv-navy:#1F3A5F;--tv-leak:#C8462B;--tv-gain:#2E7D5B;--tv-slate:#6B7480;--tv-ink:#1B2430;--tv-rule:#E3E7EA;--tv-panel:#F2F4F5;--tv-mono:'IBM Plex Mono',Consolas,Menlo,monospace;--tv-head:'Barlow Semi Condensed','Arial Narrow',Arial,sans-serif;--tv-body:'Source Sans 3',sans-serif;}.ds-card{border:1px solid var(--tv-rule);border-top:3px solid var(--tv-navy);padding:.9rem 1.1rem 1rem;max-width:22rem;font-family:var(--tv-body)}.ds-q{font-family:var(--tv-head);font-weight:700;font-size:1.35rem;line-height:1.2;color:var(--tv-navy);text-decoration:none}.ds-q::after{content:'\\2192';margin-left:.4rem}.ds-q:hover{text-decoration:underline}.ds-q:focus-visible{outline:2px solid var(--tv-navy);outline-offset:2px}.ds-a{margin:.35rem 0 0;color:var(--tv-ink);line-height:1.45}"
+    },
+    {
+      "name": "Metric",
+      "kind": "custom",
+      "refersTo": "metric",
+      "description": "Label over a monospaced value with a thin top rule.",
+      "html": "<div class=\"ds-metric\"><div class=\"ds-ml\">Price realization</div><div class=\"ds-mv\">85.2%</div></div>",
+      "css": ":host{--tv-navy:#1F3A5F;--tv-leak:#C8462B;--tv-gain:#2E7D5B;--tv-slate:#6B7480;--tv-ink:#1B2430;--tv-rule:#E3E7EA;--tv-panel:#F2F4F5;--tv-mono:'IBM Plex Mono',Consolas,Menlo,monospace;--tv-head:'Barlow Semi Condensed','Arial Narrow',Arial,sans-serif;--tv-body:'Source Sans 3',sans-serif;}.ds-metric{border-top:1px solid var(--tv-rule);padding-top:.65rem;max-width:14rem}.ds-ml{color:var(--tv-slate);font-size:.92rem;font-family:var(--tv-body)}.ds-mv{font-family:var(--tv-mono);font-variant-numeric:tabular-nums;font-weight:500;font-size:1.4rem;color:var(--tv-ink)}"
+    },
+    {
+      "name": "Navigation",
+      "kind": "nav",
+      "refersTo": "segmented-control",
+      "description": "Flat list of six short page names on the panel grey.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-on\" href=\"#\">Overview</a><a href=\"#\">Price leakage</a><a href=\"#\">Revenue bridge</a><a href=\"#\">Price sensitivity</a><a href=\"#\">Promotion impact</a><a href=\"#\">Price recommendation</a></nav>",
+      "css": ":host{--tv-navy:#1F3A5F;--tv-leak:#C8462B;--tv-gain:#2E7D5B;--tv-slate:#6B7480;--tv-ink:#1B2430;--tv-rule:#E3E7EA;--tv-panel:#F2F4F5;--tv-mono:'IBM Plex Mono',Consolas,Menlo,monospace;--tv-head:'Barlow Semi Condensed','Arial Narrow',Arial,sans-serif;--tv-body:'Source Sans 3',sans-serif;}.ds-nav{background:var(--tv-panel);padding:1rem;display:flex;flex-direction:column;gap:.15rem;max-width:14rem;font-family:var(--tv-body)}.ds-nav a{color:var(--tv-ink);text-decoration:none;padding:.35rem .5rem;border-radius:4px;font-size:.95rem}.ds-nav a:hover{background:#E3E7EA}.ds-nav a:focus-visible{outline:2px solid var(--tv-navy)}.ds-nav .ds-on{background:#DDE2E7;font-weight:600}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Itemised Bill",
+    "overview": "Every screen should read like the breakdown on an electricity bill: line by line, plain, and easy to check. The finding of the case study is that part of the list price never reaches the company, so the app shows price as a bill that starts at the list price, subtracts each leak on its own line and ends at the price the company keeps. That bill, the price breakdown, is the one signature element. Everything around it is quiet, so the reader's eye goes to the numbers.\n\nThe system is flat and light. Depth comes from rules, not shadows: a heavy navy rule on top of each container says \"this is a unit\", thin grey rules separate rows. Colour is semantic, never decorative: navy is price, red is money lost, green is money gained. Numbers sit in a monospaced face with tabular figures so columns of amounts line up like a statement. Page titles are questions a hiring manager would ask; the answer comes first, the chart that proves it second.",
+    "keyCharacteristics": [
+      "One signature element (the price breakdown); all other surfaces are quiet.",
+      "Top rules instead of shadows, side stripes or rounded cards.",
+      "Three semantic colours with fixed meanings on a white page.",
+      "Condensed headings, a humanist body face and monospaced numbers.",
+      "English throughout; numbers as `3,732.61`, `14.8%`, `TRY 23.4m`."
+    ],
+    "rules": [
+      {
+        "name": "The One Meaning Rule",
+        "body": "Each colour means one thing. Red is money that leaks or a broken rule; green is money gained or a passed check. A smaller revenue effect in a bridge is not a leak, so neutral bridges use lighter navy and grey.",
+        "section": "colors"
+      },
+      {
+        "name": "The Quiet Page Rule",
+        "body": "Red and green together cover a small share of any screen; most of the page is ink on white.",
+        "section": "colors"
+      },
+      {
+        "name": "The Statement Numbers Rule",
+        "body": "Any number a reader compares sits in IBM Plex Mono with tabular figures, right-aligned when stacked.",
+        "section": "typography"
+      },
+      {
+        "name": "The Question Title Rule",
+        "body": "Page titles are questions; the sidebar uses short nouns.",
+        "section": "typography"
+      },
+      {
+        "name": "The Top Rule Rule",
+        "body": "A container is marked by a rule on its top edge, never by a shadow or a coloured side stripe.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** answer the page's question in the title and the takeaway before showing a chart.",
+      "**Do** put every compared number in IBM Plex Mono with tabular figures.",
+      "**Do** mark containers with a top rule (4px bill, 3px cards, 2px callouts).",
+      "**Do** format numbers through the helpers in `localization.py` (`3,732.61`, `14.8%`, `TRY 23.4m`), never the browser locale.",
+      "**Do** keep secondary text at least 14px with at least 4.5:1 contrast on white."
+    ],
+    "donts": [
+      "**Don't** use red or green for anything other than leaks/breaches and gains/passed checks.",
+      "**Don't** add shadows, gradients, rounded containers or coloured side stripes.",
+      "**Don't** add emojis, decorative icons or a dark-mode variant.",
+      "**Don't** add a second signature element; the price breakdown stays the only one."
+    ]
+  }
+}
