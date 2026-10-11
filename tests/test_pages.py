@@ -10,20 +10,7 @@ from streamlit.testing.v1 import AppTest
 import dashboard_support
 
 TIMEOUT = 180
-PAGES = [
-    "app.py",
-    "pages/01_price_waterfall.py",
-    "pages/02_pvm_bridge.py",
-    "pages/03_elasticity.py",
-    "pages/04_promotion_impact.py",
-    "pages/05_price_recommendation.py",
-    "pages/scenario_analysis.py",
-    "pages/executive_summary.py",
-    "pages/market_performance.py",
-    "pages/competitive_intelligence.py",
-    "pages/profitability.py",
-    "pages/regional_opportunity.py",
-]
+PAGES = [spec[1] for spec in dashboard_support.PAGE_SPECS if not spec[1].endswith("home.py")]
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -49,30 +36,64 @@ def test_page_runs_without_exception(project_root: Path, page: str) -> None:
 
 def test_landing_page_leads_with_the_pricing_story(project_root: Path) -> None:
     app = AppTest.from_file(str(project_root / "app.py"), default_timeout=TIMEOUT).run()
-    assert "Pricing" in app.title[0].value
+    assert not app.exception, [item.value for item in app.exception]
+    assert "Fiyatlama" in app.title[0].value
     labels = [metric.label for metric in app.metric]
-    assert "Price realization" in labels
+    assert "Fiyat gerçekleşme oranı" in labels
+    # Compact values, so that the metric cards cannot be truncated.
+    assert all(len(str(metric.value)) <= 14 for metric in app.metric)
+    assert all(len(metric.label) <= 28 for metric in app.metric)
+    text = " ".join(item.value for item in app.markdown)
+    assert "Üç bulgu ve bir öneri" in text
+    assert "sabit 2025 fiyatlarıyla" in text
+
+
+def test_navigation_has_two_named_sections_in_order(project_root: Path) -> None:
+    specs = dashboard_support.PAGE_SPECS
+    sections = list(dict.fromkeys(spec[0] for spec in specs))
+    assert sections == ["", "Fiyatlama / Pricing", "Pazar / Market"]
+    assert specs[0][1] == "views/home.py"
+    titles = [spec[2] for spec in specs]
+    assert len(set(titles)) == len(titles)
+    assert len({spec[4] for spec in specs}) == len(specs)
+    for _section, path, title, _icon, _url in specs:
+        assert (project_root / path).is_file()
+        assert title and "_" not in title and not title.endswith(".py")
+    assert not (project_root / "pages").exists(), "legacy pages/ directory must not return"
+
+
+@pytest.mark.parametrize("page", PAGES)
+def test_every_page_explains_itself_and_gives_a_takeaway(project_root: Path, page: str) -> None:
+    app = AppTest.from_file(str(project_root / page), default_timeout=TIMEOUT).run()
+    assert not app.exception
+    infos = " ".join(item.value for item in app.info)
+    assert "Bu sayfa ne gösteriyor?" in infos
+    if not page.endswith(("scenario_analysis.py",)):
+        successes = " ".join(item.value for item in app.success)
+        assert "Ne anlama geliyor?" in successes
 
 
 def test_scenario_page_supports_manual_override(project_root: Path) -> None:
     app = AppTest.from_file(
-        str(project_root / "pages/scenario_analysis.py"), default_timeout=TIMEOUT
+        str(project_root / "views/scenario_analysis.py"), default_timeout=TIMEOUT
     ).run()
     assert not app.exception
-    app.radio[0].set_value("Manual override").run()
+    app.radio[0].set_value("Elle girilen").run()
     assert not app.exception
-    assert any("user-defined" in slider.label for slider in app.slider)
+    assert any("elle girilen" in slider.label for slider in app.slider)
 
 
 def test_scenario_page_uses_estimated_elasticity_by_default(project_root: Path) -> None:
     app = AppTest.from_file(
-        str(project_root / "pages/scenario_analysis.py"), default_timeout=TIMEOUT
+        str(project_root / "views/scenario_analysis.py"), default_timeout=TIMEOUT
     ).run()
-    price_slider = next(slider for slider in app.slider if slider.label == "Price change %")
+    price_slider = next(slider for slider in app.slider if slider.label == "Fiyat değişimi (%)")
     price_slider.set_value(5.0).run()
     assert not app.exception
     captions = " ".join(item.value for item in app.caption)
-    assert "implies a volume response of -" in captions
+    assert "hacim tepkisi -" in captions
+    successes = " ".join(item.value for item in app.success)
+    assert "Ne anlama geliyor?" in successes
 
 
 def test_missing_database_is_built_on_first_start(

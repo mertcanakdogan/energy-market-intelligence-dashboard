@@ -1,24 +1,33 @@
-"""Executive Summary Streamlit page."""
+"""Yönetici özeti: pazar ve şirket performansı tek bakışta."""
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from dashboard_support import format_compact, load_config, load_view, page_intro
+from dashboard_support import load_config, load_view, page_intro, show_table, takeaway
+from energy_market_intelligence.insights import market_insight
+from energy_market_intelligence.localization import (
+    format_number,
+    format_pct,
+    format_tl,
+    format_volume,
+)
 from energy_market_intelligence.metrics import generate_management_observations
 from energy_market_intelligence.opportunity import calculate_opportunity_scores
+from energy_market_intelligence.synthetic_data import FOCUS_COMPANY
 from energy_market_intelligence.visualization import (
     gross_margin_trend_figure,
     market_share_trend_figure,
 )
 
 page_intro(
-    "Executive Summary",
-    "Latest 12 months versus the preceding 12 months unless otherwise stated.",
+    "Yönetici Özeti",
+    "Pazarın ve şirketin son 12 ayını (2025) bir önceki 12 ayla (2024) karşılaştırır: hacim, "
+    "pazar payı, kâr, rakipler ve bölgesel öncelikler.",
 )
 kpis = load_view("vw_executive_kpis").iloc[0]
 trend = load_view("vw_growth_analysis").sort_values("date")
-profit = load_view("vw_northstar_profitability_monthly")
+profit = load_view("vw_focus_profitability_monthly")
 regional = calculate_opportunity_scores(
     load_view("vw_regional_opportunity_inputs"), load_config()["opportunity_weights"]
 )
@@ -27,43 +36,53 @@ competitors = load_view("vw_competitor_momentum").sort_values("momentum_rank")
 
 row1 = st.columns(5)
 row1[0].metric(
-    "Market volume",
-    f"{format_compact(kpis['market_volume'])} MWh",
-    f"{kpis['market_yoy_growth']:.1%}",
+    "Pazar hacmi",
+    format_volume(kpis["market_volume"]),
+    format_pct(kpis["market_yoy_growth"], 1, signed=True),
 )
 row1[1].metric(
-    "Northstar volume",
-    f"{format_compact(kpis['northstar_volume'])} MWh",
-    f"{kpis['northstar_yoy_growth']:.1%}",
+    "Şirket hacmi",
+    format_volume(kpis["focus_volume"]),
+    format_pct(kpis["focus_yoy_growth"], 1, signed=True),
 )
 row1[2].metric(
-    "Northstar share", f"{kpis['northstar_market_share']:.1%}", f"{kpis['share_change_pp']:+.2f} pp"
+    "Pazar payı",
+    format_pct(kpis["focus_market_share"]),
+    f"{format_number(kpis['share_change_pp'], 2, signed=True)} puan",
 )
-row1[3].metric("Gross profit", format_compact(kpis["gross_profit"]))
+row1[3].metric("Brüt kâr", format_tl(kpis["gross_profit"]))
 row1[4].metric(
-    "Gross margin", f"{kpis['gross_margin_pct']:.1%}", f"{kpis['gross_margin_change_pp']:+.2f} pp"
+    "Brüt marj",
+    format_pct(kpis["gross_margin_pct"]),
+    f"{format_number(kpis['gross_margin_change_pp'], 2, signed=True)} puan",
 )
+takeaway(market_insight(kpis))
 
 left, right = st.columns(2)
 with left:
     volume = trend.melt(
         id_vars="date",
-        value_vars=["market_volume_mwh", "northstar_volume_mwh"],
+        value_vars=["market_volume_mwh", "focus_volume_mwh"],
         var_name="series",
         value_name="volume_mwh",
     )
     volume["series"] = volume["series"].map(
-        {"market_volume_mwh": "Total market", "northstar_volume_mwh": "Northstar"}
+        {"market_volume_mwh": "Toplam pazar", "focus_volume_mwh": FOCUS_COMPANY}
     )
+    volume["volume_gwh"] = volume["volume_mwh"] / 1e3
     figure = px.line(
         volume,
         x="date",
-        y="volume_mwh",
+        y="volume_gwh",
         color="series",
-        title="Market and Northstar monthly volume",
+        title="Aylık hacim: pazar ve şirket",
     )
     figure.update_layout(
-        template="plotly_white", legend_title=None, yaxis_title="MWh", xaxis_title=None
+        template="plotly_white",
+        legend_title=None,
+        yaxis_title="GWh",
+        xaxis_title=None,
+        separators=",.",
     )
     st.plotly_chart(figure, width="stretch")
 with right:
@@ -71,23 +90,24 @@ with right:
 
 left, right = st.columns(2)
 with left:
-    st.subheader("Regional winners and losers")
+    st.subheader("Bölgesel kazananlar ve kaybedenler")
     winners = share_change.nlargest(3, "share_change_pp")[["region_name", "share_change_pp"]]
     losers = share_change.nsmallest(3, "share_change_pp")[["region_name", "share_change_pp"]]
-    comparison = pd.concat([winners.assign(signal="Gain"), losers.assign(signal="Loss")])
+    comparison = pd.concat([winners.assign(signal="Kazanım"), losers.assign(signal="Kayıp")])
     chart = px.bar(
         comparison,
         x="share_change_pp",
         y="region_name",
         color="signal",
         orientation="h",
-        title="Northstar share movement by region",
+        title="Bölgelere göre şirketin pay değişimi",
     )
     chart.update_layout(
         template="plotly_white",
-        xaxis_title="Percentage points",
+        xaxis_title="Yüzde puan",
         yaxis_title=None,
         legend_title=None,
+        separators=",.",
     )
     st.plotly_chart(chart, width="stretch")
 with right:
@@ -95,46 +115,33 @@ with right:
 
 left, right = st.columns(2)
 with left:
-    st.subheader("Competitor momentum")
-    st.dataframe(
+    st.subheader("Rakiplerin pay eğilimi")
+    show_table(
         competitors[
             ["momentum_rank", "company_name", "current_share", "share_change_pp", "momentum_signal"]
         ].head(5),
-        hide_index=True,
-        width="stretch",
-        column_config={
-            "current_share": st.column_config.NumberColumn(format="percent"),
-            "share_change_pp": st.column_config.NumberColumn(format="%+.2f pp"),
-        },
+        fractions={"current_share"},
     )
 with right:
-    st.subheader("Opportunity Top 5")
-    st.dataframe(
+    st.subheader("Fırsat sıralaması: ilk 5 bölge")
+    show_table(
         regional[
             [
                 "opportunity_rank",
                 "region_name",
                 "opportunity_score",
                 "market_growth",
-                "northstar_share",
+                "focus_share",
             ]
         ].head(5),
-        hide_index=True,
-        width="stretch",
-        column_config={
-            "opportunity_score": st.column_config.ProgressColumn(
-                min_value=0, max_value=100, format="%.1f"
-            ),
-            "market_growth": st.column_config.NumberColumn(format="percent"),
-            "northstar_share": st.column_config.NumberColumn(format="percent"),
-        },
+        fractions={"market_growth", "focus_share"},
     )
 
-st.subheader("Management observations")
+st.subheader("Yönetim gözlemleri")
 observation_kpis = {
     "share_change_pp": float(kpis["share_change_pp"]),
     "market_yoy_growth_pct": float(kpis["market_yoy_growth"]) * 100,
     "gross_margin_change_pp": float(kpis["gross_margin_change_pp"]),
 }
-for observation in generate_management_observations(observation_kpis, regional):
+for observation in generate_management_observations(observation_kpis, regional, language="tr"):
     st.markdown(f"- {observation}")
