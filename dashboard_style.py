@@ -45,6 +45,7 @@ GLOBAL_CSS = """
 :root {
   --tv-navy: #1F3A5F; --tv-leak: #C8462B; --tv-gain: #2E7D5B; --tv-slate: #6B7480;
   --tv-ink: #1B2430; --tv-rule: #E3E7EA; --tv-panel: #F2F4F5;
+  --tv-slate-panel: #5C6570; --tv-leak-panel: #B83F25; --tv-band: #7B92B1;
   --tv-mono: 'IBM Plex Mono', Consolas, Menlo, monospace;
   --tv-head: 'Barlow Semi Condensed', 'Arial Narrow', Arial, sans-serif;
 }
@@ -68,6 +69,17 @@ h2, h3 {letter-spacing: 0;}
 }
 [data-testid="stMetricDelta"] {font-family: var(--tv-mono); font-size: 0.85rem;}
 
+/* Keyboard focus: a 2px navy ring with an offset on links and buttons that show no ring of
+   their own (Streamlit's own box-shadow ring on heading links and expanders is left alone). */
+[data-testid="stPageLink"] a:focus-visible, [data-testid="stSidebarNav"] a:focus-visible,
+[data-testid="stSidebarNavLink"]:focus-visible, [data-testid="stMarkdownContainer"] a:focus-visible,
+[data-testid="stBaseButton-segmented_control"]:focus-visible,
+[data-testid="stBaseButton-segmented_controlActive"]:focus-visible,
+[data-testid="stBaseButton-secondary"]:focus-visible, [data-testid="stBaseButton-primary"]:focus-visible {
+  outline: 2px solid var(--tv-navy); outline-offset: 2px;
+}
+[data-testid="stHeading"] a:focus-visible {outline: none;}
+
 /* Callouts: intro line, takeaway (navy), caveat (slate), breach (red), gain (green). */
 .tv-intro {margin: 0.1rem 0 1.1rem; max-width: 64rem; font-size: 1.05rem; color: var(--tv-ink);}
 .tv-intro strong {color: var(--tv-navy);}
@@ -83,9 +95,9 @@ h2, h3 {letter-spacing: 0;}
 .tv-callout .tv-line {display: grid; grid-template-columns: 4.4rem 1fr; gap: 0 0.4rem; margin-top: 0.3rem;}
 .tv-callout .tv-line b {color: var(--tv-navy);}
 .tv-callout--note {border-top-color: var(--tv-slate);}
-.tv-callout--note .tv-label {color: var(--tv-slate);}
+.tv-callout--note .tv-label {color: var(--tv-slate-panel);}
 .tv-callout--breach {border-top-color: var(--tv-leak);}
-.tv-callout--breach .tv-label {color: var(--tv-leak);}
+.tv-callout--breach .tv-label {color: var(--tv-leak-panel);}
 .tv-callout--gain {border-top-color: var(--tv-gain);}
 .tv-callout--gain .tv-label {color: var(--tv-gain);}
 

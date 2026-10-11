@@ -32,7 +32,8 @@ def database_env(analytics_db: Path):
 def test_page_runs_without_exception(project_root: Path, page: str) -> None:
     app = AppTest.from_file(str(project_root / page), default_timeout=TIMEOUT).run()
     assert not app.exception, [item.value for item in app.exception]
-    assert app.title or app.subheader or app.markdown
+    assert app.title or app.header or app.markdown
+    assert not app.subheader, "section headings are h2 (st.header) right after the h1"
 
 
 def test_landing_page_leads_with_the_thesis_and_the_bill(project_root: Path) -> None:
@@ -49,8 +50,9 @@ def test_landing_page_leads_with_the_thesis_and_the_bill(project_root: Path) -> 
     assert "fictional" in text and "synthetic" in text and "constant 2025 prices" in text
     assert "Net (pocket) price" in text
     assert "day-ahead market price" in text
-    subheaders = [item.value for item in app.subheader]
-    assert "Why can you trust the model?" in subheaders
+    headers = [item.value for item in app.header]
+    assert "Why can you trust the model?" in headers
+    assert not app.subheader, "sections are h2 straight after the h1; no h3 jump"
     # The generic metric-card row is gone; every number on the page is part of the story.
     assert not app.metric
 

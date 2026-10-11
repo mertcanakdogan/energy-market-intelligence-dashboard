@@ -79,7 +79,7 @@ st.caption(
     "differences stay readable."
 )
 
-st.subheader("Are discounts within policy?")
+st.header("Are discounts within policy?")
 available = [name for name in SEGMENT_ORDER if name in set(flags["customer_segment_name"])]
 segment = st.selectbox("Customer segment", available)
 view = selected_flags[selected_flags["customer_segment_name"] == segment].sort_values(

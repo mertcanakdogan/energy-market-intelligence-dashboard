@@ -12,6 +12,10 @@ colors:
   rule: "#E3E7EA"
   leader-dots: "#AAB2BB"
   interval-blue: "#C5D0DF"
+  interval-band: "#7B92B1"
+  grey-on-panel: "#5C6570"
+  red-on-panel: "#B83F25"
+  green-text: "#27704F"
 typography:
   display:
     fontFamily: "'Barlow Semi Condensed', 'Arial Narrow', Arial, sans-serif"
@@ -125,10 +129,15 @@ A cool, utility-bill palette: one dark navy, two signal colours used sparingly, 
 - **Panel** (`panel`): sidebar and callout background.
 - **Rule** (`rule`): gridlines, row separators and container borders.
 - **Leader Dots** (`leader-dots`): the dotted leaders between a bill line's label and its amount.
-- **Interval Blue** (`interval-blue`): the 95% confidence band on the trust strip and text selection.
+- **Interval Blue** (`interval-blue`): text selection.
+- **Interval Band** (`interval-band`): the 95% confidence band on the trust strip; at least 3:1 against white.
+- **Grey on Panel** (`grey-on-panel`) and **Red on Panel** (`red-on-panel`): darker twins of transformer grey and leak red for callout labels on the panel grey (4.5:1 or more); same meaning, never used on white.
+- **Green Text** (`green-text`): a darker certificate green for small text on a pale green tint, such as the delta under a metric.
 
 ### Named Rules
 **The One Meaning Rule.** Each colour means one thing. Red is money that leaks or a broken rule; green is money gained or a passed check. A smaller revenue effect in a bridge is not a leak, so neutral bridges use lighter navy and grey.
+
+**The Panel Contrast Rule.** Text on the panel grey must reach 4.5:1: labels there use the on-panel twins, not the base grey or red.
 
 **The Quiet Page Rule.** Red and green together cover a small share of any screen; most of the page is ink on white.
 

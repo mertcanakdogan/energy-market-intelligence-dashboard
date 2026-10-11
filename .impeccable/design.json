@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-11T18:52:45+00:00",
+  "generatedAt": "2026-10-11T19:17:26+00:00",
   "title": "Design System: Tavra Energy pricing case study",
   "extensions": {
     "colorMeta": {
@@ -163,6 +163,70 @@
           "#C7D2E1",
           "#E4F0FF"
         ]
+      },
+      "interval-band": {
+        "role": "neutral",
+        "displayName": "Interval Band",
+        "canonical": "#7B92B1",
+        "oklch": "oklch(65.3% 0.053 256.0)",
+        "tonalRamp": [
+          "#021128",
+          "#162943",
+          "#2F435F",
+          "#4F6582",
+          "#7188A7",
+          "#95ADCD",
+          "#C0D3EC",
+          "#DDF0FF"
+        ]
+      },
+      "grey-on-panel": {
+        "role": "neutral",
+        "displayName": "Grey On Panel",
+        "canonical": "#5C6570",
+        "oklch": "oklch(50.3% 0.021 253.5)",
+        "tonalRamp": [
+          "#0B121B",
+          "#222A33",
+          "#3B434D",
+          "#5B646F",
+          "#7E8793",
+          "#A2ACB8",
+          "#C8D2DF",
+          "#E5F0FD"
+        ]
+      },
+      "red-on-panel": {
+        "role": "neutral",
+        "displayName": "Red On Panel",
+        "canonical": "#B83F25",
+        "oklch": "oklch(53.6% 0.161 33.7)",
+        "tonalRamp": [
+          "#410000",
+          "#620000",
+          "#830000",
+          "#AC3319",
+          "#D55A3F",
+          "#FF8064",
+          "#EAC8C0",
+          "#FFE6DD"
+        ]
+      },
+      "green-text": {
+        "role": "neutral",
+        "displayName": "Green Text",
+        "canonical": "#27704F",
+        "oklch": "oklch(49.0% 0.090 160.5)",
+        "tonalRamp": [
+          "#001C03",
+          "#003519",
+          "#005032",
+          "#2A7352",
+          "#509774",
+          "#76BD98",
+          "#BBDAC8",
+          "#D8F7E6"
+        ]
       }
     },
     "typographyMeta": {
@@ -284,6 +348,11 @@
       {
         "name": "The One Meaning Rule",
         "body": "Each colour means one thing. Red is money that leaks or a broken rule; green is money gained or a passed check. A smaller revenue effect in a bridge is not a leak, so neutral bridges use lighter navy and grey.",
+        "section": "colors"
+      },
+      {
+        "name": "The Panel Contrast Rule",
+        "body": "Text on the panel grey must reach 4.5:1: labels there use the on-panel twins, not the base grey or red.",
         "section": "colors"
       },
       {

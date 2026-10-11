@@ -13,14 +13,15 @@ greenColor = "#2E7D5B"
 blueColor = "#1F3A5F"
 grayColor = "#6B7480"
 redTextColor = "#C8462B"
-greenTextColor = "#2E7D5B"
+greenTextColor = "#27704F"
 blueTextColor = "#1F3A5F"
 baseRadius = "4px"
 buttonRadius = "4px"
 font = "'Source Sans 3':https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap"
 headingFont = "'Barlow Semi Condensed':https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&display=swap"
 codeFont = "'IBM Plex Mono':https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap"
-headingFontWeights = [700, 700, 600, 600, 600, 600]
+headingFontSizes = ["2.75rem", "1.75rem", "1.5rem", "1.25rem", "1.125rem", "1rem"]
+headingFontWeights = [700, 600, 600, 600, 600, 600]
 
 [theme.sidebar]
 backgroundColor = "#F2F4F5"

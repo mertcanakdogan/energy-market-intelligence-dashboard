@@ -58,7 +58,7 @@ with right:
     st.markdown(style.segment_leakage_html(waterfall), unsafe_allow_html=True)
 
 # 3. Three questions, each with its one-line answer; the recommendation comes first.
-st.subheader("Three questions, answered with data")
+st.header("Three questions, answered with data")
 cards = (
     (
         "action",
@@ -75,7 +75,7 @@ for column, (key, path, label, answer) in zip(st.columns(3, gap="medium"), cards
         style.answer(answer)
 
 # 4. Why the model can be trusted: estimates next to the known truth.
-st.subheader("Why can you trust the model?")
+st.header("Why can you trust the model?")
 recovered = int(elasticities["truth_in_ci"].sum())
 st.write(
     "The data are synthetic, so the true price elasticities are known; the model estimates them "

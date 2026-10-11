@@ -50,7 +50,7 @@ note(
     label="Terms",
 )
 
-st.subheader("Detail by product and segment")
+st.header("Detail by product and segment")
 detail = cells[
     [
         "product_name",

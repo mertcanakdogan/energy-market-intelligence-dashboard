@@ -332,3 +332,48 @@ def test_segment_leakage_lists_each_segment_with_rate_and_net_price(
     assert html.count("tv-seg-row") == len(SEGMENT_ORDER)
     assert chr(10) not in html
     assert ".tv-seg-rate" in style.GLOBAL_CSS and "var(--tv-leak)" in style.GLOBAL_CSS
+
+
+def _luminance(color: str) -> float:
+    channels = [int(color[i : i + 2], 16) / 255 for i in (1, 3, 5)]
+    linear = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in channels]
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+
+def contrast(foreground: str, background: str) -> float:
+    high, low = sorted((_luminance(foreground), _luminance(background)), reverse=True)
+    return (high + 0.05) / (low + 0.05)
+
+
+def _token(name: str) -> str:
+    match = re.search(rf"--{name}: (#[0-9A-Fa-f]{{6}})", style.GLOBAL_CSS)
+    assert match, name
+    return match.group(1)
+
+
+def test_labels_on_the_panel_and_the_interval_band_meet_contrast_minimums(theme: dict) -> None:
+    panel = _token("tv-panel")
+    for name in ("tv-slate-panel", "tv-leak-panel", "tv-navy", "tv-ink"):
+        assert contrast(_token(name), panel) >= 4.5, name
+    assert contrast(_token("tv-gain"), panel) >= 4.5
+    assert contrast(_token("tv-band"), "#FFFFFF") >= 3.0
+    # Streamlit's metric delta text sits on a pale tint of the same green.
+    assert contrast(theme["greenTextColor"], "#EAF2EF") >= 4.5
+    assert ".tv-callout--note .tv-label {color: var(--tv-slate-panel);}" in style.GLOBAL_CSS
+    assert ".tv-callout--breach .tv-label {color: var(--tv-leak-panel);}" in style.GLOBAL_CSS
+
+
+def test_links_and_controls_get_a_two_pixel_navy_focus_ring() -> None:
+    css = style.GLOBAL_CSS
+    for selector in (
+        '[data-testid="stPageLink"] a:focus-visible',
+        '[data-testid="stSidebarNav"] a:focus-visible',
+        '[data-testid="stBaseButton-segmented_control"]:focus-visible',
+    ):
+        assert selector in css
+    assert "outline: 2px solid var(--tv-navy); outline-offset: 2px;" in css
+
+
+def test_section_headings_are_h2_in_the_theme(theme: dict) -> None:
+    assert theme["headingFontSizes"][1] == "1.75rem"
+    assert len(theme["headingFontSizes"]) == len(theme["headingFontWeights"]) == 6
