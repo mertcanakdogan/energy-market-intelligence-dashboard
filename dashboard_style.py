@@ -57,7 +57,7 @@ h2, h3 {letter-spacing: 0;}
 [data-testid="stHeading"] {margin-top: 1.2rem;}
 [data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p {color: var(--tv-slate); opacity: 1;}
 [data-testid="stMetric"] {border-top: 1px solid var(--tv-rule); padding-top: 0.65rem;}
-[data-testid="stMetricLabel"] p {color: var(--tv-slate); font-size: 0.92rem;}
+[data-testid="stMetricLabel"] p {color: var(--tv-slate); font-size: 0.875rem;}
 [data-testid="stMetricValue"] {
   font-family: var(--tv-mono); font-variant-numeric: tabular-nums; font-weight: 500;
   font-size: 1.4rem; color: var(--tv-ink);
@@ -67,7 +67,7 @@ h2, h3 {letter-spacing: 0;}
   white-space: normal !important; overflow: visible !important; text-overflow: clip !important;
   overflow-wrap: anywhere;
 }
-[data-testid="stMetricDelta"] {font-family: var(--tv-mono); font-size: 0.85rem;}
+[data-testid="stMetricDelta"] {font-family: var(--tv-mono); font-size: 0.875rem;}
 
 /* Keyboard focus: a 2px navy ring with an offset on links and buttons that show no ring of
    their own (Streamlit's own box-shadow ring on heading links and expanders is left alone). */
@@ -130,23 +130,22 @@ h2, h3 {letter-spacing: 0;}
   font-family: var(--tv-mono); font-variant-numeric: tabular-nums;
 }
 .fl-pct {
-  flex: 0 0 3.7rem; text-align: right; font-size: 0.85rem; color: var(--tv-slate);
+  flex: 0 0 3.7rem; text-align: right; font-size: 0.875rem; color: var(--tv-slate);
   font-family: var(--tv-mono); font-variant-numeric: tabular-nums;
 }
 .fl--deduction .fl-amt {color: var(--tv-leak);}
 .fl--net {
   margin-top: 0.45rem; padding-top: 0.7rem; border-top: 2px solid var(--tv-navy);
-  font-weight: 700; color: var(--tv-navy); font-size: 1.2rem;
+  font-weight: 700; color: var(--tv-navy); font-size: 1.3rem;
 }
 .fl--net .fl-op, .fl--net .fl-pct {color: var(--tv-navy);}
 .fl--net .fl-amt {font-weight: 600;}
 @container (min-width: 27rem) {.fl--net .fl-label {white-space: nowrap;}}
-.bill-foot {margin: 0.65rem 0 0; font-size: 0.92rem; color: var(--tv-slate);}
+.bill-foot {margin: 0.65rem 0 0; font-size: 0.875rem; color: var(--tv-slate);}
 .bill-foot b {color: var(--tv-leak); font-family: var(--tv-mono); font-weight: 600;}
 /* The bill sits in a column, so it adapts to its own width, not the viewport's. */
 @media (max-width: 520px) {.bill {padding: 0.9rem 0.9rem 1rem;}}
 @container (max-width: 27rem) {
-  .fl {font-size: 1rem;}
   .fl--net {font-size: 1.1rem;}
   .fl-pct {display: none;}
   .fl-amt {min-width: 5.2rem;}
@@ -180,7 +179,7 @@ h2, h3 {letter-spacing: 0;}
 
 /* Link cards on the landing page: the question is the link. */
 [class*="st-key-card-"] {
-  border: 1px solid var(--tv-rule); border-top: 3px solid var(--tv-navy); border-radius: 0;
+  border: 1px solid var(--tv-rule); border-top: 3px solid var(--tv-navy);
   padding: 0.9rem 1.1rem 1rem; flex: 1 1 auto; box-sizing: border-box;
 }
 .st-key-card-action {background: var(--tv-panel); border-top-width: 4px;}
@@ -192,7 +191,7 @@ h2, h3 {letter-spacing: 0;}
 [data-testid="stPageLink"] a:hover p {text-decoration: underline;}
 [data-testid="stPageLink"] p {font-weight: 600; color: var(--tv-navy);}
 [class*="st-key-card-"] [data-testid="stPageLink"] p {
-  font-family: var(--tv-head); font-weight: 700; font-size: 1.35rem; color: var(--tv-navy);
+  font-family: var(--tv-head); font-weight: 700; font-size: 1.3rem; color: var(--tv-navy);
   white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.2;
 }
 [class*="st-key-card-"] [data-testid="stPageLink"] a,
@@ -224,22 +223,28 @@ h2, h3 {letter-spacing: 0;}
 }
 
 /* Model trust strip: true value, estimate and interval per segment. */
-.tv-trust {display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.2rem;}
+.tv-trust {display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.2rem; margin-bottom: 0.8rem;}
 .tv-trust-card {border-top: 1px solid var(--tv-rule); padding-top: 0.6rem;}
 .tv-trust-seg {font-family: var(--tv-head); font-weight: 600; font-size: 1.1rem; color: var(--tv-navy);}
-.tv-scale {position: relative; height: 1.5rem; margin: 0.5rem 0 0.45rem;}
+.tv-scale {position: relative; height: 1.9rem; margin: 0.5rem 0 0.45rem;}
 .tv-scale-axis {position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid var(--tv-rule);}
-.tv-scale-ci {position: absolute; top: 50%; height: 0.55rem; margin-top: -0.275rem;
-  background: #C5D0DF; border-radius: 1px;}
-.tv-scale-est {position: absolute; top: 50%; width: 0.7rem; height: 0.7rem; margin: -0.35rem 0 0 -0.35rem;
-  background: var(--tv-navy); border-radius: 50%;}
-.tv-scale-true {position: absolute; top: 50%; width: 0.85rem; height: 0.85rem; margin: -0.425rem 0 0 -0.425rem;
+.tv-scale-ci {position: absolute; top: 50%; height: 0.6rem; margin-top: -0.3rem; background: var(--tv-band);}
+.tv-scale-true {position: absolute; top: 50%; width: 1.1rem; height: 1.1rem; margin: -0.55rem 0 0 -0.55rem;
   border: 2px solid var(--tv-ink); transform: rotate(45deg); box-sizing: border-box;}
-.tv-trust-row {display: flex; justify-content: space-between; gap: 0.6rem; font-size: 0.92rem;
+.tv-scale-est {position: absolute; top: 50%; width: 0.55rem; height: 0.55rem; margin: -0.275rem 0 0 -0.275rem;
+  background: var(--tv-navy); border-radius: 50%;}
+.tv-trust-row {display: flex; justify-content: space-between; gap: 0.6rem; font-size: 0.875rem;
   color: var(--tv-slate);}
 .tv-trust-row b {font-family: var(--tv-mono); font-weight: 500; color: var(--tv-ink);}
-.tv-trust-ok {margin-top: 0.25rem; font-size: 0.9rem; font-weight: 600; color: var(--tv-gain);}
-.tv-legend {margin: 1.1rem 0 0.6rem; font-size: 0.875rem; color: var(--tv-slate);}
+.tv-trust-ok {margin-top: 0.25rem; font-size: 0.875rem; font-weight: 600; color: var(--tv-gain);}
+.tv-legend {margin: 0.9rem 0 0.6rem; font-size: 0.875rem; color: var(--tv-slate);}
+.tv-keys {display: flex; flex-wrap: wrap; gap: 0.3rem 1.3rem; margin-bottom: 0.2rem; color: var(--tv-ink);}
+.tv-key {display: inline-flex; align-items: center; gap: 0.45rem;}
+.tv-key i {display: inline-block; flex: 0 0 auto;}
+.tv-key-dot {width: 0.55rem; height: 0.55rem; background: var(--tv-navy); border-radius: 50%;}
+.tv-key-diamond {width: 0.8rem; height: 0.8rem; border: 2px solid var(--tv-ink); transform: rotate(45deg);
+  box-sizing: border-box; margin: 0 0.1rem;}
+.tv-key-band {width: 1.6rem; height: 0.6rem; background: var(--tv-band);}
 @media (max-width: 640px) {.tv-trust {grid-template-columns: minmax(0, 1fr);}}
 @media (max-width: 640px) {
   h1 {font-size: 2.1rem !important;}
@@ -425,8 +430,8 @@ def trust_strip_html(table: pd.DataFrame) -> str:
             '<div class="tv-scale" aria-hidden="true"><span class="tv-scale-axis"></span>'
             f'<span class="tv-scale-ci" style="left:{place(row.ci_low):.1f}%;width:{width:.1f}%">'
             "</span>"
-            f'<span class="tv-scale-est" style="left:{place(row.elasticity):.1f}%"></span>'
             f'<span class="tv-scale-true" style="left:{place(row.true_elasticity):.1f}%"></span>'
+            f'<span class="tv-scale-est" style="left:{place(row.elasticity):.1f}%"></span>'
             "</div>"
             f"{_row('True', format_number(row.true_elasticity, 2))}"
             f"{_row('Estimate', format_number(row.elasticity, 2))}"
@@ -435,8 +440,11 @@ def trust_strip_html(table: pd.DataFrame) -> str:
             "</div>"
         )
     legend = (
-        '<div class="tv-legend">Filled dot: estimate. Open diamond: true value. '
-        "Light blue band: 95% confidence interval. Elasticity: the percent change in volume "
-        "when the price rises 1%.</div>"
+        '<div class="tv-legend"><div class="tv-keys">'
+        '<span class="tv-key"><i class="tv-key-dot" aria-hidden="true"></i>Estimate</span>'
+        '<span class="tv-key"><i class="tv-key-diamond" aria-hidden="true"></i>True value</span>'
+        '<span class="tv-key"><i class="tv-key-band" aria-hidden="true"></i>'
+        "95% confidence interval</span></div>"
+        "Elasticity: the percent change in volume when the price rises 1%.</div>"
     )
-    return f'<div class="tv-trust">{"".join(cards)}</div>{legend}'
+    return f'{legend}<div class="tv-trust">{"".join(cards)}</div>'

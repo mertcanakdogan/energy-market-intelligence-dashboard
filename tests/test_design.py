@@ -154,7 +154,12 @@ def test_trust_strip_lists_every_segment_with_the_true_value() -> None:
     assert html.count("tv-trust-ok") == 1
     assert "True value is outside the interval" in html
     assert "True value is inside the interval" in html
-    assert "95% interval" in html and "Estimate" in html and "Open diamond: true value." in html
+    assert "95% interval" in html and "Estimate" in html
+    # The key comes before the strip, and the estimate dot sits inside the larger diamond.
+    assert html.index("tv-keys") < html.index("tv-trust-card")
+    assert "True value</span>" in html and "95% confidence interval</span>" in html
+    assert html.index("tv-scale-true") < html.index("tv-scale-est")
+    assert "border-radius: 1px" not in style.GLOBAL_CSS
 
 
 def test_callouts_escape_html(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -377,3 +382,9 @@ def test_links_and_controls_get_a_two_pixel_navy_focus_ring() -> None:
 def test_section_headings_are_h2_in_the_theme(theme: dict) -> None:
     assert theme["headingFontSizes"][1] == "1.75rem"
     assert len(theme["headingFontSizes"]) == len(theme["headingFontWeights"]) == 6
+
+
+def test_small_text_stays_at_the_documented_sizes() -> None:
+    sizes = set(re.findall(r"font-size: ([0-9.]+)rem", style.GLOBAL_CSS))
+    assert sizes <= {"0.875", "1.05", "1.1", "1.3", "1.4", "2.1"}, sizes
+    assert "font-size: 0.875rem" in style.GLOBAL_CSS.split(".fl-pct {")[1].split("}")[0]

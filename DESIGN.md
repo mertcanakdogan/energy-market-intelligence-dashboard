@@ -22,6 +22,16 @@ typography:
     fontWeight: 700
     lineHeight: 1.12
     letterSpacing: "-0.01em"
+  display-mobile:
+    fontFamily: "'Barlow Semi Condensed', 'Arial Narrow', Arial, sans-serif"
+    fontSize: "2.1rem"
+    fontWeight: 700
+    lineHeight: 1.12
+  section:
+    fontFamily: "'Barlow Semi Condensed', 'Arial Narrow', Arial, sans-serif"
+    fontSize: "1.75rem"
+    fontWeight: 600
+    lineHeight: 1.2
   headline:
     fontFamily: "'Barlow Semi Condensed', 'Arial Narrow', Arial, sans-serif"
     fontSize: "1.3rem"
@@ -151,10 +161,11 @@ A cool, utility-bill palette: one dark navy, two signal colours used sparingly, 
 
 ### Hierarchy
 - **Display** (700, Streamlit H1 size; 2.1rem below 640px, 1.12 line height, -0.01em): page titles, written as questions, and the overview thesis sentence.
-- **Headline** (700, 1.3rem, 1.2): chart titles, rendered as HTML so they wrap on phones.
-- **Title** (600, 1.1rem): segment names in the trust strip and the bold labels of callouts (1.05rem).
+- **Section** (600, 1.75rem, 1.2): section headings. They are h2, straight after the h1, and the size is set through the theme (`headingFontSizes`).
+- **Headline** (700, 1.3rem, 1.2): chart titles (rendered as HTML so they wrap on phones), the question on a card, the net line of the bill and the title of the segment comparison.
+- **Title** (600, 1.1rem): segment names in the trust strip and the segment comparison, and the bill's title and narrow net line. Callout labels use the body size (1.05rem).
 - **Body** (400, 1.05rem, 1.5): intro lines and callout text; intro lines are capped at 64rem.
-- **Label** (400, 0.875–0.92rem): metric labels, captions, the bill's meta line and legends; never below 14px.
+- **Label** (400, 0.875rem): metric labels, captions, the bill's meta line, percentage column and legends; never below 14px.
 - **Data** (500, 1.4rem in metrics, 1.05rem in the bill, tabular figures): every number that the reader compares.
 
 ### Named Rules
@@ -164,7 +175,7 @@ A cool, utility-bill palette: one dark navy, two signal colours used sparingly, 
 
 ## Layout
 
-A single reading column inside Streamlit's wide layout, capped at 1360px, with the sidebar holding one flat list of six pages. Each page follows the same order: question title, one-line "What this page shows", a "What it means" takeaway, then the evidence (metrics, charts, tables). On the overview the price breakdown and its matching waterfall sit side by side; three question cards follow in a row, then the trust strip in three columns.
+A single reading column inside Streamlit's wide layout, capped at 1360px, with the sidebar holding one flat list of six pages. Each page follows the same order: question title, one-line "What this page shows", a "What it means" takeaway, then the evidence (metrics, charts, tables). On the overview a three-line "What it means" (finding, size, action) comes straight after the hero. The price breakdown sits beside a comparison of the three customer segments; three question cards follow in a row, the recommendation first, then the trust strip in three columns with its key above it, and a closing line with the author and links. Below 900px the cards stack.
 
 Spacing is compact: 2.4rem top padding, about 1.4rem between blocks, tight padding inside containers. Below 640px columns stack, the trust strip becomes one column and the H1 drops to 2.1rem. The price breakdown adapts to its own width with container queries: under 27rem it hides the percentage column and narrows the amount column, so it stays aligned in a tablet column as well as on a phone.
 
@@ -177,7 +188,7 @@ Flat. No shadows anywhere. Depth and grouping come from rules: a 4px navy rule o
 
 ## Shapes
 
-Square. Containers (bill, callouts, cards) have no corner radius. Streamlit's own controls (segmented control, select boxes, sliders) keep a small 4px radius from the theme. The only round shapes are data marks: the filled estimate dot and the outlined true-value diamond on the trust strip.
+Square. Containers (bill, callouts, cards) have no corner radius. Streamlit's own controls (segmented control, select boxes, sliders) keep a small 4px radius from the theme. The only round shapes are data marks: the filled estimate dot inside the outlined true-value diamond on the trust strip.
 
 ## Components
 
@@ -191,16 +202,28 @@ The bill. White, 1px grey border, 4px navy top rule, max 36rem wide. A letter-sp
 - **Gain:** green rule and label, only for confirmed positive results.
 
 ### Question cards
-White, 1px grey border, 3px navy top rule, square corners. The question is the page link (condensed 1.35rem navy, wraps, arrow after it, underline on hover); one data-driven answer sentence below.
+White, 1px grey border, 3px navy top rule, square corners. The question is the page link (condensed 1.3rem navy, wraps, arrow after it, underline on hover); one data-driven answer sentence below. The cards share one height and their answers start on one line. The recommendation card comes first and is the primary card: panel grey background and a 4px rule. Below 900px the cards stack.
+
+### Segment comparison
+Beside the bill on the overview: 1px grey border, 3px navy top rule, a headline title and a one-line key. One row per customer segment (Residential, Commercial (SME), Industrial): segment name and leakage rate in red mono on one line, a thin bar of the list price (navy part kept, red part leaked, both starting at zero), and the net price in mono. Plain HTML, no chart.
+
+### Bill terms
+A compact grey paragraph under the bill that gives each bill line a one-line meaning; the bill itself stays clean.
+
+### Closing line
+A 1px grey rule, then the author, links to the code and to LinkedIn, and a "Start with Price leakage" page link; the quiet disclaimer caption comes last.
 
 ### Metrics
 A 1px grey top rule, grey label, value in 1.4rem mono with tabular figures; deltas in small mono and hidden when they round to zero.
 
 ### Trust strip
-One column per customer segment: segment name, a scale with the 95% interval band, a filled navy dot for the estimate and an outlined ink diamond for the true value, three label/value rows and a green "True value is inside the interval" line.
+A key above the strip (dot: estimate, diamond: true value, band: 95% interval, plus what elasticity means), then one column per customer segment: segment name, a scale with the interval band (`interval-band`, 3:1 against white), an outlined ink diamond for the true value with the filled navy estimate dot inside it, so both stay visible when they are equal, three label/value rows and a green "True value is inside the interval" line. One honest caption follows (largest miss, computed from the data; real data would be noisier).
 
 ### Navigation
 Streamlit's sidebar navigation on the panel grey: one flat list of six short nouns, the current page highlighted by Streamlit.
+
+### Keyboard focus
+Page links, sidebar links and buttons show a 2px navy outline with a 2px offset on `:focus-visible`. Streamlit's own box-shadow ring on heading links and expanders is kept.
 
 ### Charts
 One Plotly template (`tavra`) shared by the app and the PNG exports: transparent background, grey gridlines, mono tick labels on numeric axes, navy for price series, red only for deductions and breaches, green only for gains. Axes that do not start at zero say so in their caption.
