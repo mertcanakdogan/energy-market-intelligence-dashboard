@@ -310,9 +310,10 @@ def elasticity_recovery_figure(table: pd.DataFrame) -> go.Figure:
             y=table["customer_segment_name"],
             mode="markers",
             name="True value (data generator)",
+            # Hollow and larger than the estimate dot, so both marks show when they coincide.
             marker={
-                "color": "#FFFFFF",
-                "size": 13,
+                "color": "rgba(255,255,255,0)",
+                "size": 18,
                 "symbol": "diamond",
                 "line": {"color": INK, "width": 2},
             },
@@ -392,6 +393,7 @@ def promo_did_figure(
         line_dash="dash",
         line_color=INK,
         annotation_text=f"true value {format_pct(truth / 100, 0)}",
+        annotation_position="bottom right",
         row=1,
         col=2,
     )
@@ -399,8 +401,10 @@ def promo_did_figure(
     apply_business_theme(figure)
     figure.update_layout(
         legend={"orientation": "h", "yanchor": "top", "y": -0.2, "x": 0},
-        margin={"l": 65, "r": 30, "t": 80, "b": 120},
+        margin={"l": 65, "r": 30, "t": 104, "b": 120},
     )
+    # Method names are words, not numbers: body face, not the data mono.
+    figure.update_yaxes(tickfont={"family": FONT_BODY, "size": 13, "color": INK}, row=1, col=2)
     figure.update_xaxes(title="Month (1 = January 2023, 36 = December 2025)", row=1, col=1)
     figure.update_xaxes(title="Extra volume effect (%)", row=1, col=2, showgrid=True)
     return figure
@@ -443,9 +447,11 @@ def price_recommendation_figure(table: pd.DataFrame) -> go.Figure:
     figure.update_layout(title="Recommended price step: expected 12-month change in gross profit")
     apply_business_theme(figure, mono_axis="x")
     figure.update_yaxes(
-        showgrid=False, ticksuffix="  ", tickfont={"family": FONT_BODY, "size": 13, "color": INK}
+        showgrid=False,
+        ticklabelstandoff=12,  # both label lines clear the bar, not only the last one
+        tickfont={"family": FONT_BODY, "size": 13, "color": INK},
     )
-    figure.update_layout(margin={"l": 210, "r": 30, "t": 70, "b": 60})
+    figure.update_layout(margin={"l": 220, "r": 30, "t": 104, "b": 60})
     figure.update_xaxes(
         title="TRY m, constant 2025 prices (bar = estimate, line = elasticity confidence interval)"
     )

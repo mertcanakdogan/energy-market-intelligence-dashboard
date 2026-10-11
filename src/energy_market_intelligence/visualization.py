@@ -45,19 +45,25 @@ def _build_template() -> go.layout.Template:
     }
     layout = go.Layout(
         font={"family": FONT_BODY, "size": 14, "color": INK},
+        # Title pinned to the top of the canvas, legend pinned under it: the gap between them
+        # holds even when the export falls back to a wider system font.
         title={
             "x": 0.01,
             "xanchor": "left",
+            "yref": "container",
+            "y": 1,
+            "yanchor": "top",
+            "pad": {"t": 22},
             "font": {"family": FONT_HEADING, "size": 21, "color": NAVY},
         },
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         colorway=[NAVY, SLATE, NAVY_SOFT, SLATE_SOFT, "#3E5C86"],
-        margin={"l": 65, "r": 30, "t": 70, "b": 60},
+        margin={"l": 65, "r": 30, "t": 104, "b": 60},
         legend={
             "orientation": "h",
             "yanchor": "bottom",
-            "y": 1.02,
+            "y": 1.03,
             "x": 0,
             "font": {"family": FONT_BODY, "size": 13, "color": INK},
         },

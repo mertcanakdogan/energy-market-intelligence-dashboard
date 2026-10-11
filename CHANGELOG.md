@@ -6,6 +6,10 @@ All notable changes to this project are documented here.
 
 The whole project and the app are now in English, and the app shows only the pricing story. All numeric results are unchanged: elasticities, promotion uplift, waterfall amounts and recommendation totals are the same as in 2.2.0.
 
+### Fixed
+
+- Exported charts: the title no longer collides with the legend (title pinned to the top, legend below it, wider top margin), recommendation labels clear the bars, the promotion chart's true-value label no longer sits on the estimate, method names use the body face, and the true-value diamond is hollow so the estimate dot stays visible when they coincide.
+
 ### Python
 
 - Python 3.14 is the main version; CI tests 3.12 and 3.14 and runs 3.15 as an informational job (DuckDB has no 3.15 wheels yet). The devcontainer uses Python 3.14. Dependency ranges allow pandas 3 and Plotly 7; text columns stored as pandas 3's `str` dtype are now translated in tables too.
