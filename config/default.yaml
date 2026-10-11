@@ -25,7 +25,7 @@ validation:
   financial_tolerance: 0.02
 
 # ---------------------------------------------------------------------------
-# Pricing case study: Northstar price waterfall, demand model and ground truth.
+# Pricing case study: focus-company price waterfall, demand model and ground truth.
 # Everything below is a public-demo construct. The "true_*" values are the
 # parameters the synthetic generator uses, so the estimators in this repo can be
 # checked against a known answer.
@@ -82,7 +82,7 @@ pricing:
   # Demand: log(volume) = region-product-segment intercept + log seasonality + trend
   #   + true_elasticity * log(pocket / reference) + cross_elasticity * log(competitor / reference)
   #   + log(1 + true_volume_uplift) * promo + noise
-  cross_elasticity: 0.35             # competitor price up 1% -> Northstar volume up 0.35%
+  cross_elasticity: 0.35             # competitor price up 1% -> focus-company volume up 0.35%
   demand_trend_per_month: 0.002
   demand_noise_sd: 0.05
   discount_noise_sd: 0.008           # month-level random discount noise (exogenous variation)
