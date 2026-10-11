@@ -1,0 +1,3 @@
+method,uplift,ci_low,ci_high,std_error_log,n_obs,treated_regions,control_regions,true_uplift,abs_error,truth_in_ci
+naive,0.119783,0.101843,0.138016,0.007655,6048,5,13,0.080000,0.039783,False
+price_adjusted,0.087253,0.078982,0.095589,0.003620,6048,5,13,0.080000,0.007253,True

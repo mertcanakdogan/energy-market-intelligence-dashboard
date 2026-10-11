@@ -5,11 +5,11 @@ import dataclasses
 import numpy as np
 import pandas as pd
 import pytest
+from helpers import regression_frame
 
 from energy_market_intelligence.pricing_config import PricingConfig
 from energy_market_intelligence.pricing_data import PRICING_KEYS, generate_pricing_data
 from energy_market_intelligence.synthetic_data import GeneratorConfig, generate_synthetic_data
-from helpers import regression_frame
 
 
 @pytest.fixture(scope="module")
@@ -42,14 +42,20 @@ def test_waterfall_identity_list_minus_deductions_equals_pocket(
         ["on_invoice_discount", "off_invoice_rebate", "payment_term_cost", "freight_service_cost"]
     ].sum(axis=1)
     assert (fact["list_price"] - deductions - fact["pocket_price"]).abs().max() < 1e-4
-    assert (fact["list_price"] - fact["on_invoice_discount"] - fact["invoice_price"]).abs().max() < 1e-4
+    assert (
+        fact["list_price"] - fact["on_invoice_discount"] - fact["invoice_price"]
+    ).abs().max() < 1e-4
     assert (fact["pocket_revenue"] - fact["volume_mwh"] * fact["pocket_price"]).abs().max() < 0.01
-    assert (fact["gross_profit"] - (fact["pocket_revenue"] - fact["variable_cost"])).abs().max() < 0.01
+    assert (
+        fact["gross_profit"] - (fact["pocket_revenue"] - fact["variable_cost"])
+    ).abs().max() < 0.01
 
 
 def test_prices_volumes_and_margins_are_positive(synthetic_bundle: dict[str, pd.DataFrame]) -> None:
     fact = synthetic_bundle["fact_pricing"]
-    assert (fact[["list_price", "pocket_price", "unit_variable_cost", "volume_mwh"]] > 0).all().all()
+    assert (
+        (fact[["list_price", "pocket_price", "unit_variable_cost", "volume_mwh"]] > 0).all().all()
+    )
     assert (fact["gross_profit"] > 0).all()
 
 
@@ -57,9 +63,11 @@ def test_discount_depth_orders_by_segment(synthetic_bundle: dict[str, pd.DataFra
     fact = synthetic_bundle["fact_pricing"].merge(
         synthetic_bundle["dim_customer_segment"], on="customer_segment_id"
     )
-    depth = (fact["on_invoice_discount"] / fact["list_price"]).groupby(
-        fact["customer_segment_name"]
-    ).mean()
+    depth = (
+        (fact["on_invoice_discount"] / fact["list_price"])
+        .groupby(fact["customer_segment_name"])
+        .mean()
+    )
     assert depth["Industrial"] > depth["SME"] > depth["Residential"]
 
 
@@ -78,10 +86,16 @@ def test_list_price_increases_are_staggered_by_region(
     synthetic_bundle: dict[str, pd.DataFrame],
 ) -> None:
     frame = regression_frame(synthetic_bundle)
-    cell = frame[(frame["product_name"] == "Fixed Supply") & (frame["customer_segment_name"] == "SME")]
-    steps = cell.sort_values("month_id").groupby("region_name")["list_price"].apply(
-        lambda prices: tuple(  # month_id of every list-price jump (rows are sorted by month_id)
-            np.flatnonzero(prices.pct_change().abs().to_numpy() > 0.02) + 1
+    cell = frame[
+        (frame["product_name"] == "Fixed Supply") & (frame["customer_segment_name"] == "SME")
+    ]
+    steps = (
+        cell.sort_values("month_id")
+        .groupby("region_name")["list_price"]
+        .apply(
+            lambda prices: tuple(  # month_id of every list-price jump (rows are sorted by month_id)
+                np.flatnonzero(prices.pct_change().abs().to_numpy() > 0.02) + 1
+            )
         )
     )
     assert steps["Southern Cross"] == ()

@@ -1,16 +1,81 @@
 {
   "average_hhi": 0.154468,
   "companies": 7,
+  "customer_segments": 3,
   "dataset_fingerprint": "1998da387df4452d3374210c578f37d7b038c345c04149cd86c1e0f11caf7cee",
   "fact_row_count": 18144,
   "final_period_northstar_share": 0.180263,
-  "generated_at_utc": "2026-08-15T16:49:19+00:00",
+  "generated_at_utc": "2026-10-11T16:16:51+00:00",
   "gross_margin_change_pp": 1.342038,
   "gross_margin_pct": 0.23057,
   "highest_opportunity_region": "Sunrise Coast",
   "market_yoy_growth": 0.0784,
   "months": 36,
   "northstar_yoy_growth": 0.093903,
+  "pricing": {
+    "breaching_regions": [
+      "Blue Mesa",
+      "Central Basin",
+      "Highland Zone",
+      "Western Reach"
+    ],
+    "elasticity": {
+      "Industrial": {
+        "ci_high": -0.5304,
+        "ci_low": -0.6798,
+        "estimate": -0.6051,
+        "true": -0.6,
+        "truth_in_ci": true
+      },
+      "Residential": {
+        "ci_high": -1.4392,
+        "ci_low": -1.7576,
+        "estimate": -1.5984,
+        "true": -1.6,
+        "truth_in_ci": true
+      },
+      "SME": {
+        "ci_high": -0.9772,
+        "ci_low": -1.228,
+        "estimate": -1.1026,
+        "true": -1.1,
+        "truth_in_ci": true
+      }
+    },
+    "list_revenue_12m": 128507783.02,
+    "pocket_margin_pct": 0.201786,
+    "pocket_revenue_12m": 109446236.97,
+    "price_realization_pct": 0.85167,
+    "promo_uplift": {
+      "naive": {
+        "ci_high": 0.138,
+        "ci_low": 0.1018,
+        "estimate": 0.1198,
+        "true": 0.08,
+        "truth_in_ci": false
+      },
+      "price_adjusted": {
+        "ci_high": 0.0956,
+        "ci_low": 0.079,
+        "estimate": 0.0873,
+        "true": 0.08,
+        "truth_in_ci": true
+      }
+    },
+    "pvm_gp_change": -1020468.93,
+    "pvm_gp_cost_effect": -2885028.95,
+    "pvm_max_abs_reconciliation_gap": 1.8044374883174896e-09,
+    "pvm_mix_effect": -24931.13,
+    "pvm_price_effect": 1067696.95,
+    "pvm_total_revenue_change": 4746941.11,
+    "pvm_volume_effect": 3704175.28,
+    "recommended_gross_profit_change": 3414290.22,
+    "recommended_gross_profit_change_pct": 0.154599,
+    "region_segment_policy_breaches": 12,
+    "revenue_leakage_above_policy": 535863.42
+  },
+  "pricing_dataset_fingerprint": "f6ce0e3eb59541b77d45219073041009bdce11bc91095052a87176ee3ec77bcc",
+  "pricing_fact_row_count": 7776,
   "products": 4,
   "regions": 18,
   "seed": 20260815,
@@ -21,7 +86,9 @@
     "04_competitor_intelligence.sql",
     "05_profitability.sql",
     "06_regional_opportunity.sql",
-    "07_executive_kpis.sql"
+    "07_executive_kpis.sql",
+    "08_price_waterfall.sql",
+    "09_pvm_bridge.sql"
   ],
   "synthetic_data_only": true
 }

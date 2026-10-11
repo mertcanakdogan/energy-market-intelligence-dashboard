@@ -4,12 +4,12 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+from helpers import regression_frame
 
 from energy_market_intelligence.database import build_database, query_dataframe
 from energy_market_intelligence.pricing_config import PricingConfig, load_pricing_config
 from energy_market_intelligence.pricing_data import generate_full_bundle
 from energy_market_intelligence.synthetic_data import GeneratorConfig
-from helpers import regression_frame
 
 
 @pytest.fixture(scope="session")

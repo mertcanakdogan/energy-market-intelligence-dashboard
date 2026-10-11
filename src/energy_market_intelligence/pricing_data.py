@@ -191,14 +191,11 @@ def generate_pricing_data(
     base_volume = grid.merge(
         _northstar_base_volume(market), on=["region_id", "product_id"], how="left"
     )["base_volume"].to_numpy()
-    reference_pocket = (
-        reference_price
-        * config.list_price_premium
-        * (1 - seg_value("base_discount_pct"))
-        * (1 - seg_value("rebate_pct"))
-        * (1 - config.cost_of_capital_annual * seg_value("payment_terms_days") / 365.0)
-        - seg_value("freight_service_per_mwh")
-    )
+    reference_pocket = reference_price * config.list_price_premium * (
+        1 - seg_value("base_discount_pct")
+    ) * (1 - seg_value("rebate_pct")) * (
+        1 - config.cost_of_capital_annual * seg_value("payment_terms_days") / 365.0
+    ) - seg_value("freight_service_per_mwh")
     cell_shape = (len(regions) + 1, len(products) + 1, len(segment_dim) + 1)
     cell_effect = rng.normal(0.0, 0.05, size=cell_shape)[region_id, product_id, seg]
     seasonality = np.log(np.array(config.seasonality))[calendar_month - 1]

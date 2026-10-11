@@ -83,6 +83,14 @@ def _expected_gross_profit(volume: float, price: float, unit_cost: float) -> flo
     return volume * (price - unit_cost)
 
 
+def _profit_after_move(
+    volume: float, change: float, elasticity: float, new_price: float, unit_cost: float
+) -> float:
+    """Gross profit after a price move with constant-elasticity volume response."""
+
+    return _expected_gross_profit(volume * (1 + change) ** elasticity, new_price, unit_cost)
+
+
 def recommend_prices(
     baseline: pd.DataFrame,
     elasticities: pd.DataFrame,
@@ -122,12 +130,15 @@ def recommend_prices(
         baseline_profit = _expected_gross_profit(record.volume_mwh, price, cost)
         new_price = float(decision["recommended_price"])
 
-        def profit_at(elasticity: float, volume=record.volume_mwh, cost=cost) -> float:
-            return _expected_gross_profit(volume * (1 + change) ** elasticity, new_price, cost)
-
-        bounds = sorted(
-            [profit_at(record.ci_low) - baseline_profit, profit_at(record.ci_high) - baseline_profit]
-        )
+        profits = {
+            name: _profit_after_move(record.volume_mwh, change, value, new_price, cost)
+            for name, value in (
+                ("expected", record.elasticity),
+                ("low", record.ci_low),
+                ("high", record.ci_high),
+            )
+        }
+        bounds = sorted([profits["low"] - baseline_profit, profits["high"] - baseline_profit])
         row = {column: getattr(record, column) for column in group_columns}
         row.update(
             {
@@ -142,7 +153,7 @@ def recommend_prices(
                 "price_change_pct": change,
                 "expected_volume_change_pct": (1 + change) ** record.elasticity - 1,
                 "baseline_gross_profit": baseline_profit,
-                "expected_gross_profit_change": profit_at(record.elasticity) - baseline_profit,
+                "expected_gross_profit_change": profits["expected"] - baseline_profit,
                 "gross_profit_change_low": bounds[0],
                 "gross_profit_change_high": bounds[1],
                 "new_margin_pct": (new_price - cost) / new_price,
@@ -150,7 +161,9 @@ def recommend_prices(
             }
         )
         row["expected_gross_profit_change_pct"] = (
-            row["expected_gross_profit_change"] / baseline_profit if baseline_profit else float("nan")
+            row["expected_gross_profit_change"] / baseline_profit
+            if baseline_profit
+            else float("nan")
         )
         rows.append(row)
     return pd.DataFrame(rows)

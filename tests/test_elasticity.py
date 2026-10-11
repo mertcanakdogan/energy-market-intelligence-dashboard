@@ -89,7 +89,9 @@ def test_estimator_is_unbiased_and_well_calibrated_across_seeds(
         results.append(table.assign(seed=seed))
     combined = pd.concat(results)
     assert combined["truth_in_ci"].mean() >= 0.85
-    bias = (combined["elasticity"] - combined["true_elasticity"]).groupby(
-        combined["customer_segment_name"]
-    ).mean()
+    bias = (
+        (combined["elasticity"] - combined["true_elasticity"])
+        .groupby(combined["customer_segment_name"])
+        .mean()
+    )
     assert np.all(bias.abs() < 0.08)

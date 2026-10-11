@@ -15,9 +15,15 @@ def test_build_database_creates_star_schema(
     db_path = tmp_path / "analytics.duckdb"
     build_database(synthetic_bundle, db_path, project_root / "sql")
     relations = list_relations(db_path)
-    assert {"dim_date", "dim_region", "dim_company", "dim_product", "fact_sales"}.issubset(
-        relations
-    )
+    assert {
+        "dim_date",
+        "dim_region",
+        "dim_company",
+        "dim_product",
+        "dim_customer_segment",
+        "fact_sales",
+        "fact_pricing",
+    }.issubset(relations)
 
 
 def test_all_sql_models_create_expected_views(
@@ -34,6 +40,8 @@ def test_all_sql_models_create_expected_views(
         "vw_profitability_summary",
         "vw_regional_opportunity_inputs",
         "vw_executive_kpis",
+        "vw_price_waterfall",
+        "vw_pvm_bridge",
     }
     assert expected.issubset(relations)
 

@@ -166,7 +166,9 @@ def validate_pricing_bundle(bundle: Mapping[str, pd.DataFrame]) -> None:
     for key, table_name in PRICING_DIMENSION_KEYS.items():
         unknown = set(fact[key]).difference(bundle[table_name][key])
         if unknown:
-            raise DataValidationError(f"fact_pricing {key} has unknown values: {sorted(unknown)[:3]}")
+            raise DataValidationError(
+                f"fact_pricing {key} has unknown values: {sorted(unknown)[:3]}"
+            )
     price_columns = [
         "list_price",
         "invoice_price",

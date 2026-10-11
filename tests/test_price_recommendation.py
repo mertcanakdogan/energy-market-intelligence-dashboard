@@ -122,8 +122,12 @@ def test_volume_guard_differentiates_the_elastic_segment(
         spec.margin_floor_pct,
         max_volume_loss=spec.max_volume_loss_pct,
     ).set_index("customer_segment_name")
-    assert table.loc["Residential", "price_change_pct"] < table.loc["Industrial", "price_change_pct"]
-    assert table.loc["Residential", "expected_volume_change_pct"] >= -spec.max_volume_loss_pct - 1e-9
+    assert (
+        table.loc["Residential", "price_change_pct"] < table.loc["Industrial", "price_change_pct"]
+    )
+    assert (
+        table.loc["Residential", "expected_volume_change_pct"] >= -spec.max_volume_loss_pct - 1e-9
+    )
 
 
 def test_region_table_has_one_row_per_region_and_segment(
