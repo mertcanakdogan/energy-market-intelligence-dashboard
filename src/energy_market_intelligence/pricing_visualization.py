@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -14,23 +16,41 @@ from energy_market_intelligence.localization import (
 )
 from energy_market_intelligence.synthetic_data import FOCUS_COMPANY
 from energy_market_intelligence.visualization import (
-    ACCENT_TEAL,
-    BRAND_BLUE,
-    NEGATIVE_RED,
+    FONT_BODY,
+    FONT_MONO,
+    GAIN_GREEN,
+    GRID,
+    INK,
+    LEAK_RED,
+    NAVY,
+    NAVY_SOFT,
+    SLATE,
+    SLATE_SOFT,
     TL_AXIS,
     apply_business_theme,
 )
 
-AMBER = "#C98A1B"
+# Line items of the price waterfall. The labels read like the lines of an electricity bill and
+# are shared by the charts, the "fatura dökümü" block on the home page and the tables.
+LIST_LABEL = "Liste fiyatı"
+INVOICE_LABEL = "Fatura fiyatı"
+NET_LABEL = "Net (cebe kalan) fiyat"
+DEDUCTION_LABELS = {
+    "on_invoice_discount": "Fatura içi iskonto",
+    "off_invoice_rebate": "Fatura dışı prim",
+    "payment_term_cost": "Vade maliyeti",
+    "freight_service_cost": "Hizmet ve nakliye",
+}
 WATERFALL_STEPS = (
-    ("Liste fiyat", "list_price", "absolute"),
-    ("Fatura üstü indirim", "on_invoice_discount", "relative"),
-    ("Fatura fiyatı", "invoice_price", "total"),
-    ("Fatura dışı iskonto", "off_invoice_rebate", "relative"),
-    ("Vade maliyeti", "payment_term_cost", "relative"),
-    ("Servis ve lojistik", "freight_service_cost", "relative"),
-    ("Cebe kalan fiyat", "pocket_price", "total"),
+    (LIST_LABEL, "list_price", "absolute"),
+    (DEDUCTION_LABELS["on_invoice_discount"], "on_invoice_discount", "relative"),
+    (INVOICE_LABEL, "invoice_price", "total"),
+    (DEDUCTION_LABELS["off_invoice_rebate"], "off_invoice_rebate", "relative"),
+    (DEDUCTION_LABELS["payment_term_cost"], "payment_term_cost", "relative"),
+    (DEDUCTION_LABELS["freight_service_cost"], "freight_service_cost", "relative"),
+    (NET_LABEL, "pocket_price", "total"),
 )
+PORTFOLIO = "Tüm portföy"
 AMOUNT_COLUMNS = {
     "list_price": "list_revenue",
     "on_invoice_discount": "on_invoice_discount_amount",
@@ -52,6 +72,100 @@ def segment_waterfall_table(waterfall: pd.DataFrame) -> pd.DataFrame:
         totals[unit_column] = totals[amount_column] / totals["volume_mwh"]
     ordered = order_segments(totals).reset_index(drop=True)
     return ordered[["customer_segment_name", "volume_mwh", *AMOUNT_COLUMNS]]
+
+
+@dataclass(frozen=True)
+class BillLine:
+    """One line of the itemised price (TL/MWh) with its share of the list price."""
+
+    label: str
+    amount: float
+    share_of_list: float
+    kind: str  # "list", "deduction" or "net"
+
+
+@dataclass(frozen=True)
+class Bill:
+    """The "fatura dökümü": list price down to the net (pocket) price per MWh."""
+
+    scope: str
+    lines: tuple[BillLine, ...]
+    leakage_rate: float  # 1 - net / list: the share of the list price that never arrives
+
+
+def portfolio_bill(waterfall: pd.DataFrame, segment: str | None = None) -> Bill:
+    """Volume-weighted bill for the whole portfolio or a single customer segment."""
+
+    selected = waterfall
+    if segment is not None:
+        selected = waterfall[waterfall["customer_segment_name"] == segment]
+    if selected.empty:
+        raise ValueError(f"No price waterfall rows for segment: {segment}")
+    totals = selected[["volume_mwh", *AMOUNT_COLUMNS.values()]].sum()
+    per_mwh = {
+        name: float(totals[column] / totals["volume_mwh"])
+        for name, column in AMOUNT_COLUMNS.items()
+    }
+    list_price = per_mwh["list_price"]
+    lines = [BillLine(LIST_LABEL, list_price, 1.0, "list")]
+    lines += [
+        BillLine(label, per_mwh[name], per_mwh[name] / list_price, "deduction")
+        for name, label in DEDUCTION_LABELS.items()
+    ]
+    net = per_mwh["pocket_price"]
+    lines.append(BillLine(NET_LABEL, net, net / list_price, "net"))
+    return Bill(segment or PORTFOLIO, tuple(lines), float(1 - net / list_price))
+
+
+def bill_waterfall_figure(bill: Bill) -> go.Figure:
+    """Horizontal waterfall that mirrors the bill lines one to one (TL/MWh)."""
+
+    labels = [line.label for line in bill.lines]
+    values = [-line.amount if line.kind == "deduction" else line.amount for line in bill.lines]
+    measure = ["absolute" if line.kind == "list" else "relative" for line in bill.lines]
+    measure[-1] = "total"
+    values[-1] = 0.0  # Plotly derives the total bar from the running sum
+    text = [
+        f"−{format_number(line.amount, 0)}"
+        if line.kind == "deduction"
+        else format_number(line.amount, 0)
+        for line in bill.lines
+    ]
+    figure = go.Figure(
+        go.Waterfall(
+            orientation="h",
+            y=labels,
+            x=values,
+            measure=measure,
+            text=text,
+            textposition="outside",
+            textfont={"family": FONT_MONO, "size": 13, "color": INK},
+            decreasing={"marker": {"color": LEAK_RED}},
+            increasing={"marker": {"color": NAVY}},
+            totals={"marker": {"color": NAVY}},
+            connector={"line": {"color": SLATE_SOFT, "width": 1}},
+            hovertemplate="%{y}: %{text} TL/MWh<extra></extra>",
+            showlegend=False,
+        )
+    )
+    list_price, net = bill.lines[0].amount, bill.lines[-1].amount
+    apply_business_theme(figure, mono_axis="x")
+    figure.update_layout(margin={"l": 8, "r": 24, "t": 12, "b": 48}, height=380)
+    figure.update_yaxes(
+        autorange="reversed",
+        showgrid=False,
+        zeroline=False,
+        ticksuffix="  ",
+        tickfont={"family": FONT_BODY, "size": 13, "color": INK},
+    )
+    figure.update_xaxes(
+        range=[net * 0.94, list_price * 1.06],
+        showgrid=True,
+        gridcolor=GRID,
+        title="TL/MWh (eksen kesik)",
+        tickformat=",d",
+    )
+    return figure
 
 
 def price_waterfall_figure(waterfall: pd.DataFrame) -> go.Figure:
@@ -80,10 +194,11 @@ def price_waterfall_figure(waterfall: pd.DataFrame) -> go.Figure:
                 measure=[measure for _label, _field, measure in WATERFALL_STEPS],
                 text=[format_number(level, 0) for level in levels],
                 textposition="outside",
-                increasing={"marker": {"color": ACCENT_TEAL}},
-                decreasing={"marker": {"color": NEGATIVE_RED}},
-                totals={"marker": {"color": BRAND_BLUE}},
-                connector={"line": {"color": "#9CA3AF"}},
+                increasing={"marker": {"color": NAVY}},
+                decreasing={"marker": {"color": LEAK_RED}},
+                totals={"marker": {"color": NAVY}},
+                textfont={"family": FONT_MONO, "size": 12, "color": INK},
+                connector={"line": {"color": SLATE_SOFT}},
                 hoverinfo="x+text",
                 showlegend=False,
             ),
@@ -92,7 +207,7 @@ def price_waterfall_figure(waterfall: pd.DataFrame) -> go.Figure:
         )
     figure.update_layout(title="Liste fiyattan cebe kalan fiyata (TL/MWh, 2025)")
     apply_business_theme(figure)
-    figure.update_xaxes(tickangle=-40, tickfont={"size": 10})
+    figure.update_xaxes(tickangle=-40, tickfont={"size": 11})
     figure.update_yaxes(
         range=[float(table["pocket_price"].min()) * 0.9, float(table["list_price"].max()) * 1.04]
     )
@@ -122,7 +237,7 @@ def pvm_bridge_figure(summary: pd.DataFrame) -> go.Figure:
                 ("Fiyat", row["gp_price_effect"]),
                 ("Birim maliyet", row["gp_cost_effect"]),
             ],
-            ("Brüt kâr değişimi", row["total_gp_change"]),
+            ("Toplam", row["total_gp_change"]),
         ),
     )
     figure = make_subplots(
@@ -137,10 +252,11 @@ def pvm_bridge_figure(summary: pd.DataFrame) -> go.Figure:
                 measure=["relative"] * len(effects) + ["total"],
                 text=[format_number(value, 1, signed=True) for value in values],
                 textposition="outside",
-                increasing={"marker": {"color": ACCENT_TEAL}},
-                decreasing={"marker": {"color": NEGATIVE_RED}},
-                totals={"marker": {"color": BRAND_BLUE}},
-                connector={"line": {"color": "#9CA3AF"}},
+                increasing={"marker": {"color": NAVY_SOFT}},
+                decreasing={"marker": {"color": SLATE}},
+                totals={"marker": {"color": NAVY}},
+                textfont={"family": FONT_MONO, "size": 12, "color": INK},
+                connector={"line": {"color": SLATE_SOFT}},
                 hovertemplate="%{x}: %{y:,.1f} mn TL<extra></extra>",
                 showlegend=False,
             ),
@@ -161,13 +277,13 @@ def _interval_trace(
         y=y,
         mode="markers",
         name=name,
-        marker={"color": BRAND_BLUE, "size": 11},
+        marker={"color": NAVY, "size": 11},
         error_x={
             "type": "data",
             "symmetric": False,
             "array": high - x,
             "arrayminus": x - low,
-            "color": BRAND_BLUE,
+            "color": NAVY,
             "thickness": 2.5,
         },
     )
@@ -193,17 +309,22 @@ def elasticity_recovery_figure(table: pd.DataFrame) -> go.Figure:
             y=table["customer_segment_name"],
             mode="markers",
             name="Gerçek değer (veri üreticisi)",
-            marker={"color": AMBER, "size": 13, "symbol": "diamond"},
+            marker={
+                "color": "#FFFFFF",
+                "size": 13,
+                "symbol": "diamond",
+                "line": {"color": INK, "width": 2},
+            },
         )
     )
-    figure.add_vline(
-        x=-1, line_dash="dot", line_color="#9CA3AF", annotation_text="birim esneklik (-1)"
-    )
+    figure.add_vline(x=-1, line_dash="dot", line_color=SLATE, annotation_text="birim esneklik (-1)")
     figure.update_layout(title="Fiyat esnekliği: tahmin ve bilinen gerçek değer")
-    apply_business_theme(figure)
+    apply_business_theme(figure, mono_axis="x")
+    figure.update_yaxes(showgrid=False)
     figure.update_xaxes(
         title="Fiyat esnekliği: fiyat %1 artınca hacim yüzde kaç değişir? (cebe kalan fiyat)",
         showgrid=True,
+        gridcolor=GRID,
     )
     return figure
 
@@ -224,8 +345,8 @@ def promo_did_figure(
         horizontal_spacing=0.1,
     )
     for name, label, color in (
-        ("control", "Kontrol bölgeleri", ACCENT_TEAL),
-        ("treated", "Kampanya bölgeleri", BRAND_BLUE),
+        ("control", "Kontrol bölgeleri", SLATE),
+        ("treated", "Kampanya bölgeleri", NAVY),
     ):
         figure.add_trace(
             go.Scatter(
@@ -242,8 +363,8 @@ def promo_did_figure(
     figure.add_vrect(
         x0=window[0] - 0.5,
         x1=window[1] + 0.5,
-        fillcolor=AMBER,
-        opacity=0.15,
+        fillcolor=SLATE_SOFT,
+        opacity=0.3,
         line_width=0,
         row=1,
         col=1,
@@ -266,7 +387,7 @@ def promo_did_figure(
     figure.add_vline(
         x=truth,
         line_dash="dash",
-        line_color=AMBER,
+        line_color=INK,
         annotation_text=f"gerçek {format_pct(truth / 100, 0)}",
         row=1,
         col=2,
@@ -298,24 +419,27 @@ def price_recommendation_figure(table: pd.DataFrame) -> go.Figure:
             x=expected,
             y=labels,
             orientation="h",
-            marker_color=ACCENT_TEAL,
+            marker_color=GAIN_GREEN,
             text=[f"{format_number(value, 1, signed=True)} mn TL" for value in expected],
             textposition="inside",
             insidetextanchor="middle",
-            textfont={"color": "white", "size": 15},
+            textfont={"family": FONT_MONO, "color": "white", "size": 15},
             error_x={
                 "type": "data",
                 "symmetric": False,
                 "array": ordered["gross_profit_change_high"] / 1e6 - expected,
                 "arrayminus": expected - ordered["gross_profit_change_low"] / 1e6,
-                "color": "#4B5563",
+                "color": INK,
                 "thickness": 2,
             },
             hovertemplate="%{y}: %{x:,.1f} mn TL<extra></extra>",
         )
     )
     figure.update_layout(title="Önerilen fiyat adımı: beklenen 12 aylık brüt kâr değişimi")
-    apply_business_theme(figure)
+    apply_business_theme(figure, mono_axis="x")
+    figure.update_yaxes(
+        showgrid=False, ticksuffix="  ", tickfont={"family": FONT_BODY, "size": 13, "color": INK}
+    )
     figure.update_layout(margin={"l": 210, "r": 30, "t": 70, "b": 60})
     figure.update_xaxes(
         title="mn TL, sabit 2025 fiyatları (çubuk = tahmin, çizgi = esneklik güven aralığı)"

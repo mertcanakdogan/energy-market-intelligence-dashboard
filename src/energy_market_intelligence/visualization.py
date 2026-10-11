@@ -7,31 +7,104 @@ from pathlib import Path
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import plotly.io as pio
 
 from energy_market_intelligence.localization import format_number
 from energy_market_intelligence.synthetic_data import FOCUS_COMPANY
 
 TL_AXIS = "mn TL (sabit 2025 fiyatlarıyla)"
-BRAND_BLUE = "#1F4E79"
-ACCENT_TEAL = "#2A7F8E"
-NEGATIVE_RED = "#B84A4A"
-GRID_COLOR = "#E5E7EB"
+
+# Design tokens. Every colour carries exactly one meaning (see docs/DESIGN.md).
+NAVY = "#1F3A5F"  # Şebeke laciverti: prices, headings, primary series
+LEAK_RED = "#C8462B"  # Kaçak kırmızısı: deductions, leakage and policy breaches only
+GAIN_GREEN = "#2E7D5B"  # Sertifika yeşili: gains from the recommendation, positive outcomes only
+SLATE = "#6B7480"  # Trafo grisi: secondary text and neutral series
+INK = "#1B2430"  # body text
+GRID = "#E3E7EA"  # gridlines and hairlines
+NAVY_SOFT = "#8197B4"  # lighter navy for second series and neutral increases
+SLATE_SOFT = "#B5BDC6"  # lighter slate for third series
+
+# Font stacks. The web fonts come from Google Fonts in the app; the fallbacks keep PNG exports
+# (rendered offline by Kaleido) and slow connections readable.
+FONT_BODY = "'Source Sans 3', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+FONT_HEADING = "'Barlow Semi Condensed', 'Arial Narrow', Arial, sans-serif"
+FONT_MONO = "'IBM Plex Mono', Consolas, Menlo, monospace"
+TEMPLATE_NAME = "tavra"
 
 
-def apply_business_theme(figure: go.Figure, *, y_title: str | None = None) -> go.Figure:
-    """Apply restrained, readable styling shared across static and interactive charts."""
+def _build_template() -> go.layout.Template:
+    """The single Plotly template shared by the Streamlit pages and the PNG exports."""
 
-    figure.update_layout(
-        template="plotly_white",
-        font={"family": "Arial", "size": 13, "color": "#243447"},
-        title={"x": 0.01, "xanchor": "left", "font": {"size": 19}},
+    axis = {
+        "tickfont": {"family": FONT_BODY, "size": 12, "color": SLATE},
+        "title": {"font": {"family": FONT_BODY, "size": 13, "color": SLATE}},
+        "linecolor": GRID,
+        "tickcolor": GRID,
+        "automargin": True,
+    }
+    layout = go.Layout(
+        font={"family": FONT_BODY, "size": 14, "color": INK},
+        title={
+            "x": 0.01,
+            "xanchor": "left",
+            "font": {"family": FONT_HEADING, "size": 21, "color": NAVY},
+        },
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        colorway=[NAVY, SLATE, NAVY_SOFT, SLATE_SOFT, "#3E5C86"],
         margin={"l": 65, "r": 30, "t": 70, "b": 60},
-        legend={"orientation": "h", "yanchor": "bottom", "y": 1.02, "x": 0},
-        hoverlabel={"namelength": -1},
+        legend={
+            "orientation": "h",
+            "yanchor": "bottom",
+            "y": 1.02,
+            "x": 0,
+            "font": {"family": FONT_BODY, "size": 13, "color": INK},
+        },
+        hoverlabel={
+            "namelength": -1,
+            "bgcolor": "#FFFFFF",
+            "bordercolor": GRID,
+            "font": {"family": FONT_MONO, "size": 13, "color": INK},
+        },
         separators=",.",  # Turkish: comma for decimals, dot for thousands
+        xaxis={**axis, "showgrid": False, "zeroline": False},
+        yaxis={
+            **axis,
+            "showgrid": True,
+            "gridcolor": GRID,
+            "zeroline": True,
+            "zerolinecolor": GRID,
+            "showline": False,
+        },
+        annotationdefaults={"font": {"family": FONT_BODY, "size": 14, "color": INK}},
+        colorscale={
+            "sequential": [[0, "#E3E9F1"], [1, NAVY]],
+            "sequentialminus": [[0, NAVY], [1, "#E3E9F1"]],
+            "diverging": [[0, SLATE], [0.5, "#F2F4F5"], [1, NAVY]],
+        },
     )
-    figure.update_xaxes(showgrid=False, title=None)
-    figure.update_yaxes(gridcolor=GRID_COLOR, zerolinecolor=GRID_COLOR, title=y_title)
+    return go.layout.Template(layout=layout)
+
+
+pio.templates[TEMPLATE_NAME] = _build_template()
+pio.templates.default = TEMPLATE_NAME
+
+
+def apply_business_theme(
+    figure: go.Figure, *, y_title: str | None = None, mono_axis: str | None = "y"
+) -> go.Figure:
+    """Apply the shared template to a figure and set axis titles.
+
+    ``mono_axis`` names the axis (``"x"`` or ``"y"``) that carries numbers; its tick labels use
+    the monospaced data font.
+    """
+
+    figure.update_layout(template=TEMPLATE_NAME)
+    figure.update_xaxes(title=None)
+    figure.update_yaxes(title=y_title)
+    if mono_axis in {"x", "y"}:
+        mono = {"tickfont": {"family": FONT_MONO, "size": 12, "color": SLATE}}
+        (figure.update_xaxes if mono_axis == "x" else figure.update_yaxes)(**mono)
     return figure
 
 
@@ -45,7 +118,7 @@ def market_share_trend_figure(frame: pd.DataFrame) -> go.Figure:
         title=f"{FOCUS_COMPANY}: aylık pazar payı",
         markers=True,
     )
-    figure.update_traces(line={"color": BRAND_BLUE, "width": 3}, marker={"size": 5})
+    figure.update_traces(line={"color": NAVY, "width": 3}, marker={"size": 5})
     figure.update_yaxes(tickformat=".1%")
     figure.update_traces(hovertemplate="%{x|%b %Y}: %{y:.1%}<extra></extra>")
     return apply_business_theme(figure, y_title="Pazar payı")
@@ -69,7 +142,6 @@ def opportunity_matrix_figure(frame: pd.DataFrame) -> go.Figure:
         color="opportunity_score",
         hover_name="region_name",
         text="display_label",
-        color_continuous_scale="Blues",
         size_max=42,
         title="Bölgesel fırsat matrisi (balon büyüklüğü = pazar hacmi)",
         labels={
@@ -80,7 +152,7 @@ def opportunity_matrix_figure(frame: pd.DataFrame) -> go.Figure:
             "region_name": "Bölge",
         },
     )
-    figure.update_traces(textposition="top center", textfont={"size": 10})
+    figure.update_traces(textposition="top center", textfont={"size": 11})
     figure.update_xaxes(tickformat=".0%")
     figure.update_yaxes(tickformat=".0%")
     apply_business_theme(figure, y_title="Pazar büyümesi (son 12 ay / önceki 12 ay)")
@@ -92,13 +164,14 @@ def competitor_change_figure(frame: pd.DataFrame) -> go.Figure:
     """Rank annual company-share movement in percentage points."""
 
     ordered = frame.sort_values("share_change_pp")
-    colors = [ACCENT_TEAL if value >= 0 else NEGATIVE_RED for value in ordered["share_change_pp"]]
+    colors = [NAVY if value >= 0 else SLATE for value in ordered["share_change_pp"]]
     figure = go.Figure(
         go.Bar(
             x=ordered["share_change_pp"],
             y=ordered["company_name"],
             orientation="h",
             marker_color=colors,
+            textfont={"family": FONT_MONO, "size": 13},
             text=ordered["share_change_pp"].map(
                 lambda value: f"{format_number(value, 2, signed=True)} puan"
             ),
@@ -107,7 +180,7 @@ def competitor_change_figure(frame: pd.DataFrame) -> go.Figure:
         )
     )
     figure.update_layout(title="Şirketlerin pazar payı değişimi: son 12 ay / önceki 12 ay")
-    apply_business_theme(figure, y_title=None)
+    apply_business_theme(figure, y_title=None, mono_axis="x")
     figure.update_xaxes(title="Pazar payı değişimi (yüzde puan)")
     return figure
 
@@ -126,7 +199,7 @@ def gross_margin_trend_figure(frame: pd.DataFrame) -> go.Figure:
         title=f"{FOCUS_COMPANY}: aylık brüt marj",
         markers=True,
     )
-    figure.update_traces(line={"color": ACCENT_TEAL, "width": 3}, marker={"size": 5})
+    figure.update_traces(line={"color": NAVY, "width": 3}, marker={"size": 5})
     figure.update_yaxes(tickformat=".1%")
     figure.update_traces(hovertemplate="%{x|%b %Y}: %{y:.1%}<extra></extra>")
     return apply_business_theme(figure, y_title="Brüt marj")
@@ -148,10 +221,11 @@ def profit_bridge_figure(bridge: pd.DataFrame) -> go.Figure:
             measure=["relative", "relative", "relative", "total"],
             text=[format_number(value, 1, signed=True) for value in values],
             textposition="outside",
-            increasing={"marker": {"color": ACCENT_TEAL}},
-            decreasing={"marker": {"color": NEGATIVE_RED}},
-            totals={"marker": {"color": BRAND_BLUE}},
-            connector={"line": {"color": "#9CA3AF"}},
+            increasing={"marker": {"color": NAVY_SOFT}},
+            decreasing={"marker": {"color": SLATE}},
+            totals={"marker": {"color": NAVY}},
+            textfont={"family": FONT_MONO, "size": 13},
+            connector={"line": {"color": SLATE_SOFT}},
             hovertemplate="%{x}: %{y:,.1f} mn TL<extra></extra>",
         )
     )
@@ -166,7 +240,9 @@ def write_png(figure: go.Figure, path: Path) -> None:
 
     path.parent.mkdir(parents=True, exist_ok=True)
     try:
-        figure.write_image(path, width=1200, height=680, scale=1.5)
+        export = go.Figure(figure)
+        export.update_layout(paper_bgcolor="#FFFFFF", plot_bgcolor="#FFFFFF")
+        export.write_image(path, width=1200, height=680, scale=1.5)
     except Exception as exc:  # pragma: no cover - exercised only when renderer is unavailable
         raise RuntimeError(
             "Static chart export failed. Install the project dev dependencies, including Kaleido."
