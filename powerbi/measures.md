@@ -16,20 +16,21 @@ the export code is `src/energy_market_intelligence/powerbi_export.py`):
 
 | File | Grain | Role |
 |---|---|---|
-| `fact_pricing.csv` | month x region x product x customer segment | fact (amounts in TL, prices in TL/MWh, constant 2025 prices) |
+| `fact_pricing.csv` | month x region x product x customer segment | fact (amounts in TRY, prices in TRY/MWh, constant 2025 prices) |
 | `dim_date.csv` | month | dimension (first-of-month dates) |
-| `dim_region.csv` | region | dimension |
+| `dim_region.csv` | region | dimension (`region_name` holds the province name; the internal name "region" is kept) |
 | `dim_product.csv` | product | dimension |
-| `dim_customer_segment.csv` | customer segment | dimension (`customer_segment_name` is Turkish: Mesken, Ticarethane / KOBİ, Sanayi; `customer_segment_en` holds the English gloss) |
+| `dim_customer_segment.csv` | customer segment | dimension (`customer_segment_name`: Residential, Commercial (SME), Industrial; there is no separate `customer_segment_en` column, because the names are already English) |
 | `dim_discount_policy.csv` | customer segment | policy threshold (`max_discount_pct`) |
 
 Load them with *Get data > Text/CSV*. Set `dim_date[date]` to type Date and `promo_flag` to whole
 number. Hide the key columns in report view.
 
-Entity names (regions, products, segments) are Turkish and fictional. The data run from January
-2023 to December 2025, so "L12M" in the measures below is calendar year 2025 and "P12M" is 2024.
-For Turkish number formatting set the report language to Turkish (Türkiye) and use the format
-string `#,0 "TL"` for amounts and `#,0 "TL/MWh"` for prices.
+Names are in English. The sales areas are 18 Turkish provinces, stored in `region_name` with
+their Turkish spelling; their figures are invented. The data run from January 2023 to December
+2025, so "L12M" in the measures below is calendar year 2025 and "P12M" is 2024. For English number
+formatting set the report language to English and use the format string `"TRY "#,0` for amounts
+and `#,0 "TRY/MWh"` for prices.
 
 ## 2. Data model
 
@@ -53,7 +54,7 @@ dim_customer_segment ◄──1:1──► dim_discount_policy
 last-12-month measures therefore shift `month_id` instead of using `DATEADD`.
 
 Fact amount columns (`*_amount`, `*_revenue`, `variable_cost`, `gross_profit`) are totals in
-Turkish lira (TL) at constant 2025 prices; per-unit columns (`list_price`, `pocket_price`, ...) are per MWh and must
+Turkish lira (TRY) at constant 2025 prices; per-unit columns (`list_price`, `pocket_price`, ...) are per MWh and must
 be volume-weighted, never averaged. The measures below do that.
 
 ## 3. Waterfall measures
@@ -84,7 +85,7 @@ Check: `[List Revenue] - [On-invoice Discount] - [Off-invoice Rebates] - [Paymen
 
 ### Discount above policy
 
-Revenue given away on-invoice beyond the segment's policy depth, evaluated per region and segment:
+Revenue given away on-invoice beyond the segment's policy depth, evaluated per province (`region_name`) and segment:
 
 ```DAX
 Discount Above Policy =
@@ -300,7 +301,7 @@ PVM GP Reconciliation Gap =
 ## 7. Suggested report pages
 
 1. **Waterfall**: waterfall visual (list, discount, rebates, payment terms, freight, pocket) by
-   segment; matrix of `Discount Depth %` and `Discount Above Policy` by region x segment.
+   segment; matrix of `Discount Depth %` and `Discount Above Policy` by province (`region_name`) x segment.
 2. **PVM bridge**: waterfall visual on the PVM measures plus `PVM Reconciliation Gap` and
    `PVM GP Reconciliation Gap` as cards that should read 0. Compare with `outputs/examples/pvm_bridge.csv`.
 3. **Margin trend**: line chart of `Gross Margin %` and `Pocket Price` by month with a YoY card.

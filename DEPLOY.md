@@ -3,7 +3,7 @@
 The Streamlit app can run locally or on Streamlit Community Cloud. No API keys, secrets, external
 databases or paid services are needed: all data are synthetic and generated deterministically.
 
-**Live demo:** <https://tavra-enerji-fiyatlama.streamlit.app> (deploys from branch `main`, main file `app.py`). The app text is in Turkish. The subdomain `tavra-enerji-fiyatlama` is not part of the code: it is set in the app's settings on Streamlit Community Cloud (**Settings** > **General** > **App URL**), so change it there if the link above ever differs.
+**Live demo:** <https://tavra-energy-pricing.streamlit.app> (deploys from branch `main`, main file `app.py`). The app text is in English. The subdomain `tavra-energy-pricing` is not part of the code: it is set in the app's settings on Streamlit Community Cloud (**Settings** > **General** > **App URL**), so change it there if the link above ever differs. From version 2.3.0 on, (re)deploy the app under this new subdomain; the old subdomain is no longer used.
 
 ## How the app finds its data
 
@@ -16,7 +16,7 @@ databases or paid services are needed: all data are synthetic and generated dete
    spinner) and then reuses it. If the repository directory is read-only, the database is
    written to the system temp directory instead.
 
-The app navigation (`st.navigation`) is defined in `app.py` and `dashboard_support.PAGE_SPECS`; the pages live in `views/`. The first-start build does not touch `outputs/examples/`, so running the app locally never
+The app navigation (`st.navigation`) is defined in `app.py` and `dashboard_support.PAGE_SPECS`. The six pages live in `views/`. The first-start build does not touch `outputs/examples/`, so running the app locally never
 modifies tracked files.
 
 ## Local run
@@ -58,5 +58,6 @@ The look of the app (colour tokens, fonts, the bill block) is documented in [doc
 | Spinner never finishes | Check the app logs for the traceback; the pipeline needs about 1 GB of memory. |
 | `Could not create the analytical database` | Neither the repository nor the temp directory is writable. Set `EMID_DATABASE_PATH` to a writable path. |
 | Old page names (`app`, `price waterfall`) in the sidebar | Browser cache of an older deployment; reload the page. Version 2.1.0 replaced the `pages/` directory with `st.navigation`. |
+| Turkish names or more than six pages after updating to 2.3.0 | The app still serves an older build. The database rebuilds itself when `DATASET_VERSION` changes; if the old pages remain, reboot the app from **Manage app**. |
 | Stale numbers after changing `config/default.yaml` | Delete `data/energy_market.duckdb` (and the temp copy) and clear the Streamlit cache. |
 | `ModuleNotFoundError: energy_market_intelligence` (or one of its modules) | `requirements.txt` was not picked up, or the package was installed non-editable before a module was added; confirm it contains `-e .`, then reboot the app from **Manage app**. |

@@ -1,4 +1,4 @@
-# Theme tokens of the "fiyat kaçağı" design. Meaning of each colour: docs/DESIGN.md.
+# Theme tokens of the "price leakage" design. Meaning of each colour: docs/DESIGN.md.
 # Fonts load from Google Fonts through Streamlit's native "<font name>:<css url>" syntax.
 [theme]
 base = "light"

@@ -2,9 +2,29 @@
 
 All notable changes to this project are documented here.
 
+## [2.3.0] - 2026-10-11
+
+The whole project and the app are now in English, and the app shows only the pricing story. All numeric results are unchanged: elasticities, promotion uplift, waterfall amounts and recommendation totals are the same as in 2.2.0.
+
+### Changed
+
+- Language: the app, README, design notes, Power BI notes and generated data are in English. The README no longer has a Turkish summary.
+- Sales areas are now 18 Turkish provinces instead of 18 regions, one province for each former region (for example Istanbul, Ankara, Izmir, Tekirdağ). Their numbers are unchanged. In the tables and SQL the province keeps the internal name "region" (`region_id`, `region_name`).
+- Currency is shown as TRY at constant 2025 prices: amounts as TRY 23.4m or TRY 4.69bn, unit prices as TRY/MWh. The older lira abbreviation and the lira sign are no longer used.
+- Names: the focus company is renamed from "Tavra Enerji" to "Tavra Energy", and the six competitors are now "<invented word> Energy". Customer segments are Residential, Commercial (SME) and Industrial. Products are Fixed price, Index-linked (PTF+), Green energy (YEK-G) and Corporate bundle. `dim_customer_segment` no longer has a `customer_segment_en` column, because the segment names are already English.
+- Codes in the generated data are English: `market_size_band` Small/Medium/Large, `strategic_segment` Develop/Defend/Core, `product_segment` Fixed/Index-linked/Green/Corporate.
+- Number formats are English: thousands separated by commas and a decimal point (3,732.61), percentages as 14.8%, money as TRY 23.4m and TRY 4.69bn. The Plotly template uses `separators=".,"`.
+- The app has six pricing pages in one flat navigation list: Overview, Price leakage, Revenue bridge, Price sensitivity, Promotion impact and Price recommendation.
+- New live URL: <https://tavra-energy-pricing.streamlit.app>. The old subdomain is no longer used.
+- `DATASET_VERSION` and the package version are 2.3.0, so a deployed app rebuilds its database (the names changed; the numbers did not).
+
+### Removed
+
+- The market, competition, profitability, regional-opportunity and scenario pages are removed from the app. Their analytics, SQL views (`sql/02` to `sql/07`) and pipeline outputs stay in the repository.
+
 ## [2.2.0] - 2026-10-11
 
-Redesign of the Streamlit app around the fatura dökümü; analysis results are unchanged.
+Redesign of the Streamlit app around the price breakdown, read like the line items of a bill; analysis results are unchanged.
 
 ### Fixed
 
@@ -12,30 +32,30 @@ Redesign of the Streamlit app around the fatura dökümü; analysis results are 
 
 ### Changed
 
-- Design: the "fiyat kaçağı" concept with one signature element, the fatura dökümü (bill-style price itemisation) on the landing page. The home page now leads with a computed thesis sentence, the bill next to a matching waterfall, three question cards and a model-trust strip instead of the metric-card row. See `docs/DESIGN.md`.
-- Page titles are questions; sidebar sections are "Fiyatlama" and "Pazar" with short noun labels; page URLs changed accordingly. Waterfall items are named like bill lines (Fatura içi iskonto, Fatura dışı prim, Hizmet ve nakliye).
+- Design: the "price leakage" concept with one signature element, the bill-style price breakdown on the landing page. The home page now leads with a computed thesis sentence, the bill next to a matching waterfall, three question cards and a model-trust strip instead of the metric-card row. See `docs/DESIGN.md`.
+- Page titles are questions; the sidebar had two sections, pricing and market, with short noun labels; page URLs changed accordingly. Waterfall items are named like bill lines (on-invoice discount, off-invoice premium, service and freight).
 - One Plotly template (`tavra`) for all charts and PNG exports; colours have fixed meanings (red only for leakage and breaches, green only for gains). Theme and fonts (Source Sans 3, Barlow Semi Condensed, IBM Plex Mono) are set in `.streamlit/config.toml`; Streamlit 1.65 or newer is required.
-- Public URL is `https://tavra-enerji-fiyatlama.streamlit.app`.
-- Every number reads the Turkish way regardless of the browser locale: tables are formatted through a Styler (sorting still uses raw values), share axes show `%10` instead of `10%`, month axes `01/2025`, numeric axes have thousands separators, and percentage sliders show `+%2,5`.
+- The public URL was set on Streamlit Community Cloud (replaced in 2.3.0).
+- Every number used Turkish formatting regardless of the browser locale (replaced by English formats in 2.3.0): tables are formatted through a Styler (sorting still uses raw values), share axes put the percent sign first, month axes show `01/2025`, numeric axes have thousands separators, and percentage sliders use a decimal comma.
 - The bill block adapts to its own column width (container queries), so it stays aligned on tablets as well as phones; landing-card titles wrap instead of being cut off.
 - Callouts use a top rule like the bill and the landing cards instead of a side stripe. The scenario page hides zero deltas and says plainly when nothing changes.
 
 ## [2.1.0] - 2026-10-11
 
-Turkish setting, TL currency and a clearer app and README. The ground truth is unchanged: all elasticity and promotion estimates are identical to 2.0.0 to three decimals.
+Turkish setting, Turkish lira currency and a clearer app and README. The ground truth is unchanged: all elasticity and promotion estimates are identical to 2.0.0 to three decimals.
 
 ### Changed
 
-- Fictional Turkish setting: focus company Tavra Enerji and six fictional competitors ("<invented word> Enerji", web-screened against real companies), 18 sales regions based on Turkey's geography (for example İstanbul Avrupa, Ege Kuzey, Doğu Karadeniz), customer segments Mesken, Ticarethane / KOBİ and Sanayi (English gloss in `dim_customer_segment.customer_segment_en`) and Turkish product names.
-- All money is Turkish lira at constant 2025 prices; prices are TL per MWh at realistic 2025 levels (list about 3,300 to 4,200 TL/MWh). Seasonality now peaks in summer and winter. The latest 12 months are calendar year 2025.
-- Streamlit app is fully Turkish, with `st.navigation` in two sections ("Fiyatlama / Pricing", "Pazar / Market"), readable page titles, "Bu sayfa ne gösteriyor?" and data-driven "Ne anlama geliyor?" boxes, compact KPI cards with help tooltips, a glossary, Turkish charts (TL axes, Turkish number separators) and a scenario baseline restricted to 2025. The `pages/` directory became `views/`; page URLs changed.
-- README rewritten for a non-technical reader first: key terms, Turkish summary, three findings and one recommendation, a description of the fictional setting and the random stream used.
+- Fictional Turkish setting: focus company Tavra and six fictional competitors, each an invented word followed by the Turkish word for energy (web-screened against real companies); 18 sales regions based on Turkey's geography (for example European Istanbul, North Aegean, East Black Sea); customer segments with Turkish names for households, small businesses and industry (English gloss in `dim_customer_segment.customer_segment_en`); and Turkish product names. Names and regions were replaced in 2.3.0.
+- All money is Turkish lira at constant 2025 prices; prices are lira per MWh at realistic 2025 levels (list about 3,300 to 4,200 per MWh). Seasonality now peaks in summer and winter. The latest 12 months are calendar year 2025.
+- Streamlit app is fully Turkish, with `st.navigation` in two sections (pricing and market), readable page titles, a "what this page shows" line and a data-driven "what it means" box on every page, compact KPI cards with help tooltips, a glossary, Turkish charts (lira axes, Turkish number separators) and a scenario baseline restricted to 2025. The `pages/` directory became `views/`; page URLs changed.
+- README rewritten for a non-technical reader first: key terms, a Turkish summary (removed in 2.3.0), three findings and one recommendation, a description of the fictional setting and the random stream used.
 - SQL and output column names `northstar_*` became `focus_*`, and `vw_northstar_profitability_monthly` became `vw_focus_profitability_monthly`; SQL filters the focus company by `company_type`, not by name.
 - `run_metadata.json` is written as UTF-8 without escaping Turkish characters. Power BI measures, DEPLOY.md and the sample-data note describe the new names and units; DEPLOY.md links the live app.
 
 ### Added
 
-- `localization.py` (Turkish number, percent, TL and volume formats; column and value labels) and `insights.py` (takeaway sentences computed from the data).
+- `localization.py` (Turkish number, percent, lira and volume formats; column and value labels) and `insights.py` (takeaway sentences computed from the data).
 - `generate_management_observations(..., language="tr")`.
 - Tests for the Turkish setting (names, prices, calendar), localization, insights, navigation and page explanations; the hygiene test also blocks real Turkish retailers, distribution companies and fuel brands.
 
