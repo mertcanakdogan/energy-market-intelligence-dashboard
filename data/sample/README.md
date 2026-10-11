@@ -17,3 +17,13 @@ month × region × company × product
 ```
 
 The default run contains 36 months, 18 fictional regions, seven fictional companies, and four generic product segments. The generator combines explicit seasonality, region and product growth, company momentum, pricing positions, cost inflation, a temporary margin-compression interval, and seeded noise. These assumptions are public-demo constructs only and are not calibrated to a real business.
+
+## Pricing ledger
+
+The same run also generates `fact_pricing`, one row per:
+
+```text
+month × region × product × customer segment
+```
+
+with 36 × 18 × 4 × 3 = 7,776 rows. It carries a list-to-pocket price waterfall, unit variable cost, competitor price and a promotion flag. Its demand follows a constant-elasticity model whose true parameters (own-price elasticity by segment, cross elasticity, promotion uplift) and the staggered list-price increases are documented in the `pricing:` section of `config/default.yaml`, so analytics can be checked against the truth.

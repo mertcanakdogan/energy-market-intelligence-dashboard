@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "energy-market-intelligence-dashboard"
-version = "1.0.0"
-description = "Synthetic energy market commercial analytics and executive decision support"
+version = "2.0.0"
+description = "Synthetic pricing and revenue analytics case study: price waterfall, PVM bridge, elasticity, promotion DiD and price recommendations"
 readme = "README.md"
 requires-python = ">=3.12,<3.15"
 license = "MIT"
