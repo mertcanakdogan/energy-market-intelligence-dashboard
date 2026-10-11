@@ -116,7 +116,8 @@ if breaches.empty:
     st.caption("In the selected provinces no segment goes above the discount policy limit.")
 else:
     breach(
-        f"{len(breaches)} province-segment pairs give discounts above the policy limit. "
+        f"{len(breaches)} province and customer-group combinations give discounts above the "
+        "policy limit. "
         "Discount above policy = (discount rate - policy limit) x revenue at list price."
     )
 show_table(

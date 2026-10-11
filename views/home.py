@@ -7,15 +7,16 @@ from dashboard_support import (
     load_elasticities,
     load_pricing_config,
     load_view,
-    note,
     page_spec,
     show_chart,
+    takeaway,
 )
 from energy_market_intelligence.insights import (
     action_answer,
     bridge_answer,
     leakage_answer,
     leakage_thesis,
+    overview_takeaway,
 )
 from energy_market_intelligence.localization import SEGMENT_ORDER
 from energy_market_intelligence.price_recommendation import recommend_prices
@@ -48,6 +49,8 @@ with st.container(key="hero"):
         "Amounts are in TRY at constant 2025 prices."
     )
 
+takeaway(overview_takeaway(portfolio, waterfall, recommendation))
+
 # 2. The price breakdown next to the waterfall it summarises.
 segments = [name for name in SEGMENT_ORDER if name in set(waterfall["customer_segment_name"])]
 scope = st.segmented_control(
@@ -57,6 +60,7 @@ bill = portfolio_bill(waterfall, None if scope in (None, PORTFOLIO) else scope)
 left, right = st.columns([6, 5], gap="large")
 with left:
     st.markdown(style.bill_html(bill), unsafe_allow_html=True)
+    st.markdown(style.bill_terms_html(), unsafe_allow_html=True)
 with right:
     st.markdown("**From list price to net price** (TRY/MWh)")
     show_chart(
@@ -124,8 +128,6 @@ with st.expander("Glossary (terms used in this app)"):
         """
     )
 
-note(
-    "All data and business logic in this app were redesigned for a public demonstration. "
-    "The app does not make automatic business decisions.",
-    label="For demonstration only",
-)
+st.markdown(style.closing_html(), unsafe_allow_html=True)
+st.page_link("views/price_waterfall.py", label="Start with Price leakage")
+st.caption("Synthetic data and a fictional company. Not decision advice.")

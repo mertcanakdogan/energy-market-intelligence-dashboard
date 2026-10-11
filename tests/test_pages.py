@@ -39,8 +39,8 @@ def test_landing_page_leads_with_the_thesis_and_the_bill(project_root: Path) -> 
     app = AppTest.from_file(str(project_root / "app.py"), default_timeout=TIMEOUT).run()
     assert not app.exception, [item.value for item in app.exception]
     assert re.fullmatch(
-        r"Of every TRY 100 at list price, the company keeps TRY \d+\.\d and "
-        r":red\[TRY \d+\.\d\] leaks away\.",
+        r"Of every TRY\xa0100 at list price, the company keeps TRY\xa0\d+\.\d and "
+        r":red\[TRY\xa0\d+\.\d\] leaks away\.",
         app.title[0].value,
     )
     text = " ".join(item.value for item in app.markdown)

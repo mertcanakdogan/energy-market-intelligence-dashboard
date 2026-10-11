@@ -16,7 +16,13 @@ from energy_market_intelligence.localization import (
     format_try_per_mwh,
     order_segments,
 )
-from energy_market_intelligence.pricing_visualization import Bill, segment_waterfall_table
+from energy_market_intelligence.pricing_visualization import (
+    Bill,
+    BillLine,
+    segment_waterfall_table,
+)
+
+NBSP = chr(0xA0)  # non-breaking space
 
 
 def _worst_row(frame: pd.DataFrame, column: str, *, largest: bool = True) -> pd.Series:
@@ -165,40 +171,64 @@ def leakage_thesis(leakage_rate: float, *, highlight: bool = False) -> str:
     """The hero sentence of the landing page.
 
     For example "Of every TRY 100 at list price, the company keeps TRY 85.2 and TRY 14.8 leaks
-    away." With ``highlight`` the leaked amount is wrapped in Streamlit's red text markup.
+    away." The currency and its number are joined by a non-breaking space so that a line break
+    never separates them. With ``highlight`` the leaked amount is wrapped in Streamlit's red
+    text markup.
     """
 
     leaked = round(leakage_rate * 100, 1)
-    kept = f"{CURRENCY} {format_number(100 - leaked, 1)}"
-    lost = f"{CURRENCY} {format_number(leaked, 1)}"
+    kept = f"{CURRENCY}{NBSP}{format_number(100 - leaked, 1)}"
+    lost = f"{CURRENCY}{NBSP}{format_number(leaked, 1)}"
     if highlight:
         lost = f":red[{lost}]"
-    return f"Of every {CURRENCY} 100 at list price, the company keeps {kept} and {lost} leaks away."
+    return (
+        f"Of every {CURRENCY}{NBSP}100 at list price, the company keeps {kept} and {lost} "
+        "leaks away."
+    )
+
+
+def _largest_deduction(bill: Bill) -> BillLine:
+    deductions = [line for line in bill.lines if line.kind == "deduction"]
+    return max(deductions, key=lambda line: line.amount)
 
 
 def leakage_answer(bill: Bill, flags: pd.DataFrame) -> str:
-    """Largest bill deduction and the number of province-segment pairs above the policy limit."""
+    """Largest bill deduction and the number of province and customer-group combinations above
+    the policy limit."""
 
-    deductions = [line for line in bill.lines if line.kind == "deduction"]
-    largest = max(deductions, key=lambda line: line.amount)
+    largest = _largest_deduction(bill)
     breaches = int(flags["exceeds_policy"].sum())
     return (
         f"The largest item is the {largest.label.lower()} "
-        f"({format_pct(largest.share_of_list)} of the list price); {breaches} province-segment "
-        "pairs give discounts above the policy limit."
+        f"({format_pct(largest.share_of_list)} of the list price); {breaches} province and "
+        "customer-group combinations give discounts above the policy limit."
     )
 
 
 def bridge_answer(summary: pd.DataFrame) -> str:
-    """Revenue versus gross-profit change and the unit-cost effect in one sentence."""
+    """Why revenue and gross profit moved differently, in plain cause form."""
 
     row = summary.iloc[0]
-    return (
-        f"Net revenue {_rose_or_fell(row['total_revenue_change'])} by "
-        f"{format_try(abs(row['total_revenue_change']))} and gross profit "
-        f"{_rose_or_fell(row['total_gp_change'])} by {format_try(abs(row['total_gp_change']))}; "
-        f"the unit-cost effect was {format_try(row['gp_cost_effect'], signed=True)}."
+    revenue, profit = row["total_revenue_change"], row["total_gp_change"]
+    price_gain, cost_hit = row["gp_price_effect"], row["gp_cost_effect"]
+    movement = (
+        f"net revenue {_rose_or_fell(revenue)} by {format_try(abs(revenue))} "
+        f"while gross profit {_rose_or_fell(profit)} by {format_try(abs(profit))}"
     )
+    if revenue > 0 > profit and price_gain > 0 > cost_hit and -cost_hit > price_gain:
+        return (
+            f"Prices rose, but costs rose faster: {movement}. Price rises added "
+            f"{format_try(price_gain)}; higher unit costs took {format_try(-cost_hit)}."
+        )
+    return (
+        f"{movement[0].upper()}{movement[1:]}. Price changes {_added_or_took(price_gain)} "
+        f"{format_try(abs(price_gain))}; unit costs {_added_or_took(cost_hit)} "
+        f"{format_try(abs(cost_hit))}."
+    )
+
+
+def _added_or_took(value: float) -> str:
+    return "added" if value >= 0 else "took"
 
 
 def action_answer(table: pd.DataFrame) -> str:
@@ -210,6 +240,57 @@ def action_answer(table: pd.DataFrame) -> str:
     return (
         f"With the recommended price steps, gross profit could {direction} by "
         f"{format_try(abs(change))} a year ({format_pct(share, 1, signed=True)})."
+    )
+
+
+def overview_takeaway(
+    bill: Bill, waterfall: pd.DataFrame, recommendation: pd.DataFrame
+) -> list[tuple[str, str]]:
+    """The three lines under the overview hero: finding, size and action, as (lead, text)."""
+
+    largest = _largest_deduction(bill)
+    leaked = round(bill.leakage_rate * 100, 1)
+    leaked_revenue = waterfall["list_revenue"].sum() - waterfall["pocket_revenue"].sum()
+    change = recommendation["expected_gross_profit_change"].sum()
+    share = change / recommendation["baseline_gross_profit"].sum()
+    verb = "add" if change >= 0 else "cost"
+    return [
+        (
+            "Finding",
+            f"The largest leak is the {largest.label.lower()}, "
+            f"{format_pct(largest.share_of_list)} of the list price.",
+        ),
+        (
+            "Size",
+            f"{CURRENCY}{NBSP}{format_number(leaked, 1)} of every {CURRENCY}{NBSP}100 at list "
+            f"price never reaches the company, or {format_try(leaked_revenue)} a year.",
+        ),
+        (
+            "Action",
+            f"The recommended price steps {verb} {format_try(abs(change))} of gross profit a "
+            f"year ({format_pct(share, 1, signed=True)}). This is an estimate that assumes no "
+            "reaction from competitors.",
+        ),
+    ]
+
+
+def trust_note(elasticities: pd.DataFrame) -> str:
+    """Honest caveat under the trust strip, with the largest miss computed from the data."""
+
+    miss = (elasticities["elasticity"] - elasticities["true_elasticity"]).abs().max()
+    return (
+        "Estimated without seeing the true values; largest miss "
+        f"{format_number(miss, 2)}. Real data would be noisier."
+    )
+
+
+def promo_proof(estimates: pd.DataFrame) -> str:
+    """One line: the price-adjusted promotion uplift next to the true value set in the data."""
+
+    row = estimates.set_index("method").loc["price_adjusted"]
+    return (
+        f"The same test works for the promotion: uplift estimated at {format_pct(row['uplift'])} "
+        f"against a true {format_pct(row['true_uplift'])}."
     )
 
 

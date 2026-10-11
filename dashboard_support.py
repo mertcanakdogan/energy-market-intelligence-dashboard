@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import re
 import tempfile
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import replace
 from pathlib import Path
 from typing import NamedTuple
@@ -174,8 +174,11 @@ def page_intro(path: str, what: str) -> None:
     style.intro("What this page shows", what)
 
 
-def takeaway(text: str) -> None:
-    """Data-driven "What it means" callout, computed from the numbers on the page."""
+def takeaway(text: str | Sequence[tuple[str, str]]) -> None:
+    """Data-driven "What it means" callout, computed from the numbers on the page.
+
+    ``text`` is one sentence or a sequence of ``(lead, sentence)`` lines.
+    """
 
     style.callout("takeaway", "What it means", text)
 

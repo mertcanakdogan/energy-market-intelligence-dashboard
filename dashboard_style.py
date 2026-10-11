@@ -8,6 +8,7 @@ Streamlit from ``.streamlit/config.toml``; this module only refers to them by na
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from html import escape
 
 import pandas as pd
@@ -18,7 +19,24 @@ from energy_market_intelligence.localization import (
     format_pct,
     order_segments,
 )
-from energy_market_intelligence.pricing_visualization import Bill
+from energy_market_intelligence.pricing_visualization import (
+    DEDUCTION_LABELS,
+    NET_LABEL,
+    Bill,
+)
+
+GITHUB_URL = "https://github.com/mertcanakdogan/energy-market-intelligence-dashboard"
+LINKEDIN_URL = "https://www.linkedin.com/in/mertcanakdogan/"
+
+# One-line meaning of each bill line, shown under the bill where the reader meets the words.
+BILL_TERMS = (
+    (DEDUCTION_LABELS["on_invoice_discount"], "comes off the price on the invoice."),
+    (DEDUCTION_LABELS["off_invoice_rebate"], "is paid back to the customer later."),
+    (DEDUCTION_LABELS["payment_term_cost"], "is what waiting to be paid costs."),
+    (DEDUCTION_LABELS["freight_service_cost"], "covers delivery and support."),
+    (NET_LABEL, "is the price the company keeps."),
+    ("Leakage rate", "is the share of the list price it does not keep."),
+)
 
 GLOBAL_CSS = """
 <style>
@@ -59,6 +77,8 @@ h2, h3 {letter-spacing: 0;}
   display: block; font-family: var(--tv-head); font-weight: 700; font-size: 1.05rem;
   color: var(--tv-navy); margin-bottom: 0.1rem;
 }
+.tv-callout .tv-line {display: block; margin-top: 0.25rem;}
+.tv-callout .tv-line b {color: var(--tv-navy);}
 .tv-callout--note {border-top-color: var(--tv-slate);}
 .tv-callout--note .tv-label {color: var(--tv-slate);}
 .tv-callout--breach {border-top-color: var(--tv-leak);}
@@ -140,6 +160,14 @@ h2, h3 {letter-spacing: 0;}
 }
 .tv-answer {margin: 0.35rem 0 0; color: var(--tv-ink); line-height: 1.45;}
 
+/* Bill terms (under the bill) and the closing line of the overview. */
+.tv-terms {margin: 0.7rem 0 0; max-width: 36rem; font-size: 0.875rem; line-height: 1.5; color: var(--tv-slate);}
+.tv-terms b {font-weight: 600; color: var(--tv-ink);}
+.tv-closing {
+  margin: 2.2rem 0 0.4rem; padding-top: 0.9rem; border-top: 1px solid var(--tv-rule);
+  color: var(--tv-ink);
+}
+
 /* Model trust strip: true value, estimate and interval per segment. */
 .tv-trust {display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.2rem;}
 .tv-trust-card {border-top: 1px solid var(--tv-rule); padding-top: 0.6rem;}
@@ -176,13 +204,24 @@ def _html(text: str) -> str:
     return escape(text, quote=True)
 
 
-def callout(kind: str, label: str, text: str) -> None:
-    """Top-ruled callout (the same rule as the bill and the cards). ``kind``: ``takeaway`` (navy), ``note``, ``breach`` or ``gain``."""
+def callout(kind: str, label: str, text: str | Sequence[tuple[str, str]]) -> None:
+    """Top-ruled callout (the same rule as the bill and the cards).
+
+    ``kind``: ``takeaway`` (navy), ``note``, ``breach`` or ``gain``. ``text`` is one sentence or
+    a sequence of ``(lead, sentence)`` pairs shown as short lines with a bold lead-in.
+    """
 
     modifier = "" if kind == "takeaway" else f" tv-callout--{kind}"
+    if isinstance(text, str):
+        body = _html(text)
+    else:
+        body = "".join(
+            f'<span class="tv-line"><b>{_html(lead)}</b> {_html(sentence)}</span>'
+            for lead, sentence in text
+        )
     st.markdown(
         f'<div class="tv-callout{modifier}"><span class="tv-label">{_html(label)}</span>'
-        f"{_html(text)}</div>",
+        f"{body}</div>",
         unsafe_allow_html=True,
     )
 
@@ -191,7 +230,7 @@ def intro(label: str, text: str) -> None:
     """Quiet one-line explanation under the page title."""
 
     st.markdown(
-        f'<div class="tv-intro"><strong>{_html(label)}</strong> {_html(text)}</div>',
+        f'<div class="tv-intro"><strong>{_html(label)}:</strong> {_html(text)}</div>',
         unsafe_allow_html=True,
     )
 
@@ -212,6 +251,23 @@ def answer(text: str) -> None:
     """One-line data-driven answer inside a landing-page card."""
 
     st.markdown(f'<div class="tv-answer">{_html(text)}</div>', unsafe_allow_html=True)
+
+
+def bill_terms_html() -> str:
+    """One-line meaning of each bill line, as a compact paragraph under the bill."""
+
+    parts = " ".join(f"<b>{_html(term)}</b> {_html(meaning)}" for term, meaning in BILL_TERMS)
+    return f'<p class="tv-terms">{parts}</p>'
+
+
+def closing_html() -> str:
+    """Author line with the links to the code and to LinkedIn (no employer, no contact data)."""
+
+    return (
+        '<div class="tv-closing">Built by <b>Mert Can Akdoğan</b> · '
+        f'<a href="{GITHUB_URL}">Method and code on GitHub</a> · '
+        f'<a href="{LINKEDIN_URL}">LinkedIn</a></div>'
+    )
 
 
 def bill_display_amounts(bill: Bill) -> list[float]:

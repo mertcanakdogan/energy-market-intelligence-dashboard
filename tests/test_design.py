@@ -17,6 +17,9 @@ from energy_market_intelligence.insights import (
     bridge_answer,
     leakage_answer,
     leakage_thesis,
+    overview_takeaway,
+    promo_proof,
+    trust_note,
 )
 from energy_market_intelligence.localization import SEGMENT_ORDER
 from energy_market_intelligence.price_recommendation import recommend_prices
@@ -174,21 +177,29 @@ def test_landing_answers_are_computed_from_the_data(
 
     bill = portfolio_bill(waterfall_frame)
     thesis = leakage_thesis(bill.leakage_rate)
-    assert thesis.startswith("Of every TRY 100 at list price, the company keeps TRY ")
+    assert thesis.startswith(f"Of every TRY{chr(0xA0)}100 at list price, the company keeps TRY")
     assert thesis.endswith("leaks away.")
     assert ":red[" not in thesis
     assert leakage_thesis(bill.leakage_rate, highlight=True).count(":red[") == 1
+    nbsp = chr(0xA0)
     assert leakage_thesis(0.148) == (
-        "Of every TRY 100 at list price, the company keeps TRY 85.2 and TRY 14.8 leaks away."
+        f"Of every TRY{nbsp}100 at list price, the company keeps TRY{nbsp}85.2 and "
+        f"TRY{nbsp}14.8 leaks away."
     )
 
     flags = query_dataframe(analytics_db, "SELECT * FROM vw_discount_policy_flags")
     answer = leakage_answer(bill, flags)
-    assert f"{int(flags['exceeds_policy'].sum())} province-segment pairs" in answer
+    assert (
+        f"{int(flags['exceeds_policy'].sum())} province and customer-group combinations" in answer
+    )
+    assert "pairs" not in answer
     assert "on-invoice discount" in answer  # the largest deduction of the synthetic portfolio
 
     summary = query_dataframe(analytics_db, "SELECT * FROM vw_pvm_bridge_summary")
-    assert "Net revenue" in bridge_answer(summary) and "unit-cost" in bridge_answer(summary)
+    cause = bridge_answer(summary)
+    assert cause.startswith("Prices rose, but costs rose faster: net revenue rose by TRY")
+    assert "gross profit fell by TRY" in cause and "higher unit costs took TRY" in cause
+    assert "-TRY" not in cause  # no signed money in the card answers
 
     elasticities = estimate_segment_elasticities(
         regression_frame(synthetic_bundle), pricing_config.true_elasticities
@@ -203,6 +214,12 @@ def test_landing_answers_are_computed_from_the_data(
     )
     assert "gross profit could rise by TRY" in action_answer(table)
     assert re.search(r"a year \(\+\d+\.\d%\)\.$", action_answer(table))
+
+    lines = dict(overview_takeaway(bill, waterfall_frame, table))
+    assert list(lines) == ["Finding", "Size", "Action"]
+    assert lines["Finding"].startswith("The largest leak is the on-invoice discount, ")
+    assert f"TRY{nbsp}{round(bill.leakage_rate * 100, 1)} of every TRY{nbsp}100" in lines["Size"]
+    assert re.search(r"add TRY \d+\.\dm of gross profit a year \(\+\d+\.\d%\)", lines["Action"])
 
 
 def test_table_cells_use_english_separators_whatever_the_browser_locale() -> None:
@@ -235,3 +252,66 @@ def test_unformatted_axes_get_english_months_and_thousands() -> None:
     )
     assert bars.layout.xaxis.tickformat is None
     assert bars.layout.yaxis.tickformat == ".0%"
+
+
+def test_bridge_answer_falls_back_to_plain_effects_when_costs_did_not_win() -> None:
+    summary = pd.DataFrame(
+        [
+            {
+                "total_revenue_change": -2e6,
+                "total_gp_change": 5e6,
+                "gp_price_effect": 7e6,
+                "gp_cost_effect": -2e6,
+            }
+        ]
+    )
+    text = bridge_answer(summary)
+    assert text.startswith("Net revenue fell by TRY 2.00m while gross profit rose by TRY 5.00m.")
+    assert "Price changes added TRY 7.00m; unit costs took TRY 2.00m." in text
+
+
+def test_trust_and_promotion_lines_are_computed() -> None:
+    table = pd.DataFrame(
+        {
+            "elasticity": [-0.61, -1.58],
+            "true_elasticity": [-0.6, -1.6],
+        }
+    )
+    assert trust_note(table) == (
+        "Estimated without seeing the true values; largest miss 0.02. Real data would be noisier."
+    )
+    estimates = pd.DataFrame(
+        {
+            "method": ["naive", "price_adjusted"],
+            "uplift": [0.12, 0.0873],
+            "true_uplift": [0.08, 0.08],
+        }
+    )
+    assert promo_proof(estimates) == (
+        "The same test works for the promotion: uplift estimated at 8.7% against a true 8.0%."
+    )
+
+
+def test_bill_terms_and_closing_use_the_bill_words_and_no_private_details() -> None:
+    terms = style.bill_terms_html()
+    for label in (*DEDUCTION_LABELS.values(), NET_LABEL, "Leakage rate"):
+        assert f"<b>{label}</b>" in terms
+    closing = style.closing_html()
+    assert "Built by <b>Mert Can Akdoğan</b>" in closing
+    assert style.GITHUB_URL in closing and style.LINKEDIN_URL in closing
+    assert "@" not in closing and "tel:" not in closing
+
+
+def test_takeaway_callout_accepts_lines(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: list[str] = []
+    monkeypatch.setattr(style.st, "markdown", lambda body, **_: captured.append(body))
+    style.callout("takeaway", "What it means", [("Finding", "a <b>"), ("Size", "b")])
+    assert captured[0].count('class="tv-line"') == 2
+    assert "<b>Finding</b> a &lt;b&gt;" in captured[0]
+
+
+def test_intro_label_ends_with_a_colon(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: list[str] = []
+    monkeypatch.setattr(style.st, "markdown", lambda body, **_: captured.append(body))
+    style.intro("What this page shows", "text")
+    assert "<strong>What this page shows:</strong> text" in captured[0]
