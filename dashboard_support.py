@@ -3,14 +3,18 @@
 from __future__ import annotations
 
 import os
+import re
 import tempfile
 from dataclasses import replace
 from pathlib import Path
+from typing import NamedTuple
 
 import pandas as pd
+import plotly.graph_objects as go
 import streamlit as st
 import yaml
 
+import dashboard_style as style
 from energy_market_intelligence.database import query_dataframe
 from energy_market_intelligence.elasticity import estimate_segment_elasticities
 from energy_market_intelligence.localization import COLUMN_LABELS, localize_frame
@@ -123,100 +127,144 @@ def load_promotion_results() -> tuple[pd.DataFrame, pd.DataFrame]:
     return estimates, treated_control_trend(frame)
 
 
-# Navigation: (section, file, title, icon, url path). The first section has no header.
+class PageSpec(NamedTuple):
+    """One page of the app: its sidebar section and label, the H1 question and the URL slug."""
+
+    section: str  # sidebar section; the empty string is the headerless first group
+    path: str
+    title: str  # short noun used in the sidebar
+    question: str  # H1 of the page ("" for the landing page, which leads with its thesis)
+    url_path: str
+
+
+PRICING = "Fiyatlama"
+MARKET = "Pazar"
 PAGE_SPECS = (
-    ("", "views/home.py", "Genel Bakış", ":material/home:", "genel-bakis"),
-    (
-        "Fiyatlama / Pricing",
-        "views/price_waterfall.py",
-        "Fiyat Şelalesi",
-        ":material/waterfall_chart:",
-        "fiyat-selalesi",
+    PageSpec("", "views/home.py", "Genel bakış", "", "genel-bakis"),
+    PageSpec(
+        PRICING, "views/price_waterfall.py", "Fiyat kaçağı", "Fiyat nerede kaçıyor?", "fiyat-kacagi"
     ),
-    (
-        "Fiyatlama / Pricing",
-        "views/pvm_bridge.py",
-        "Gelir Köprüsü (PVM)",
-        ":material/swap_vert:",
-        "gelir-koprusu",
-    ),
-    (
-        "Fiyatlama / Pricing",
+    PageSpec(PRICING, "views/pvm_bridge.py", "Ciro köprüsü", "Ciro neden değişti?", "ciro-koprusu"),
+    PageSpec(
+        PRICING,
         "views/elasticity.py",
-        "Fiyat Esnekliği",
-        ":material/trending_down:",
-        "fiyat-esnekligi",
+        "Fiyat duyarlılığı",
+        "Müşteri fiyata ne kadar duyarlı?",
+        "fiyat-duyarliligi",
     ),
-    (
-        "Fiyatlama / Pricing",
+    PageSpec(
+        PRICING,
         "views/promotion_impact.py",
-        "Kampanya Etkisi",
-        ":material/campaign:",
+        "Kampanya etkisi",
+        "Kampanya gerçekten işe yaradı mı?",
         "kampanya-etkisi",
     ),
-    (
-        "Fiyatlama / Pricing",
+    PageSpec(
+        PRICING,
         "views/price_recommendation.py",
-        "Fiyat Önerisi",
-        ":material/price_check:",
+        "Fiyat önerisi",
+        "Hangi fiyat adımı değer?",
         "fiyat-onerisi",
     ),
-    (
-        "Fiyatlama / Pricing",
-        "views/scenario_analysis.py",
-        "Senaryo Analizi",
-        ":material/tune:",
-        "senaryo-analizi",
+    PageSpec(
+        PRICING, "views/scenario_analysis.py", "Senaryo", "Fiyatı değiştirirsem ne olur?", "senaryo"
     ),
-    (
-        "Pazar / Market",
+    PageSpec(
+        MARKET,
         "views/executive_summary.py",
-        "Yönetici Özeti",
-        ":material/dashboard:",
+        "Yönetici özeti",
+        "Pazarda ve şirkette ne değişti?",
         "yonetici-ozeti",
     ),
-    (
-        "Pazar / Market",
+    PageSpec(
+        MARKET,
         "views/market_performance.py",
-        "Pazar Performansı",
-        ":material/show_chart:",
+        "Pazar performansı",
+        "Pazar nerede büyüyor?",
         "pazar-performansi",
     ),
-    (
-        "Pazar / Market",
+    PageSpec(
+        MARKET,
         "views/competitive_intelligence.py",
-        "Rekabet Analizi",
-        ":material/groups:",
+        "Rekabet analizi",
+        "Rakipler pay kazanıyor mu?",
         "rekabet-analizi",
     ),
-    (
-        "Pazar / Market",
-        "views/profitability.py",
-        "Kârlılık",
-        ":material/payments:",
-        "karlilik",
+    PageSpec(
+        MARKET, "views/profitability.py", "Kârlılık", "Hacim kâr da getiriyor mu?", "karlilik"
     ),
-    (
-        "Pazar / Market",
+    PageSpec(
+        MARKET,
         "views/regional_opportunity.py",
-        "Bölgesel Fırsat",
-        ":material/map:",
+        "Bölgesel fırsat",
+        "Önce hangi bölgeye gidilmeli?",
         "bolgesel-firsat",
     ),
 )
 
 
-def page_intro(title: str, what: str) -> None:
-    """Page heading with the plain-language "Bu sayfa ne gösteriyor?" note."""
+def page_spec(path: str) -> PageSpec:
+    """The navigation entry of a page file such as ``views/price_waterfall.py``."""
 
-    st.title(title)
-    st.info(f"**Bu sayfa ne gösteriyor?** {what}", icon=":material/help:")
+    return next(spec for spec in PAGE_SPECS if spec.path == path)
+
+
+def page_intro(path: str, what: str) -> None:
+    """H1 question of the page and the plain-language "Bu sayfa ne gösteriyor?" line."""
+
+    st.title(page_spec(path).question)
+    style.intro("Bu sayfa ne gösteriyor?", what)
 
 
 def takeaway(text: str) -> None:
-    """Data-driven "Ne anlama geliyor?" box, computed from the numbers on the page."""
+    """Data-driven "Ne anlama geliyor?" callout, computed from the numbers on the page."""
 
-    st.success(f"**Ne anlama geliyor?** {text}", icon=":material/lightbulb:")
+    style.callout("takeaway", "Ne anlama geliyor?", text)
+
+
+def note(text: str, label: str = "Not") -> None:
+    """Neutral caveat or method note (grey rule)."""
+
+    style.callout("note", label, text)
+
+
+def breach(text: str, label: str = "Politika aşımı") -> None:
+    """Policy breach or leakage finding (red rule, only for real breaches)."""
+
+    style.callout("breach", label, text)
+
+
+def positive(text: str, label: str = "Doğrulama") -> None:
+    """Positive outcome (green rule)."""
+
+    style.callout("gain", label, text)
+
+
+def show_chart(figure: go.Figure, *, alt: str | None = None) -> None:
+    """Render a Plotly figure with the shared template (Streamlit's own chart theme is off).
+
+    The title is shown as a regular heading above the chart so that it wraps on narrow screens;
+    the PNG exports keep the title inside the figure.
+    """
+
+    # Backgrounds are set on the figure itself: the frontend would otherwise fill the plot area
+    # with its secondary background colour instead of the template's transparent one.
+    figure = go.Figure(figure)
+    figure.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+    title = figure.layout.title.text
+    if title:
+        plain = re.sub(r"<[^>]+>", " ", title)
+        style.chart_title(plain)
+        top = figure.layout.margin.t
+        figure.update_layout(title=None, margin={"t": 44 if top is None else max(top - 40, 30)})
+        alt = alt or plain
+    st.plotly_chart(
+        figure,
+        theme=None,
+        width="stretch",
+        alt=alt,
+        config={"displaylogo": False, "modeBarButtonsToRemove": ["lasso2d", "select2d"]},
+    )
 
 
 def _table_rule(column: str, fractions: set[str]) -> tuple[float, str, str | None]:

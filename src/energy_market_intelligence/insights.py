@@ -12,12 +12,13 @@ import pandas as pd
 from energy_market_intelligence.localization import (
     format_number,
     format_pct,
+    format_pct_accusative,
     format_tl,
     format_tl_per_mwh,
     format_volume,
     order_segments,
 )
-from energy_market_intelligence.pricing_visualization import segment_waterfall_table
+from energy_market_intelligence.pricing_visualization import Bill, segment_waterfall_table
 
 
 def _worst_row(frame: pd.DataFrame, column: str, *, largest: bool = True) -> pd.Series:
@@ -140,6 +141,61 @@ def recommendation_insight(table: pd.DataFrame) -> str:
         f"{direction}. "
         "Bu bir karar destek hesabıdır; sabit esneklik ve rakip tepkisi olmaması "
         "varsayımına dayanır."
+    )
+
+
+# ---------------------------------------------------------------------------------------------
+# Landing page: the thesis and one-line answers to the three questions
+# ---------------------------------------------------------------------------------------------
+
+
+def leakage_thesis(leakage_rate: float, *, highlight: bool = False) -> str:
+    """The hero sentence of the landing page, e.g. "Liste fiyatının %14,8'i ... kayboluyor."
+
+    With ``highlight`` the percentage is wrapped in Streamlit's red text markup.
+    """
+
+    share = format_pct_accusative(leakage_rate)
+    if highlight:
+        share = f":red[{share}]"
+    return f"Liste fiyatının {share} müşteriye ulaşmadan kayboluyor."
+
+
+def leakage_answer(bill: Bill, flags: pd.DataFrame) -> str:
+    """Largest bill deduction and the number of region-segment pairs above the policy limit."""
+
+    deductions = [line for line in bill.lines if line.kind == "deduction"]
+    largest = max(deductions, key=lambda line: line.amount)
+    breaches = int(flags["exceeds_policy"].sum())
+    return (
+        f"En büyük kalem {largest.label.lower()} (liste fiyata göre "
+        f"{format_pct(largest.share_of_list)}); {breaches} bölge-segment çifti indirim "
+        "politikasının sınırını aşıyor."
+    )
+
+
+def bridge_answer(summary: pd.DataFrame) -> str:
+    """Revenue versus gross-profit change and the unit-cost effect in one sentence."""
+
+    row = summary.iloc[0]
+    revenue_word = "arttı" if row["total_revenue_change"] >= 0 else "azaldı"
+    profit_word = "arttı" if row["total_gp_change"] >= 0 else "azaldı"
+    return (
+        f"Net ciro {format_tl(abs(row['total_revenue_change']))} {revenue_word}, brüt kâr "
+        f"{format_tl(abs(row['total_gp_change']))} {profit_word}; birim maliyet etkisi "
+        f"{format_tl(row['gp_cost_effect'], signed=True)}."
+    )
+
+
+def action_answer(table: pd.DataFrame) -> str:
+    """Expected yearly gross-profit change of the recommended price steps."""
+
+    change = table["expected_gross_profit_change"].sum()
+    share = change / table["baseline_gross_profit"].sum()
+    direction = "artabilir" if change >= 0 else "azalabilir"
+    return (
+        f"Önerilen fiyat adımlarıyla brüt kâr yılda {format_tl(abs(change))} "
+        f"({format_pct(share, 1, signed=True)}) {direction}."
     )
 
 

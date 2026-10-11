@@ -3,11 +3,18 @@
 import plotly.express as px
 import streamlit as st
 
-from dashboard_support import load_view, page_intro, select_regions, show_table, takeaway
+from dashboard_support import (
+    load_view,
+    page_intro,
+    select_regions,
+    show_chart,
+    show_table,
+    takeaway,
+)
 from energy_market_intelligence.insights import performance_insight
 
 page_intro(
-    "Pazar Performansı",
+    "views/market_performance.py",
     "Pazarın ve şirketin hacmini ve pazar payını zaman içinde ve bölgelere göre gösterir. "
     "Soldaki filtrelerle bölge ve dönem seçebilirsiniz.",
 )
@@ -27,7 +34,7 @@ company_filtered = companies[
     & companies["date"].dt.date.between(date_range[0], date_range[1])
 ]
 if filtered.empty:
-    st.warning("Seçilen bölge ve dönem için veri yok.")
+    st.info("Seçilen bölge ve dönem için veri yok.")
     st.stop()
 monthly = filtered.groupby("date", as_index=False)[["market_volume_mwh", "focus_volume_mwh"]].sum()
 monthly["focus_share"] = monthly["focus_volume_mwh"] / monthly["market_volume_mwh"]
@@ -42,8 +49,8 @@ volume_figure = px.line(
     title="Toplam pazar hacmi nasıl değişiyor?",
     labels={"market_volume_gwh": "Pazar hacmi (GWh)", "date": "Ay"},
 )
-volume_figure.update_layout(separators=",.")
-left.plotly_chart(volume_figure, width="stretch")
+with left:
+    show_chart(volume_figure)
 share_figure = px.line(
     monthly,
     x="date",
@@ -52,8 +59,8 @@ share_figure = px.line(
     labels={"focus_share": "Şirketin pazar payı", "date": "Ay"},
 )
 share_figure.update_yaxes(tickformat=".1%")
-share_figure.update_layout(separators=",.")
-right.plotly_chart(share_figure, width="stretch")
+with right:
+    show_chart(share_figure)
 
 company_summary = (
     company_filtered.groupby("company_name", as_index=False)["company_volume_mwh"]
@@ -77,8 +84,8 @@ company_figure = px.bar(
     title="Hangi şirketler en çok hacme sahip?",
     labels={"volume_gwh": "Hacim (GWh)", "company_name": "Şirket"},
 )
-company_figure.update_layout(separators=",.")
-left.plotly_chart(company_figure, width="stretch")
+with left:
+    show_chart(company_figure)
 regional_figure = px.scatter(
     region_summary,
     x="market_volume_gwh",
@@ -87,10 +94,10 @@ regional_figure = px.scatter(
     title="Pazar büyüklüğü ile şirket payı nerede ayrışıyor?",
     labels={"market_volume_gwh": "Pazar hacmi (GWh)", "focus_share": "Şirketin pazar payı"},
 )
-regional_figure.update_traces(textposition="top center", textfont={"size": 10})
+regional_figure.update_traces(textposition="top center", textfont={"size": 11})
 regional_figure.update_yaxes(tickformat=".1%")
-regional_figure.update_layout(separators=",.")
-right.plotly_chart(regional_figure, width="stretch")
+with right:
+    show_chart(regional_figure)
 
 st.subheader("Bölge ve ay bazında ayrıntı")
 show_table(

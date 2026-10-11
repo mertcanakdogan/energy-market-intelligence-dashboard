@@ -4,7 +4,14 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from dashboard_support import load_config, load_view, page_intro, show_table, takeaway
+from dashboard_support import (
+    load_config,
+    load_view,
+    page_intro,
+    show_chart,
+    show_table,
+    takeaway,
+)
 from energy_market_intelligence.insights import market_insight
 from energy_market_intelligence.localization import (
     format_number,
@@ -16,12 +23,14 @@ from energy_market_intelligence.metrics import generate_management_observations
 from energy_market_intelligence.opportunity import calculate_opportunity_scores
 from energy_market_intelligence.synthetic_data import FOCUS_COMPANY
 from energy_market_intelligence.visualization import (
+    NAVY,
+    SLATE,
     gross_margin_trend_figure,
     market_share_trend_figure,
 )
 
 page_intro(
-    "Yönetici Özeti",
+    "views/executive_summary.py",
     "Pazarın ve şirketin son 12 ayını (2025) bir önceki 12 ayla (2024) karşılaştırır: hacim, "
     "pazar payı, kâr, rakipler ve bölgesel öncelikler.",
 )
@@ -77,16 +86,10 @@ with left:
         color="series",
         title="Aylık hacim: pazar ve şirket",
     )
-    figure.update_layout(
-        template="plotly_white",
-        legend_title=None,
-        yaxis_title="GWh",
-        xaxis_title=None,
-        separators=",.",
-    )
-    st.plotly_chart(figure, width="stretch")
+    figure.update_layout(legend_title=None, yaxis_title="GWh", xaxis_title=None)
+    show_chart(figure)
 with right:
-    st.plotly_chart(market_share_trend_figure(trend), width="stretch")
+    show_chart(market_share_trend_figure(trend))
 
 left, right = st.columns(2)
 with left:
@@ -99,19 +102,14 @@ with left:
         x="share_change_pp",
         y="region_name",
         color="signal",
+        color_discrete_map={"Kazanım": NAVY, "Kayıp": SLATE},
         orientation="h",
         title="Bölgelere göre şirketin pay değişimi",
     )
-    chart.update_layout(
-        template="plotly_white",
-        xaxis_title="Yüzde puan",
-        yaxis_title=None,
-        legend_title=None,
-        separators=",.",
-    )
-    st.plotly_chart(chart, width="stretch")
+    chart.update_layout(xaxis_title="Yüzde puan", yaxis_title=None, legend_title=None)
+    show_chart(chart)
 with right:
-    st.plotly_chart(gross_margin_trend_figure(profit), width="stretch")
+    show_chart(gross_margin_trend_figure(profit))
 
 left, right = st.columns(2)
 with left:

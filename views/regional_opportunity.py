@@ -2,22 +2,30 @@
 
 import streamlit as st
 
-from dashboard_support import load_config, load_view, page_intro, show_table, takeaway
+from dashboard_support import (
+    load_config,
+    load_view,
+    note,
+    page_intro,
+    show_chart,
+    show_table,
+    takeaway,
+)
 from energy_market_intelligence.insights import opportunity_insight
 from energy_market_intelligence.localization import COLUMN_LABELS, format_pct
 from energy_market_intelligence.opportunity import calculate_opportunity_scores
 from energy_market_intelligence.visualization import opportunity_matrix_figure
 
 page_intro(
-    "Bölgesel Fırsat",
+    "views/regional_opportunity.py",
     "Hangi bölgelere öncelik verilmesi gerektiğini, pazar büyüklüğü, büyüme, pay boşluğu, "
     "pay eğilimi, marj ve rekabet puanlarını birleştirerek sıralar. Puanlar açıkça "
     "görülebilir; analist incelemesi için bir başlangıçtır.",
 )
-st.info(
+note(
     "Bu, gösterim amaçlı şeffaf bir önceliklendirme yöntemidir; nedensel bir model veya "
     "otomatik karar kuralı değildir.",
-    icon=":material/info:",
+    label="Yöntem",
 )
 config = load_config()
 opportunity = calculate_opportunity_scores(
@@ -37,9 +45,9 @@ filtered = opportunity[opportunity["opportunity_score"] >= minimum_score].sort_v
     sort_options[sort_label], ascending=False
 )
 if filtered.empty:
-    st.warning("Seçilen en düşük skoru sağlayan bölge yok.")
+    st.info("Seçilen en düşük skoru sağlayan bölge yok.")
     st.stop()
-st.plotly_chart(opportunity_matrix_figure(filtered), width="stretch")
+show_chart(opportunity_matrix_figure(filtered))
 
 left, right = st.columns(2)
 with left:

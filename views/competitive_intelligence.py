@@ -3,13 +3,13 @@
 import plotly.express as px
 import streamlit as st
 
-from dashboard_support import load_view, page_intro, show_table, takeaway
+from dashboard_support import load_view, page_intro, show_chart, show_table, takeaway
 from energy_market_intelligence.insights import competition_insight
 from energy_market_intelligence.localization import VALUE_LABELS
 from energy_market_intelligence.visualization import competitor_change_figure
 
 page_intro(
-    "Rekabet Analizi",
+    "views/competitive_intelligence.py",
     "Şirketlerin pazar payı ve son 12 aydaki pay değişimi ile bölgesel pazarların ne kadar "
     "yoğunlaştığını gösterir. HHI, payların karelerinin toplamıdır; hukuki veya düzenleyici bir "
     "değerlendirme değildir.",
@@ -20,7 +20,8 @@ concentration = load_view("vw_regional_concentration")
 takeaway(competition_insight(momentum, concentration))
 
 left, right = st.columns(2)
-left.plotly_chart(competitor_change_figure(momentum), width="stretch")
+with left:
+    show_chart(competitor_change_figure(momentum))
 share_figure = px.bar(
     momentum.sort_values("current_share"),
     x="current_share",
@@ -30,8 +31,8 @@ share_figure = px.bar(
     labels={"current_share": "Pazar payı", "company_name": "Şirket"},
 )
 share_figure.update_xaxes(tickformat=".1%")
-share_figure.update_layout(separators=",.", template="plotly_white")
-right.plotly_chart(share_figure, width="stretch")
+with right:
+    show_chart(share_figure)
 
 dominant = ranking.query("company_rank == 1")
 left, right = st.columns(2)
@@ -53,16 +54,17 @@ concentration_figure = px.bar(
         "concentration_classification": "Yoğunlaşma düzeyi",
     },
 )
-concentration_figure.update_layout(separators=",.", template="plotly_white")
-left.plotly_chart(concentration_figure, width="stretch")
+with left:
+    show_chart(concentration_figure)
 leader_figure = px.histogram(
     dominant,
     x="company_name",
     title="Hangi şirket en çok bölgede lider?",
     labels={"company_name": "Bölge lideri"},
 )
-leader_figure.update_layout(yaxis_title="Lider olduğu bölge sayısı", template="plotly_white")
-right.plotly_chart(leader_figure, width="stretch")
+leader_figure.update_layout(yaxis_title="Lider olduğu bölge sayısı")
+with right:
+    show_chart(leader_figure)
 
 st.subheader("Bölgeye göre şirket sıralaması")
 selected = st.selectbox("Bölge", sorted(ranking["region_name"].unique()))

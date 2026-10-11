@@ -3,13 +3,13 @@
 import plotly.express as px
 import streamlit as st
 
-from dashboard_support import load_view, page_intro, takeaway
+from dashboard_support import load_view, page_intro, show_chart, takeaway
 from energy_market_intelligence.insights import profitability_insight
 from energy_market_intelligence.localization import format_number, format_pct, format_tl
 from energy_market_intelligence.visualization import gross_margin_trend_figure, profit_bridge_figure
 
 page_intro(
-    "Kârlılık",
+    "views/profitability.py",
     "Satış hacmi ile o hacmin ürettiği brüt kârın kalitesini birbirinden ayırır: hangi "
     "bölge ve ürün ailesi ne kadar kâr getiriyor? Veri: 2025.",
 )
@@ -35,7 +35,8 @@ takeaway(profitability_insight(region))
 region["volume_gwh"] = region["volume_mwh"] / 1e3
 region["gross_profit_mn"] = region["gross_profit"] / 1e6
 left, right = st.columns(2)
-left.plotly_chart(gross_margin_trend_figure(monthly), width="stretch")
+with left:
+    show_chart(gross_margin_trend_figure(monthly))
 region_figure = px.scatter(
     region,
     x="volume_gwh",
@@ -49,10 +50,10 @@ region_figure = px.scatter(
         "gross_profit_mn": "Brüt kâr (mn TL)",
     },
 )
-region_figure.update_traces(textposition="top center", textfont={"size": 10})
+region_figure.update_traces(textposition="top center", textfont={"size": 11})
 region_figure.update_yaxes(tickformat=".1%")
-region_figure.update_layout(separators=",.", template="plotly_white")
-right.plotly_chart(region_figure, width="stretch")
+with right:
+    show_chart(region_figure)
 
 left, right = st.columns(2)
 product = summary.groupby("product_segment", as_index=False)[
@@ -72,9 +73,10 @@ product_figure = px.bar(
         "gross_margin_pct": "Brüt marj",
     },
 )
-product_figure.update_layout(separators=",.", template="plotly_white")
-left.plotly_chart(product_figure, width="stretch")
-right.plotly_chart(profit_bridge_figure(bridge), width="stretch")
+with left:
+    show_chart(product_figure)
+with right:
+    show_chart(profit_bridge_figure(bridge))
 
 st.caption(
     "Köprü, baz dönem hacmi ve fiyatı etkileri ile bir etkileşim terimi kullanır. "

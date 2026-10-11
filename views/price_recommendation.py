@@ -6,7 +6,9 @@ from dashboard_support import (
     load_elasticities,
     load_pricing_config,
     load_view,
+    note,
     page_intro,
+    show_chart,
     show_table,
     takeaway,
 )
@@ -16,16 +18,16 @@ from energy_market_intelligence.price_recommendation import recommend_prices
 from energy_market_intelligence.pricing_visualization import price_recommendation_figure
 
 page_intro(
-    "Fiyat Önerisi",
+    "views/price_recommendation.py",
     "Her müşteri segmenti için cebe kalan fiyatın ne kadar değiştirilebileceğini ve bunun "
     "brüt kâra tahmini etkisini gösterir. Soldaki sınırları değiştirerek sonucun nasıl "
     "değiştiğini deneyebilirsiniz.",
 )
-st.warning(
+note(
     "Bu bir karar destek hesabıdır, otomatik fiyat kuralı değildir. Sabit tahmini esneklik, "
     "rakip tepkisi olmaması ve değişmeyen birim maliyet varsayar; yalnızca küçük fiyat "
     "adımları için anlamlıdır.",
-    icon=":material/warning:",
+    label="Varsayımlar",
 )
 defaults = load_pricing_config().recommendation
 st.sidebar.header("Sınırlar")
@@ -91,7 +93,7 @@ cards[2].metric(
 )
 takeaway(recommendation_insight(table))
 
-st.plotly_chart(price_recommendation_figure(by_segment), width="stretch")
+show_chart(price_recommendation_figure(by_segment))
 show_table(
     table.sort_values("expected_gross_profit_change", ascending=False)[
         [

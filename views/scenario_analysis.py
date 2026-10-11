@@ -3,7 +3,7 @@
 import pandas as pd
 import streamlit as st
 
-from dashboard_support import load_elasticities, load_view, page_intro, takeaway
+from dashboard_support import load_elasticities, load_view, note, page_intro, takeaway
 from energy_market_intelligence.insights import scenario_insight
 from energy_market_intelligence.localization import (
     format_number,
@@ -18,15 +18,15 @@ from energy_market_intelligence.scenario import (
 )
 
 page_intro(
-    "Senaryo Analizi",
+    "views/scenario_analysis.py",
     "Bir bölge ve ürün ailesi için fiyat veya maliyet değişirse brüt kârın ne olacağını "
     "hesaplar (baz: 2025). Bu bir tahmin değil, seçtiğiniz varsayımların aritmetik sonucudur.",
 )
-st.warning(
+note(
     "Bu hesaplayıcı varsayımların aritmetik sonuçlarını gösterir; nedensel bir talep modeli "
     "değildir. Hacim tepkisi ya sizin girdiğiniz bir varsayımdır ya da tahmini esneklikten "
     "türetilir; esneklik de belirsizdir.",
-    icon=":material/warning:",
+    label="Varsayımlar",
 )
 monthly = load_view("vw_focus_profitability_monthly")
 baseline = monthly[monthly["date"] > monthly["date"].max() - pd.DateOffset(months=12)]
@@ -40,7 +40,7 @@ mode = st.radio(
     "Hacim tepkisi",
     ["Tahmini esneklik", "Elle girilen"],
     horizontal=True,
-    help="Tahmini esneklik, Fiyat Esnekliği sayfasındaki modelden gelir.",
+    help="Tahmini esneklik, Fiyat duyarlılığı sayfasındaki modelden gelir.",
 )
 if mode == "Tahmini esneklik":
     segment = st.selectbox("Müşteri segmenti (esnekliğin alındığı grup)", list(elasticities.index))

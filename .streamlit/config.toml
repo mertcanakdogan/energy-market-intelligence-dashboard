@@ -1,9 +1,33 @@
+# Theme tokens of the "fiyat kaçağı" design. Meaning of each colour: docs/DESIGN.md.
+# Fonts load from Google Fonts through Streamlit's native "<font name>:<css url>" syntax.
 [theme]
-primaryColor = "#1F4E79"
+base = "light"
+primaryColor = "#1F3A5F"
 backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F4F7FA"
-textColor = "#243447"
-font = "sans serif"
+secondaryBackgroundColor = "#F2F4F5"
+textColor = "#1B2430"
+linkColor = "#1F3A5F"
+borderColor = "#E3E7EA"
+redColor = "#C8462B"
+greenColor = "#2E7D5B"
+blueColor = "#1F3A5F"
+grayColor = "#6B7480"
+redTextColor = "#C8462B"
+greenTextColor = "#2E7D5B"
+blueTextColor = "#1F3A5F"
+baseRadius = "4px"
+buttonRadius = "4px"
+font = "'Source Sans 3':https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap"
+headingFont = "'Barlow Semi Condensed':https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&display=swap"
+codeFont = "'IBM Plex Mono':https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+headingFontWeights = [700, 700, 600, 600, 600, 600]
+
+[theme.sidebar]
+backgroundColor = "#F2F4F5"
+secondaryBackgroundColor = "#E3E7EA"
+
+[client]
+toolbarMode = "minimal"
 
 [server]
 headless = true

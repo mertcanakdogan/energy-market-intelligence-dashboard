@@ -2,13 +2,13 @@
 
 import streamlit as st
 
-from dashboard_support import load_view, page_intro, show_table, takeaway
+from dashboard_support import load_view, note, page_intro, show_chart, show_table, takeaway
 from energy_market_intelligence.insights import pvm_insight
 from energy_market_intelligence.localization import format_tl
 from energy_market_intelligence.pricing_visualization import pvm_bridge_figure
 
 page_intro(
-    "Gelir Köprüsü (PVM)",
+    "views/pvm_bridge.py",
     "Net ciro ve brüt kârın neden değiştiğini fiyat, hacim, karışım ve maliyet etkilerine ayırır. "
     "Karşılaştırma: 2025 (son 12 ay) ve 2024 (önceki 12 ay).",
 )
@@ -39,15 +39,15 @@ cards[3].metric(
 )
 takeaway(pvm_insight(summary))
 
-st.plotly_chart(pvm_bridge_figure(summary), width="stretch")
+show_chart(pvm_bridge_figure(summary))
 largest_gap = cells[["reconciliation_gap", "gp_reconciliation_gap"]].abs().max().max()
-st.info(
-    "**Hacim:** toplam satış hacmindeki değişim (eski fiyat ve karışımla). "
-    "**Karışım:** hacmin ürün ve müşteri segmentleri arasındaki dağılımının değişmesi. "
-    "**Fiyat:** cebe kalan fiyattaki değişim (yeni hacimle). Brüt kârda ayrıca **birim maliyet** "
+note(
+    "Hacim: toplam satış hacmindeki değişim (eski fiyat ve karışımla). "
+    "Karışım: hacmin ürün ve müşteri segmentleri arasındaki dağılımının değişmesi. "
+    "Fiyat: cebe kalan fiyattaki değişim (yeni hacimle). Brüt kârda ayrıca birim maliyet "
     "etkisi vardır. Bileşenler toplam değişime tam olarak eşittir; en büyük mutabakat farkı "
     f"{largest_gap:.1e} TL.",
-    icon=":material/info:",
+    label="Terimler",
 )
 
 st.subheader("Ürün ve segment ayrıntısı")

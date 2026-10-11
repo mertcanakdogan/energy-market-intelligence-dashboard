@@ -6,6 +6,7 @@ from dashboard_support import (
     load_pricing_config,
     load_promotion_results,
     page_intro,
+    show_chart,
     show_table,
     takeaway,
 )
@@ -14,7 +15,7 @@ from energy_market_intelligence.localization import format_pct
 from energy_market_intelligence.pricing_visualization import promo_did_figure
 
 page_intro(
-    "Kampanya Etkisi",
+    "views/promotion_impact.py",
     "İndirim kampanyasının gerçekte ne kadar ek hacim yarattığını, kampanya yapılan ve "
     "yapılmayan bölgeleri karşılaştırarak (farkların farkı, DiD) ölçer. Kampanya: "
     "Ocak-Nisan 2025.",
@@ -46,10 +47,7 @@ cards[2].metric(
 )
 takeaway(promo_insight(estimates))
 
-st.plotly_chart(
-    promo_did_figure(estimates, trend, (promo.start_month_id, promo.end_month_id)),
-    width="stretch",
-)
+show_chart(promo_did_figure(estimates, trend, (promo.start_month_id, promo.end_month_id)))
 st.write(
     f"Kampanya bölgesi: {adjusted['treated_regions']}; kontrol bölgesi: "
     f"{adjusted['control_regions']}; kampanya ayları: {promo.start_month_id}-{promo.end_month_id} "

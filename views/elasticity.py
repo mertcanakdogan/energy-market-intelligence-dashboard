@@ -2,13 +2,20 @@
 
 import streamlit as st
 
-from dashboard_support import load_elasticities, page_intro, show_table, takeaway
+from dashboard_support import (
+    load_elasticities,
+    page_intro,
+    positive,
+    show_chart,
+    show_table,
+    takeaway,
+)
 from energy_market_intelligence.insights import elasticity_insight
 from energy_market_intelligence.localization import format_number, order_segments
 from energy_market_intelligence.pricing_visualization import elasticity_recovery_figure
 
 page_intro(
-    "Fiyat Esnekliği",
+    "views/elasticity.py",
     "Cebe kalan fiyat %1 arttığında satış hacminin yüzde kaç değiştiğini, müşteri segmentine "
     "göre gösterir. Veri sentetik olduğu için gerçek değerler bilinir ve tahminin ne kadar "
     "doğru olduğu kontrol edilebilir.",
@@ -27,13 +34,13 @@ for column, row in zip(cards, table.itertuples(index=False), strict=True):
     )
 takeaway(elasticity_insight(table))
 
-st.plotly_chart(elasticity_recovery_figure(table), width="stretch")
+show_chart(elasticity_recovery_figure(table))
 recovered = int(table["truth_in_ci"].sum())
-st.success(
+positive(
     f"Bilinen gerçek esneklik, {len(table)} segmentin {recovered} tanesinde tahminin %95 güven "
     "aralığı içinde. Veri üreticisinin gerçek parametreleri bilindiği için tahmin yöntemi "
     "doğrudan sınanabilir.",
-    icon=":material/check_circle:",
+    label="Model sınandı",
 )
 show_table(
     table[

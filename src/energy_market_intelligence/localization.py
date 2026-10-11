@@ -61,6 +61,60 @@ def format_pct(fraction: float, decimals: int = 1, *, signed: bool = False) -> s
     return f"{sign}%{text[len(sign) :]}"
 
 
+# Vowel of the accusative suffix after the spoken last digit (sekiz -> -i, dört -> -ü, ...).
+# "y" is the buffer consonant after a vowel (iki -> ikiyi, altı -> altıyı, yedi -> yediyi).
+_ACCUSATIVE_AFTER_DIGIT = {
+    "0": "ı",
+    "1": "i",
+    "2": "yi",
+    "3": "ü",
+    "4": "ü",
+    "5": "i",
+    "6": "yı",
+    "7": "yi",
+    "8": "i",
+    "9": "u",
+}
+_ACCUSATIVE_AFTER_TENS = {
+    "1": "u",
+    "2": "i",
+    "3": "u",
+    "4": "ı",
+    "5": "i",
+    "6": "ı",
+    "7": "i",
+    "8": "i",
+    "9": "ı",
+}
+
+
+def accusative_suffix(number_text: str) -> str:
+    """Accusative suffix that follows a spoken number, e.g. ``14,8`` -> ``i`` (...virgül sekizi).
+
+    Only the last spoken word matters: the last digit, or for round integers the tens word
+    (``10`` on -> ``u``, ``40`` kırk -> ``ı``, ``100`` yüz -> ``ü``).
+    """
+
+    digits = [char for char in number_text if char.isdigit()]
+    if not digits:
+        return "i"
+    has_decimals = "," in number_text
+    if digits[-1] == "0" and not has_decimals and len(digits) >= 2:
+        # Round integers end in a tens or hundreds word: on, yirmi, ... doksan, yüz.
+        return _ACCUSATIVE_AFTER_TENS[digits[-2]] if digits[-2] != "0" else "ü"
+    return _ACCUSATIVE_AFTER_DIGIT[digits[-1]]
+
+
+def format_pct_accusative(fraction: float, decimals: int = 1) -> str:
+    """Percentage with the accusative suffix: ``0.148`` becomes ``%14,8'i``."""
+
+    text = format_pct(fraction, decimals)
+    if text == MISSING:
+        return text
+    suffix = accusative_suffix(text)
+    return f"{text}'{suffix}"
+
+
 def format_pp(value: float, decimals: int = 2) -> str:
     """Format a change in percentage points: ``+0,55 puan``."""
 
@@ -129,7 +183,7 @@ COLUMN_LABELS: dict[str, str] = {
     "pocket_revenue": "Cebe kalan ciro (TL)",
     "gross_profit": "Brüt kâr (TL)",
     "revenue": "Ciro (TL)",
-    "on_invoice_discount_pct": "Fatura üstü indirim (liste fiyatın %'si)",
+    "on_invoice_discount_pct": "Fatura içi iskonto (liste fiyatın %'si)",
     "policy_max_discount_pct": "Politika üst sınırı",
     "excess_discount_pp": "Sınır aşımı (puan)",
     "revenue_leakage_above_policy": "Politika üstü indirim (TL)",

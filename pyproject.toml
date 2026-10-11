@@ -22,7 +22,7 @@ dependencies = [
   "plotly>=5.24,<7",
   "PyYAML>=6.0,<7",
   "statsmodels>=0.14,<1",
-  "streamlit>=1.40,<2",
+  "streamlit>=1.65,<2",
 ]
 
 [project.optional-dependencies]
@@ -67,3 +67,5 @@ select = ["B", "E", "F", "I", "UP"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["B018"]
+# The stylesheet is one long CSS string.
+"dashboard_style.py" = ["E501"]
