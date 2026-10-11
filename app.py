@@ -1,9 +1,11 @@
-"""Landing page for the Northstar Energy market-intelligence portfolio app."""
+"""Landing page for the Northstar Energy pricing and revenue analytics case study."""
 
 import streamlit as st
 
+from dashboard_support import format_compact, load_elasticities, load_view
+
 st.set_page_config(
-    page_title="Northstar Energy | Market Intelligence",
+    page_title="Northstar Energy | Pricing & Revenue Analytics",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -21,22 +23,44 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.title("Energy Market Intelligence Dashboard")
-st.subheader("Commercial performance and market signals for Northstar Energy")
+st.title("Northstar Energy: Pricing & Revenue Analytics")
+st.subheader("Where should Northstar change prices, and what is it worth?")
 st.write(
-    "A production-style portfolio project that turns a deterministic synthetic market dataset "
-    "into SQL-led management decision support. Use the page navigation to examine growth, "
-    "competition, profitability, regional priorities, and transparent what-if assumptions."
+    "A portfolio case study on a fully synthetic energy retailer. Because the data are "
+    "generated, the true price elasticities and promotion uplift are known, so every estimate "
+    "on these pages can be checked against the truth. Start with the pricing pages; the "
+    "market-intelligence pages below them cover growth, competition, and regional priorities."
 )
 
-left, middle, right = st.columns(3)
-left.markdown(
-    "### 36 months\nMonthly commercial history with structured seasonality and market change."
+waterfall = load_view("vw_price_waterfall")
+pvm = load_view("vw_pvm_bridge_summary").iloc[0]
+elasticities = load_elasticities()
+list_revenue = waterfall["list_revenue"].sum()
+pocket_revenue = waterfall["pocket_revenue"].sum()
+flags = load_view("vw_discount_policy_flags")
+
+cards = st.columns(4)
+cards[0].metric("Price realization", f"{pocket_revenue / list_revenue:.1%}")
+cards[1].metric(
+    "Discount above policy",
+    format_compact(flags["revenue_leakage_above_policy"].sum()),
+    f"{int(flags['exceeds_policy'].sum())} region-segment cells",
+    delta_color="off",
 )
-middle.markdown(
-    "### 18 regions\nComparable market, share, profitability, and concentration diagnostics."
+cards[2].metric("Gross profit change (YoY)", format_compact(pvm["total_gp_change"]))
+cards[3].metric(
+    "Elasticities recovered",
+    f"{int(elasticities['truth_in_ci'].sum())} of {len(elasticities)}",
+    "true value inside 95% CI",
+    delta_color="off",
 )
-right.markdown("### 7 companies\nNorthstar Energy and six entirely fictional competitors.")
+
+st.markdown("### Pricing pages")
+st.page_link("pages/01_price_waterfall.py", label="Price Waterfall: list to pocket price")
+st.page_link("pages/02_pvm_bridge.py", label="PVM Bridge: price, volume, mix, cost")
+st.page_link("pages/03_elasticity.py", label="Price Elasticity: estimates vs known truth")
+st.page_link("pages/04_promotion_impact.py", label="Promotion Impact: difference-in-differences")
+st.page_link("pages/05_price_recommendation.py", label="Price Recommendation: decision aid")
 
 st.info(
     "All data and business logic in this repository are newly designed for a public demonstration. "
