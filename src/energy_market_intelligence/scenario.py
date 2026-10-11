@@ -6,6 +6,18 @@ import numpy as np
 import pandas as pd
 
 
+def volume_response_from_elasticity(price_change_pct: float, elasticity: float) -> float:
+    """Volume response (in percent) implied by a constant own-price elasticity.
+
+    ``(1 + dP)^e - 1``: a +5% price move with elasticity -1.6 gives about -7.5% volume.
+    The elasticity is an estimate, so the result is an assumption, not a forecast.
+    """
+
+    if price_change_pct <= -100:
+        raise ValueError("price change must be greater than -100%")
+    return ((1 + price_change_pct / 100) ** elasticity - 1) * 100
+
+
 def calculate_scenario(
     baseline: dict[str, float],
     price_change_pct: float,

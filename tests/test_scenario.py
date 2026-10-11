@@ -4,7 +4,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from energy_market_intelligence.scenario import calculate_scenario, scenario_for_selection
+from energy_market_intelligence.scenario import (
+    calculate_scenario,
+    scenario_for_selection,
+    volume_response_from_elasticity,
+)
 
 BASELINE = {"volume_mwh": 100.0, "revenue": 5000.0, "variable_cost": 3500.0, "gross_profit": 1500.0}
 
@@ -59,3 +63,22 @@ def test_scenario_selection_filters_region_and_product() -> None:
     )
     result = scenario_for_selection(frame, "R1", "P1", 0, 0, 0)
     assert result["baseline_volume_mwh"] == 100
+
+
+def test_volume_response_from_elasticity_matches_constant_elasticity_formula() -> None:
+    assert np.isclose(volume_response_from_elasticity(5, -1.6), (1.05**-1.6 - 1) * 100)
+    assert volume_response_from_elasticity(0, -1.6) == 0
+    assert volume_response_from_elasticity(-5, -0.6) > 0
+
+
+def test_elasticity_driven_scenario_reproduces_the_recommendation_arithmetic() -> None:
+    response = volume_response_from_elasticity(5, -1.0)
+    result = calculate_scenario(BASELINE, 5, response, 0)
+    # Unit elasticity keeps revenue (almost) flat while profit rises through lower volume.
+    assert np.isclose(result["scenario_revenue"], BASELINE["revenue"])
+    assert result["gross_profit_delta"] > 0
+
+
+def test_volume_response_rejects_impossible_price_change() -> None:
+    with pytest.raises(ValueError, match="greater than -100"):
+        volume_response_from_elasticity(-100, -1.0)
