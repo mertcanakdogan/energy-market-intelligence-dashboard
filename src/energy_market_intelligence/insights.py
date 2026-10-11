@@ -300,6 +300,11 @@ def scenario_insight(result: dict[str, float]) -> str:
 
     profit = result["gross_profit_delta"]
     volume_change = result["volume_delta"] / result["baseline_volume_mwh"]
+    if abs(profit) < 0.5 and abs(volume_change) < 0.0005:
+        return (
+            "Bu varsayımlarla brüt kâr ve hacim değişmez. Fiyat, maliyet veya hacim tepkisini "
+            "değiştirerek etkisini görebilirsiniz."
+        )
     word = "artar" if profit >= 0 else "azalır"
     return (
         f"Bu varsayımlarla brüt kâr yılda {format_tl(abs(profit))} {word} "

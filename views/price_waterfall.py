@@ -25,7 +25,12 @@ from energy_market_intelligence.pricing_visualization import (
     price_waterfall_figure,
     segment_waterfall_table,
 )
-from energy_market_intelligence.visualization import LEAK_RED, NAVY, apply_business_theme
+from energy_market_intelligence.visualization import (
+    LEAK_RED,
+    NAVY,
+    apply_business_theme,
+    percent_axis,
+)
 
 page_intro(
     "views/price_waterfall.py",
@@ -97,7 +102,7 @@ figure.add_hline(
     line_dash="dash",
     annotation_text="politika üst sınırı",
 )
-figure.update_yaxes(tickformat=".0%")
+percent_axis(figure, "y")
 apply_business_theme(figure, y_title="İndirim oranı (liste fiyata göre)")
 figure.update_xaxes(title=None)
 show_chart(figure)

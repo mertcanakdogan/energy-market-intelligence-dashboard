@@ -6,7 +6,11 @@ import streamlit as st
 from dashboard_support import load_view, page_intro, show_chart, takeaway
 from energy_market_intelligence.insights import profitability_insight
 from energy_market_intelligence.localization import format_number, format_pct, format_tl
-from energy_market_intelligence.visualization import gross_margin_trend_figure, profit_bridge_figure
+from energy_market_intelligence.visualization import (
+    gross_margin_trend_figure,
+    percent_axis,
+    profit_bridge_figure,
+)
 
 page_intro(
     "views/profitability.py",
@@ -51,7 +55,7 @@ region_figure = px.scatter(
     },
 )
 region_figure.update_traces(textposition="top center", textfont={"size": 11})
-region_figure.update_yaxes(tickformat=".1%")
+percent_axis(region_figure, "y")
 with right:
     show_chart(region_figure)
 

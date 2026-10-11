@@ -8,6 +8,7 @@ from dashboard_support import (
     load_view,
     note,
     page_intro,
+    percent_slider,
     show_chart,
     show_table,
     takeaway,
@@ -31,28 +32,31 @@ note(
 )
 defaults = load_pricing_config().recommendation
 st.sidebar.header("Sınırlar")
-max_step = st.sidebar.slider(
+max_step = percent_slider(
     "En büyük fiyat adımı (%)",
     1.0,
     15.0,
     defaults.max_price_step_pct * 100,
-    0.5,
+    signed=False,
+    sidebar=True,
     help="Cebe kalan fiyat tek seferde en fazla bu oranda değişir.",
 )
-margin_floor = st.sidebar.slider(
+margin_floor = percent_slider(
     "En düşük marj (%)",
     0.0,
     40.0,
     defaults.margin_floor_pct * 100,
-    0.5,
+    signed=False,
+    sidebar=True,
     help="Önerilen fiyattaki cep marjı bu değerin altına düşmez (ulaşılabiliyorsa).",
 )
-volume_guard = st.sidebar.slider(
+volume_guard = percent_slider(
     "En büyük hacim kaybı (%)",
     1.0,
     20.0,
     defaults.max_volume_loss_pct * 100,
-    0.5,
+    signed=False,
+    sidebar=True,
     help="Fiyat artışı, beklenen hacim kaybı bu oranı aşmayacak şekilde sınırlanır.",
 )
 level = st.sidebar.radio("Ayrıntı düzeyi", ["Müşteri segmenti", "Segment x bölge"])

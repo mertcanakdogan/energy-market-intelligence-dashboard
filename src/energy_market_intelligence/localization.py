@@ -232,6 +232,7 @@ COLUMN_LABELS: dict[str, str] = {
     "momentum_signal": "Eğilim",
     "company_rank": "Bölgedeki sıra",
     "market_share": "Pazar payı",
+    "market_yoy_growth": "Pazar büyümesi (yıllık)",
     "hhi": "HHI (yoğunlaşma)",
     "concentration_classification": "Yoğunlaşma düzeyi",
     "opportunity_rank": "Sıra",

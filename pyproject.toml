@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "energy-market-intelligence-dashboard"
-version = "2.1.0"
+version = "2.2.0"
 description = "Synthetic pricing and revenue analytics case study for a fictional Turkish electricity retailer: price waterfall, PVM bridge, elasticity, promotion DiD and price recommendations (TL, Turkish app)"
 readme = "README.md"
 requires-python = ">=3.12,<3.15"

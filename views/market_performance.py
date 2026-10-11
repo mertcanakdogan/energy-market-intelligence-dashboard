@@ -12,6 +12,7 @@ from dashboard_support import (
     takeaway,
 )
 from energy_market_intelligence.insights import performance_insight
+from energy_market_intelligence.visualization import percent_axis
 
 page_intro(
     "views/market_performance.py",
@@ -58,7 +59,7 @@ share_figure = px.line(
     title="Şirket pazar payı kazanıyor mu?",
     labels={"focus_share": "Şirketin pazar payı", "date": "Ay"},
 )
-share_figure.update_yaxes(tickformat=".1%")
+percent_axis(share_figure, "y")
 with right:
     show_chart(share_figure)
 
@@ -95,7 +96,7 @@ regional_figure = px.scatter(
     labels={"market_volume_gwh": "Pazar hacmi (GWh)", "focus_share": "Şirketin pazar payı"},
 )
 regional_figure.update_traces(textposition="top center", textfont={"size": 11})
-regional_figure.update_yaxes(tickformat=".1%")
+percent_axis(regional_figure, "y")
 with right:
     show_chart(regional_figure)
 

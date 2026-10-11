@@ -3,7 +3,16 @@
 import pandas as pd
 import streamlit as st
 
-from dashboard_support import load_elasticities, load_view, note, page_intro, takeaway
+from dashboard_support import (
+    load_elasticities,
+    load_view,
+    note,
+    page_intro,
+    percent_slider,
+    show_dataframe,
+    takeaway,
+    turkish_formatter,
+)
 from energy_market_intelligence.insights import scenario_insight
 from energy_market_intelligence.localization import (
     format_number,
@@ -33,8 +42,8 @@ baseline = monthly[monthly["date"] > monthly["date"].max() - pd.DateOffset(month
 elasticities = order_segments(load_elasticities()).set_index("customer_segment_name")
 region = st.selectbox("Bölge", sorted(baseline["region_name"].unique()))
 product = st.selectbox("Ürün ailesi", sorted(baseline["product_segment"].unique()))
-price_change = st.slider("Fiyat değişimi (%)", -20.0, 20.0, 0.0, 0.5)
-cost_change = st.slider("Birim maliyet değişimi (%)", -20.0, 20.0, 0.0, 0.5)
+price_change = percent_slider("Fiyat değişimi (%)", -20.0, 20.0, 0.0)
+cost_change = percent_slider("Birim maliyet değişimi (%)", -20.0, 20.0, 0.0)
 
 mode = st.radio(
     "Hacim tepkisi",
@@ -54,33 +63,42 @@ if mode == "Tahmini esneklik":
         f"{format_pct(volume_response / 100, 2, signed=True)} olur."
     )
 else:
-    volume_response = st.slider("Beklenen hacim tepkisi (%, elle girilen)", -25.0, 25.0, 0.0, 0.5)
+    volume_response = percent_slider("Beklenen hacim tepkisi (%, elle girilen)", -25.0, 25.0, 0.0)
 
 result = scenario_for_selection(
     baseline, region, product, price_change, volume_response, cost_change
 )
+
+
+def _change(value: float, text: str) -> str | None:
+    """Metric delta; hidden when it rounds to zero so a zero does not show a green arrow."""
+
+    digits = "".join(character for character in text if character.isdigit())
+    return text if digits.strip("0") else None
+
+
 cards = st.columns(4)
 cards[0].metric(
     "Tahmini hacim",
     format_volume(result["scenario_volume_mwh"]),
-    format_volume(result["volume_delta"], signed=True),
+    _change(result["volume_delta"], format_volume(result["volume_delta"], signed=True)),
     help="Bu bölge ve ürün ailesi için 2025 hacmi baz alınır.",
 )
 cards[1].metric(
     "Tahmini ciro",
     format_tl(result["scenario_revenue"]),
-    format_tl(result["revenue_delta"], signed=True),
+    _change(result["revenue_delta"], format_tl(result["revenue_delta"], signed=True)),
 )
 cards[2].metric(
     "Tahmini brüt kâr",
     format_tl(result["scenario_gross_profit"]),
-    format_tl(result["gross_profit_delta"], signed=True),
+    _change(result["gross_profit_delta"], format_tl(result["gross_profit_delta"], signed=True)),
 )
 margin_delta = (result["scenario_gross_margin_pct"] - result["baseline_gross_margin_pct"]) * 100
 cards[3].metric(
     "Tahmini brüt marj",
     format_pct(result["scenario_gross_margin_pct"]),
-    f"{format_number(margin_delta, 2, signed=True)} puan",
+    _change(margin_delta, f"{format_number(margin_delta, 2, signed=True)} puan"),
 )
 takeaway(scenario_insight(result))
 
@@ -104,14 +122,13 @@ if mode == "Tahmini esneklik":
                 "Brüt kâr değişimi (mn TL)": outcome["gross_profit_delta"] / 1e6,
             }
         )
-    st.dataframe(
+    two_decimals = turkish_formatter(2)
+    show_dataframe(
         pd.DataFrame(rows),
-        hide_index=True,
-        width="stretch",
-        column_config={
-            "Değer": st.column_config.NumberColumn(format="%.2f"),
-            "Hacim tepkisi (%)": st.column_config.NumberColumn(format="%.2f"),
-            "Brüt kâr değişimi (mn TL)": st.column_config.NumberColumn(format="%.2f"),
+        {
+            "Değer": two_decimals,
+            "Hacim tepkisi (%)": two_decimals,
+            "Brüt kâr değişimi (mn TL)": two_decimals,
         },
     )
 
@@ -128,7 +145,7 @@ formula = pd.DataFrame(
         ],
     }
 )
-st.dataframe(formula, hide_index=True, width="stretch")
+show_dataframe(formula, {})
 st.caption(
     "Esneklik modunda: hacim tepkisi % = ((1 + fiyat değişimi %) ^ esneklik - 1) x 100. "
     "Esneklik, fiyatlama verisinde müşteri segmenti bazında tahmin edilir ve burada seçilen "

@@ -95,14 +95,16 @@ def test_scenario_page_supports_manual_override(project_root: Path) -> None:
     assert not app.exception
     app.radio[0].set_value("Elle girilen").run()
     assert not app.exception
-    assert any("elle girilen" in slider.label for slider in app.slider)
+    assert any("elle girilen" in slider.label for slider in app.select_slider)
 
 
 def test_scenario_page_uses_estimated_elasticity_by_default(project_root: Path) -> None:
     app = AppTest.from_file(
         str(project_root / "views/scenario_analysis.py"), default_timeout=TIMEOUT
     ).run()
-    price_slider = next(slider for slider in app.slider if slider.label == "Fiyat değişimi (%)")
+    price_slider = next(
+        slider for slider in app.select_slider if slider.label == "Fiyat değişimi (%)"
+    )
     price_slider.set_value(5.0).run()
     assert not app.exception
     captions = " ".join(item.value for item in app.caption)

@@ -209,7 +209,8 @@ def price_waterfall_figure(waterfall: pd.DataFrame) -> go.Figure:
     apply_business_theme(figure)
     figure.update_xaxes(tickangle=-40, tickfont={"size": 11})
     figure.update_yaxes(
-        range=[float(table["pocket_price"].min()) * 0.9, float(table["list_price"].max()) * 1.04]
+        range=[float(table["pocket_price"].min()) * 0.9, float(table["list_price"].max()) * 1.04],
+        tickformat=",d",
     )
     figure.update_yaxes(title="TL/MWh (sabit 2025 fiyatları, eksen kesik)", col=1)
     return figure

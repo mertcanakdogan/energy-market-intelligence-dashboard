@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import re
 import tempfile
+from collections.abc import Callable
 from dataclasses import replace
 from pathlib import Path
 from typing import NamedTuple
@@ -17,10 +18,16 @@ import yaml
 import dashboard_style as style
 from energy_market_intelligence.database import query_dataframe
 from energy_market_intelligence.elasticity import estimate_segment_elasticities
-from energy_market_intelligence.localization import COLUMN_LABELS, localize_frame
+from energy_market_intelligence.localization import (
+    COLUMN_LABELS,
+    format_number,
+    format_pct,
+    localize_frame,
+)
 from energy_market_intelligence.pipeline import PipelinePaths, build_dataset
 from energy_market_intelligence.pricing_config import PricingConfig
 from energy_market_intelligence.promotion import estimate_promo_uplift, treated_control_trend
+from energy_market_intelligence.visualization import turkish_axes
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 DATABASE_PATH = PROJECT_ROOT / "data" / "energy_market.duckdb"
@@ -249,7 +256,7 @@ def show_chart(figure: go.Figure, *, alt: str | None = None) -> None:
 
     # Backgrounds are set on the figure itself: the frontend would otherwise fill the plot area
     # with its secondary background colour instead of the template's transparent one.
-    figure = go.Figure(figure)
+    figure = turkish_axes(go.Figure(figure))
     figure.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
     title = figure.layout.title.text
     if title:
@@ -267,23 +274,43 @@ def show_chart(figure: go.Figure, *, alt: str | None = None) -> None:
     )
 
 
-def _table_rule(column: str, fractions: set[str]) -> tuple[float, str, str | None]:
-    """Display scale, number format and unit suffix replacement for one numeric column."""
+def _table_rule(column: str, fractions: set[str]) -> tuple[float, int, bool, str | None]:
+    """Display scale, decimals, percent flag and unit suffix replacement for one numeric column."""
 
     label = COLUMN_LABELS.get(column, column)
     if column in fractions:
-        return 1.0, "percent", None
+        return 1.0, 2, True, None
     if label.endswith("(TL)"):
-        return 1e6, "%.2f", "(mn TL)"
+        return 1e6, 2, False, "(mn TL)"
     if label.endswith("(MWh)"):
-        return 1e3, "%.1f", "(GWh)"
+        return 1e3, 1, False, "(GWh)"
     if label.endswith("(TL/MWh)"):
-        return 1.0, "%.0f", None
-    if label.endswith("(puan)"):
-        return 1.0, "%.2f", None
+        return 1.0, 0, False, None
     if column == "hhi":
-        return 1.0, "%.3f", None
-    return 1.0, "%.2f", None
+        return 1.0, 3, False, None
+    return 1.0, 2, False, None
+
+
+def turkish_formatter(decimals: int, *, percent: bool = False) -> Callable[[object], str]:
+    """Cell formatter with Turkish separators (``1.234,56``, ``%9,28``); blanks become a dash."""
+
+    def render(value: object) -> str:
+        if value is None or pd.isna(value):
+            return "–"
+        if percent:
+            return format_pct(float(value), decimals)
+        return format_number(float(value), decimals)
+
+    return render
+
+
+def show_dataframe(frame: pd.DataFrame, formats: dict[str, Callable[[object], str]]) -> None:
+    """Render a table whose numbers read the Turkish way whatever the browser locale is.
+
+    The Styler only changes the displayed text, so column sorting still uses the raw values.
+    """
+
+    st.dataframe(frame.style.format(formats), hide_index=True, width="stretch")
 
 
 def show_table(frame: pd.DataFrame, *, fractions: set[str] | frozenset[str] = frozenset()) -> None:
@@ -294,7 +321,7 @@ def show_table(frame: pd.DataFrame, *, fractions: set[str] | frozenset[str] = fr
     """
 
     display = frame.copy()
-    config = {}
+    formats = {}
     rename = {}
     for column in frame.columns:
         if not pd.api.types.is_numeric_dtype(display[column]) or pd.api.types.is_bool_dtype(
@@ -303,15 +330,41 @@ def show_table(frame: pd.DataFrame, *, fractions: set[str] | frozenset[str] = fr
             continue
         if column in {"month_id", "n_obs", "momentum_rank", "company_rank", "opportunity_rank"}:
             continue
-        scale, number_format, unit = _table_rule(column, set(fractions))
+        scale, decimals, percent, unit = _table_rule(column, set(fractions))
         display[column] = display[column] / scale
         label = COLUMN_LABELS.get(column, column)
         if unit:
             label = label.rsplit("(", 1)[0] + unit
         rename[column] = label
-        config[label] = st.column_config.NumberColumn(label, format=number_format)
+        formats[label] = turkish_formatter(decimals, percent=percent)
     localized = localize_frame(display.rename(columns=rename).rename(columns=COLUMN_LABELS))
-    st.dataframe(localized, hide_index=True, width="stretch", column_config=config)
+    show_dataframe(localized, formats)
+
+
+def percent_slider(
+    label: str,
+    low: float,
+    high: float,
+    value: float,
+    *,
+    step: float = 0.5,
+    signed: bool = True,
+    sidebar: bool = False,
+    help: str | None = None,
+) -> float:
+    """Slider over percentage points whose labels read the Turkish way (``+%2,5``)."""
+
+    count = round((high - low) / step)
+    options = [round(low + i * step, 4) for i in range(count + 1)]
+    start = min(options, key=lambda option: abs(option - value))
+    host = st.sidebar if sidebar else st
+    return host.select_slider(
+        label,
+        options=options,
+        value=start,
+        format_func=lambda option: format_pct(option / 100, 1, signed=signed and option != 0),
+        help=help,
+    )
 
 
 def select_regions(frame: pd.DataFrame, *, key: str) -> list[str]:

@@ -2,7 +2,9 @@
 
 All notable changes to this project are documented here.
 
-## [Unreleased]
+## [2.2.0] - 2026-10-11
+
+Redesign of the Streamlit app around the fatura dökümü; analysis results are unchanged.
 
 ### Changed
 
@@ -10,6 +12,8 @@ All notable changes to this project are documented here.
 - Page titles are questions; sidebar sections are "Fiyatlama" and "Pazar" with short noun labels; page URLs changed accordingly. Waterfall items are named like bill lines (Fatura içi iskonto, Fatura dışı prim, Hizmet ve nakliye).
 - One Plotly template (`tavra`) for all charts and PNG exports; colours have fixed meanings (red only for leakage and breaches, green only for gains). Theme and fonts (Source Sans 3, Barlow Semi Condensed, IBM Plex Mono) are set in `.streamlit/config.toml`; Streamlit 1.65 or newer is required.
 - Public URL is `https://tavra-enerji-fiyatlama.streamlit.app`.
+- Every number reads the Turkish way regardless of the browser locale: tables are formatted through a Styler (sorting still uses raw values), share axes show `%10` instead of `10%`, month axes `01/2025`, numeric axes have thousands separators, and percentage sliders show `+%2,5`.
+- Callouts use a top rule like the bill and the landing cards instead of a side stripe. The scenario page hides zero deltas and says plainly when nothing changes.
 
 ## [2.1.0] - 2026-10-11
 

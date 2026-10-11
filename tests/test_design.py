@@ -216,3 +216,43 @@ def test_landing_answers_are_computed_from_the_data(
         max_volume_loss=guard.max_volume_loss_pct,
     )
     assert "brüt kâr yılda" in action_answer(table)
+
+
+def test_table_cells_use_turkish_separators_whatever_the_browser_locale() -> None:
+    from dashboard_support import turkish_formatter
+
+    assert turkish_formatter(2)(2.784) == "2,78"
+    assert turkish_formatter(0)(3180.47) == "3.180"
+    assert turkish_formatter(2, percent=True)(0.0928) == "%9,28"
+    assert turkish_formatter(2, percent=True)(0.084) == "%8,40"
+    assert turkish_formatter(2)(float("nan")) == "–"
+
+
+def test_callouts_use_a_top_rule_not_a_side_stripe() -> None:
+    assert "border-left" not in style.GLOBAL_CSS
+
+
+def test_percent_axes_put_the_sign_first() -> None:
+    import plotly.graph_objects as go
+
+    figure = go.Figure(go.Bar(x=["a", "b"], y=[0.031, 0.104]))
+    visualization.percent_axis(figure, "y")
+    assert figure.layout.yaxis.ticktext[0] == "%0"
+    assert all(label.startswith("%") for label in figure.layout.yaxis.ticktext)
+    assert max(figure.layout.yaxis.tickvals) >= 0.104
+
+
+def test_unformatted_axes_get_turkish_months_and_thousands() -> None:
+    import plotly.express as px
+
+    frame = pd.DataFrame(
+        {"month": pd.date_range("2024-01-01", periods=3, freq="MS"), "mwh": [1500, 2500, 4000]}
+    )
+    figure = visualization.turkish_axes(px.line(frame, x="month", y="mwh"))
+    assert figure.layout.xaxis.tickformat == "%m/%Y"
+    assert figure.layout.yaxis.tickformat == ",~f"
+    bars = visualization.turkish_axes(
+        px.bar(x=["a", "b"], y=[0.1, 0.2]).update_yaxes(tickformat=".0%")
+    )
+    assert bars.layout.xaxis.tickformat is None
+    assert bars.layout.yaxis.tickformat == ".0%"

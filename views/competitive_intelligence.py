@@ -6,7 +6,7 @@ import streamlit as st
 from dashboard_support import load_view, page_intro, show_chart, show_table, takeaway
 from energy_market_intelligence.insights import competition_insight
 from energy_market_intelligence.localization import VALUE_LABELS
-from energy_market_intelligence.visualization import competitor_change_figure
+from energy_market_intelligence.visualization import competitor_change_figure, percent_axis
 
 page_intro(
     "views/competitive_intelligence.py",
@@ -30,7 +30,7 @@ share_figure = px.bar(
     title="Şirketlerin güncel pazar payı",
     labels={"current_share": "Pazar payı", "company_name": "Şirket"},
 )
-share_figure.update_xaxes(tickformat=".1%")
+percent_axis(share_figure, "x")
 with right:
     show_chart(share_figure)
 

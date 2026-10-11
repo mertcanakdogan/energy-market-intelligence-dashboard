@@ -28,11 +28,12 @@ GLOBAL_CSS = """
   --tv-mono: 'IBM Plex Mono', Consolas, Menlo, monospace;
   --tv-head: 'Barlow Semi Condensed', 'Arial Narrow', Arial, sans-serif;
 }
+::selection {background: #C5D0DF; color: var(--tv-ink);}
 .block-container {padding-top: 2.4rem; padding-bottom: 3.5rem; max-width: 1360px;}
 h1, h2, h3, h4 {color: var(--tv-navy);}
 h1 {letter-spacing: -0.01em; line-height: 1.12;}
 h2, h3 {letter-spacing: 0;}
-div[data-testid="stCaptionContainer"] {color: var(--tv-slate);}
+[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p {color: var(--tv-slate); opacity: 1;}
 [data-testid="stMetric"] {border-top: 1px solid var(--tv-rule); padding-top: 0.65rem;}
 [data-testid="stMetricLabel"] p {color: var(--tv-slate); font-size: 0.92rem;}
 [data-testid="stMetricValue"] {
@@ -50,19 +51,19 @@ div[data-testid="stCaptionContainer"] {color: var(--tv-slate);}
 .tv-intro {margin: 0.1rem 0 1.1rem; max-width: 64rem; font-size: 1.05rem; color: var(--tv-ink);}
 .tv-intro strong {color: var(--tv-navy);}
 .tv-callout {
-  border-left: 4px solid var(--tv-navy); background: var(--tv-panel);
-  padding: 0.8rem 1.1rem; margin: 0.9rem 0 1.4rem; border-radius: 0 4px 4px 0;
+  border-top: 2px solid var(--tv-navy); background: var(--tv-panel);
+  padding: 0.75rem 1.1rem 0.85rem; margin: 0.9rem 0 1.4rem;
   color: var(--tv-ink); line-height: 1.5;
 }
 .tv-callout .tv-label {
   display: block; font-family: var(--tv-head); font-weight: 700; font-size: 1.05rem;
   color: var(--tv-navy); margin-bottom: 0.1rem;
 }
-.tv-callout--note {border-left-color: var(--tv-slate);}
+.tv-callout--note {border-top-color: var(--tv-slate);}
 .tv-callout--note .tv-label {color: var(--tv-slate);}
-.tv-callout--breach {border-left-color: var(--tv-leak);}
+.tv-callout--breach {border-top-color: var(--tv-leak);}
 .tv-callout--breach .tv-label {color: var(--tv-leak);}
-.tv-callout--gain {border-left-color: var(--tv-gain);}
+.tv-callout--gain {border-top-color: var(--tv-gain);}
 .tv-callout--gain .tv-label {color: var(--tv-gain);}
 
 /* The signature: fatura dökümü (bill-style itemisation). */
@@ -116,7 +117,7 @@ div[data-testid="stCaptionContainer"] {color: var(--tv-slate);}
 
 /* Link cards on the landing page: the question is the link. */
 [class*="st-key-card-"] {
-  border: 1px solid var(--tv-rule); border-top: 3px solid var(--tv-navy); border-radius: 2px;
+  border: 1px solid var(--tv-rule); border-top: 3px solid var(--tv-navy); border-radius: 0;
   padding: 0.9rem 1.1rem 1rem; height: 100%; box-sizing: border-box;
 }
 [data-testid="stColumn"]:has([class*="st-key-card-"]) > [data-testid="stVerticalBlock"],
@@ -171,7 +172,7 @@ def _html(text: str) -> str:
 
 
 def callout(kind: str, label: str, text: str) -> None:
-    """Left-ruled callout. ``kind``: ``takeaway`` (navy), ``note``, ``breach`` or ``gain``."""
+    """Top-ruled callout (the same rule as the bill and the cards). ``kind``: ``takeaway`` (navy), ``note``, ``breach`` or ``gain``."""
 
     modifier = "" if kind == "takeaway" else f" tv-callout--{kind}"
     st.markdown(

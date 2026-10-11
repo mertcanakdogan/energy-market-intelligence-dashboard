@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import datetime
+import math
 from pathlib import Path
 
 import pandas as pd
@@ -9,7 +11,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
 
-from energy_market_intelligence.localization import format_number
+from energy_market_intelligence.localization import format_number, format_pct
 from energy_market_intelligence.synthetic_data import FOCUS_COMPANY
 
 TL_AXIS = "mn TL (sabit 2025 fiyatlarıyla)"
@@ -90,6 +92,89 @@ pio.templates[TEMPLATE_NAME] = _build_template()
 pio.templates.default = TEMPLATE_NAME
 
 
+def _nice_step(span: float, target_ticks: int = 5) -> float:
+    raw = span / max(target_ticks, 1)
+    magnitude = 10 ** math.floor(math.log10(raw))
+    for multiple in (1, 2, 5, 10):
+        if raw <= multiple * magnitude:
+            return multiple * magnitude
+    return 10 * magnitude
+
+
+def percent_axis(figure: go.Figure, axis: str = "y") -> go.Figure:
+    """Label a share axis the Turkish way (``%10``, ``%12,5``) instead of d3's ``10%``.
+
+    Plotly's d3 formats always put the percent sign after the number, so the ticks are set
+    explicitly from the plotted data. Call it after the traces are final.
+    """
+
+    values: list[float] = []
+    for trace in figure.data:
+        data = getattr(trace, axis, None)
+        if data is None:
+            continue
+        values.extend(float(v) for v in data if v is not None and math.isfinite(float(v)))
+    if not values:
+        return figure
+    low, high = min(values), max(values)
+    if any(trace.type == "bar" for trace in figure.data):
+        low, high = min(low, 0.0), max(high, 0.0)  # bars start at zero; lines keep their range
+    if high == low:
+        high = low + 0.01
+    step = _nice_step(high - low)
+    first = math.floor(low / step + 1e-9)
+    last = math.ceil(high / step - 1e-9)
+    ticks = [round(index * step, 10) for index in range(first, last + 1)]
+    shown = 0 if round(step * 100, 6).is_integer() else 1
+    labels = [format_pct(value, shown) for value in ticks]
+    update = {"tickmode": "array", "tickvals": ticks, "ticktext": labels}
+    if axis == "y":
+        figure.update_yaxes(**update)
+    else:
+        figure.update_xaxes(**update)
+    return figure
+
+
+def _axis_kind(figure: go.Figure, axis: str) -> str | None:
+    """``"date"``, ``"number"`` or ``None`` (categories or mixed) for the plotted data."""
+
+    kinds = set()
+    for trace in figure.data:
+        data = getattr(trace, axis, None)
+        if data is None or len(data) == 0:
+            continue
+        series = pd.Series(list(data))
+        if pd.api.types.is_datetime64_any_dtype(series) or all(
+            isinstance(value, pd.Timestamp | datetime.date) for value in series
+        ):
+            kinds.add("date")
+        elif pd.api.types.is_numeric_dtype(series) and not pd.api.types.is_bool_dtype(series):
+            kinds.add("number")
+        else:
+            kinds.add(None)
+    return kinds.pop() if len(kinds) == 1 else None
+
+
+def turkish_axes(figure: go.Figure) -> go.Figure:
+    """Give unformatted axes Turkish ticks: months as ``01/2025``, thousands as ``4.000``.
+
+    Axes that already carry a ``tickformat`` or explicit tick labels are left as they are.
+    """
+
+    formats = {"date": "%m/%Y", "number": ",~f"}
+    for axis, each in (("x", figure.for_each_xaxis), ("y", figure.for_each_yaxis)):
+        kind = _axis_kind(figure, axis)
+        if kind is None:
+            continue
+
+        def apply(layout_axis, fmt=formats[kind]) -> None:
+            if not layout_axis.tickformat and layout_axis.tickvals is None:
+                layout_axis.tickformat = fmt
+
+        each(apply)
+    return figure
+
+
 def apply_business_theme(
     figure: go.Figure, *, y_title: str | None = None, mono_axis: str | None = "y"
 ) -> go.Figure:
@@ -119,8 +204,8 @@ def market_share_trend_figure(frame: pd.DataFrame) -> go.Figure:
         markers=True,
     )
     figure.update_traces(line={"color": NAVY, "width": 3}, marker={"size": 5})
-    figure.update_yaxes(tickformat=".1%")
-    figure.update_traces(hovertemplate="%{x|%b %Y}: %{y:.1%}<extra></extra>")
+    percent_axis(figure, "y")
+    figure.update_traces(hovertemplate="%{x|%m/%Y}: %{y:.1%}<extra></extra>")
     return apply_business_theme(figure, y_title="Pazar payı")
 
 
@@ -153,8 +238,8 @@ def opportunity_matrix_figure(frame: pd.DataFrame) -> go.Figure:
         },
     )
     figure.update_traces(textposition="top center", textfont={"size": 11})
-    figure.update_xaxes(tickformat=".0%")
-    figure.update_yaxes(tickformat=".0%")
+    percent_axis(figure, "x")
+    percent_axis(figure, "y")
     apply_business_theme(figure, y_title="Pazar büyümesi (son 12 ay / önceki 12 ay)")
     figure.update_xaxes(title="Şirketin pazar payı (son 12 ay)")
     return figure
@@ -200,8 +285,8 @@ def gross_margin_trend_figure(frame: pd.DataFrame) -> go.Figure:
         markers=True,
     )
     figure.update_traces(line={"color": NAVY, "width": 3}, marker={"size": 5})
-    figure.update_yaxes(tickformat=".1%")
-    figure.update_traces(hovertemplate="%{x|%b %Y}: %{y:.1%}<extra></extra>")
+    percent_axis(figure, "y")
+    figure.update_traces(hovertemplate="%{x|%m/%Y}: %{y:.1%}<extra></extra>")
     return apply_business_theme(figure, y_title="Brüt marj")
 
 
@@ -240,7 +325,7 @@ def write_png(figure: go.Figure, path: Path) -> None:
 
     path.parent.mkdir(parents=True, exist_ok=True)
     try:
-        export = go.Figure(figure)
+        export = turkish_axes(go.Figure(figure))
         export.update_layout(paper_bgcolor="#FFFFFF", plot_bgcolor="#FFFFFF")
         export.write_image(path, width=1200, height=680, scale=1.5)
     except Exception as exc:  # pragma: no cover - exercised only when renderer is unavailable

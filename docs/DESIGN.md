@@ -20,7 +20,7 @@ Each colour has one meaning and is never used decoratively.
 
 Neutral bridges (price-volume-mix, profit bridge) and share changes use lighter navy and grey rather than red and green, because a smaller revenue effect is not leakage.
 
-Type: headings in Barlow Semi Condensed (600/700), body in Source Sans 3, numbers and data in IBM Plex Mono with tabular figures. All three cover Turkish glyphs. Labels are in sentence case.
+Type: headings in Barlow Semi Condensed (600/700), body in Source Sans 3, numbers and data in IBM Plex Mono with tabular figures. All three cover Turkish glyphs. Labels are in sentence case. Every number in text, metrics and tables uses Turkish separators (`1.234,56`, `%9,28`) through the helpers in `localization.py`, never the browser locale.
 
 ## Where the tokens live
 
@@ -31,6 +31,6 @@ Type: headings in Barlow Semi Condensed (600/700), body in Source Sans 3, number
 ## Rules
 
 - Page titles are questions; the sidebar uses short nouns. Sections: Fiyatlama first, then Pazar.
-- Every page: H1 question, a short "Bu sayfa ne gösteriyor?" line and a "Ne anlama geliyor?" takeaway (navy rule). Caveats use a grey rule; red is reserved for real breaches, green for confirmed positive results.
+- Every page: H1 question, a short "Bu sayfa ne gösteriyor?" line and a "Ne anlama geliyor?" takeaway (navy top rule, the same device as the bill and the landing cards; no side stripes). Caveats use a grey rule; red is reserved for real breaches, green for confirmed positive results.
 - No emojis, gradients, decorative icons or dark-mode variants. Keyboard focus outlines are left as Streamlit draws them. Secondary text is at least 14 px and at least 4.5:1 contrast on white.
 - Mobile (about 400 px): columns stack, the bill block drops its percentage column and wraps cleanly, chart titles are HTML headings so they wrap.
