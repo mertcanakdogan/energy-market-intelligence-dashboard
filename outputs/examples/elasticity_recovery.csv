@@ -1,4 +1,4 @@
 customer_segment_name,elasticity,std_error,ci_low,ci_high,cross_elasticity,n_obs,classification,true_elasticity,abs_error,truth_in_ci
-Industrial,-0.605109,0.035387,-0.679768,-0.530449,0.376823,2592,inelastic,-0.600000,0.005109,True
-Residential,-1.598418,0.075442,-1.757587,-1.439249,0.265942,2592,elastic,-1.600000,0.001582,True
-SME,-1.102610,0.059429,-1.227995,-0.977225,0.435171,2592,elastic,-1.100000,0.002610,True
+Mesken,-1.598447,0.075418,-1.757566,-1.439328,0.265767,2592,elastic,-1.600000,0.001553,True
+Sanayi,-0.605119,0.035382,-0.679769,-0.530470,0.376773,2592,inelastic,-0.600000,0.005119,True
+Ticarethane / KOBİ,-1.102590,0.059427,-1.227969,-0.977211,0.435118,2592,elastic,-1.100000,0.002590,True

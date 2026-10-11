@@ -1,40 +1,40 @@
 {
-  "average_hhi": 0.154468,
+  "average_hhi": 0.154467,
   "companies": 7,
   "customer_segments": 3,
-  "dataset_fingerprint": "1998da387df4452d3374210c578f37d7b038c345c04149cd86c1e0f11caf7cee",
+  "dataset_fingerprint": "0308d10379c83087b0359e37d602a20bca6d1533da94dd4b649477a99a471406",
   "fact_row_count": 18144,
-  "final_period_northstar_share": 0.180263,
-  "generated_at_utc": "2026-10-11T16:16:51+00:00",
-  "gross_margin_change_pp": 1.342038,
-  "gross_margin_pct": 0.23057,
-  "highest_opportunity_region": "Sunrise Coast",
-  "market_yoy_growth": 0.0784,
+  "final_period_focus_share": 0.189355,
+  "focus_yoy_growth": 0.099759,
+  "generated_at_utc": "2026-10-11T17:11:55+00:00",
+  "gross_margin_change_pp": 1.402049,
+  "gross_margin_pct": 0.231235,
+  "highest_opportunity_region": "İstanbul Avrupa",
+  "market_yoy_growth": 0.08141,
   "months": 36,
-  "northstar_yoy_growth": 0.093903,
   "pricing": {
     "breaching_regions": [
-      "Blue Mesa",
-      "Central Basin",
-      "Highland Zone",
-      "Western Reach"
+      "Batı Akdeniz",
+      "Doğu Akdeniz",
+      "Doğu Anadolu Kuzey",
+      "Ege Kuzey"
     ],
     "elasticity": {
-      "Industrial": {
-        "ci_high": -0.5304,
-        "ci_low": -0.6798,
-        "estimate": -0.6051,
-        "true": -0.6,
-        "truth_in_ci": true
-      },
-      "Residential": {
-        "ci_high": -1.4392,
+      "Mesken": {
+        "ci_high": -1.4393,
         "ci_low": -1.7576,
         "estimate": -1.5984,
         "true": -1.6,
         "truth_in_ci": true
       },
-      "SME": {
+      "Sanayi": {
+        "ci_high": -0.5305,
+        "ci_low": -0.6798,
+        "estimate": -0.6051,
+        "true": -0.6,
+        "truth_in_ci": true
+      },
+      "Ticarethane / KOBİ": {
         "ci_high": -0.9772,
         "ci_low": -1.228,
         "estimate": -1.1026,
@@ -42,10 +42,10 @@
         "truth_in_ci": true
       }
     },
-    "list_revenue_12m": 128507783.02,
-    "pocket_margin_pct": 0.201786,
-    "pocket_revenue_12m": 109446236.97,
-    "price_realization_pct": 0.85167,
+    "list_revenue_12m": 5504647868.19,
+    "pocket_margin_pct": 0.207466,
+    "pocket_revenue_12m": 4690369826.9,
+    "price_realization_pct": 0.852074,
     "promo_uplift": {
       "naive": {
         "ci_high": 0.138,
@@ -62,19 +62,19 @@
         "truth_in_ci": true
       }
     },
-    "pvm_gp_change": -1020468.93,
-    "pvm_gp_cost_effect": -2885028.95,
-    "pvm_max_abs_reconciliation_gap": 1.8044374883174896e-09,
-    "pvm_mix_effect": -24931.13,
-    "pvm_price_effect": 1067696.95,
-    "pvm_total_revenue_change": 4746941.11,
-    "pvm_volume_effect": 3704175.28,
-    "recommended_gross_profit_change": 3414290.22,
-    "recommended_gross_profit_change_pct": 0.154599,
+    "pvm_gp_change": -36340165.38,
+    "pvm_gp_cost_effect": -122382076.77,
+    "pvm_max_abs_reconciliation_gap": 5.21540641784668e-08,
+    "pvm_mix_effect": -1361518.61,
+    "pvm_price_effect": 57863248.98,
+    "pvm_total_revenue_change": 186888008.07,
+    "pvm_volume_effect": 130386277.7,
+    "recommended_gross_profit_change": 145226945.81,
+    "recommended_gross_profit_change_pct": 0.149243,
     "region_segment_policy_breaches": 12,
-    "revenue_leakage_above_policy": 535863.42
+    "revenue_leakage_above_policy": 23435358.83
   },
-  "pricing_dataset_fingerprint": "f6ce0e3eb59541b77d45219073041009bdce11bc91095052a87176ee3ec77bcc",
+  "pricing_dataset_fingerprint": "7a71d61d60e9d68bc75d918c7f6aa21bae34a150a3aab2d0ee687366f3a91ea0",
   "pricing_fact_row_count": 7776,
   "products": 4,
   "regions": 18,
